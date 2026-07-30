@@ -984,6 +984,55 @@ function AquaLeaderModal({ me, onPick, onClose }) {
   );
 }
 
+// ---------- เล็น / ไวท์เล็น (patch 2.2 beta): เมนูเลือกท่า/สกิลในคลัง ----------
+//  ใช้ร่วมกัน 4 กรณี: เผาท่าเป็นดาเมจ (ฝันดีนะคะ) / เลือกจะสลับออก (คลังเต็ม) / เลือกสวมร่างตอนกลางคืน / เลือกของมาใช้จริง (ไวท์เล็น)
+function BankPickModal({ title, desc, items, onPick, onClose }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="text-lg font-black text-echo-gold">{title}</div>
+        {desc && <div className="text-sm opacity-80 mb-3">{desc}</div>}
+        {items.length === 0 ? (
+          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
+            {items.map((it, i) => (
+              <button
+                key={i}
+                onClick={() => { clickSound(); onPick(i); }}
+                className="text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition bg-white/5 hover:bg-white/15 border-white/15"
+              >
+                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
+                <div>
+                  <div className="font-bold text-echo-gold">{it.skillName}</div>
+                  <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+      </div>
+    </div>
+  );
+}
+// ไวท์เล็น: เลือกจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมาย (เลือกก่อน แล้วค่อยเลือกเป้าหมาย)
+function LwTierModal({ onPick, onClose }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="text-lg font-black text-echo-gold">🤍 ฉันขอรับไปนะคะ — จะขโมยสกิลไหน?</div>
+        <div className="text-sm opacity-80 mb-3">เลือกแล้วค่อยแตะเลือกเป้าหมาย</div>
+        <div className="flex flex-col gap-2">
+          <button onClick={() => { clickSound(); onPick("basic"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15 font-bold text-echo-gold">สกิลพื้นฐาน</button>
+          <button onClick={() => { clickSound(); onPick("secondary"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15 font-bold text-echo-gold">สกิลรอง</button>
+        </div>
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+      </div>
+    </div>
+  );
+}
+
 // ---------- สนใจใช้บริการเราไหม (เจ้าแห่งเน็ตบ้าน): ข้อเสนอสัญญา — เป้าหมายเลือกตอบรับ/ปฏิเสธ ----------
 //  ไม่ตอบก่อนเปิดไพ่ = ถือว่าปฏิเสธ (โดนค่าปรับตามปกติ)
 function ContractOfferModal({ offer, onAnswer }) {
@@ -1267,6 +1316,16 @@ export default function Game({ state, lowQ }) {
   const [appleOpen, setAppleOpen] = useState(false); // Apple guy: เมนูเลือกของส่งมอบ (สกิลพื้นฐาน)
   const [tohnoOpen, setTohnoOpen] = useState(false); // โทโนะ ชิกิ: เมนูเลือกระดับมีดพับประจำตระกูล (สกิลพื้นฐาน)
   const [aquaOpen, setAquaOpen] = useState(false);   // อควาเรียน: เมนูเลือกผู้นำ (สกิลพื้นฐาน)
+  // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
+  const [lenCopySel, setLenCopySel] = useState(false); // เล็น: โหมดเลือกเป้าหมายคัดลอกท่าไม้ตาย (กลางวัน)
+  const [lenSwapIdx, setLenSwapIdx] = useState(null);  // เล็น: index ในคลังที่จะถูกสลับออก (คลังเต็มแล้ว)
+  const [lenSwapOpen, setLenSwapOpen] = useState(false); // เล็น: เมนูเลือกอันที่จะสลับออก (คลังเต็ม — ก่อนเลือกเป้าหมาย)
+  const [lenBankOpen, setLenBankOpen] = useState(false); // เล็น: เมนูเลือกท่าในคลังมาเผาเป็นดาเมจ (ฝันดีนะคะ)
+  const [lenNightOpen, setLenNightOpen] = useState(false); // เล็น: เมนูเลือกท่าจากคลังมาสวมร่าง (กลางคืน — ก่อนกดยืนยัน)
+  const [lwTierOpen, setLwTierOpen] = useState(false); // ไวท์เล็น: เมนูเลือกจะขโมยสกิลพื้นฐาน/สกิลรอง (กลางวัน)
+  const [lwStealTier, setLwStealTier] = useState(null); // ไวท์เล็น: tier ที่เลือกไว้ รอเลือกเป้าหมาย
+  const [lwStealSel, setLwStealSel] = useState(false); // ไวท์เล็น: โหมดเลือกเป้าหมายขโมยสกิล (กลางวัน)
+  const [lwBankOpen, setLwBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของในคลังมาใช้จริง (กลางคืน)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
@@ -1479,6 +1538,24 @@ export default function Game({ state, lowQ }) {
     if (tier === "secondary" && ch?.id === "shiki") { setSkSel(true); setSkillOpen(false); return; }
     // บานาจ ลิงก์ (patch 2.1.2): สกิลพื้นฐาน Absorb shield เข้าโหมดเลือกเป้าหมาย (เลือกตัวเองได้)
     if (tier === "basic" && ch?.id === "banagher") { setBgSel(true); setSkillOpen(false); return; }
+    // ---------- เล็น (patch 2.2 beta) ----------
+    if (tier === "basic" && ch?.id === "len") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
+    if (tier === "secondary" && ch?.id === "len") { setLenBankOpen(true); setSkillOpen(false); return; }
+    if (tier === "ultimate" && ch?.id === "len") {
+      if (nightNow) {
+        if (me?.lenLoadedIndex == null) { setLenNightOpen(true); setSkillOpen(false); return; }
+        socket.emit("useSkill", { tier }); setSkillOpen(false); return;
+      }
+      if ((me?.lenBank || []).length >= 3) { setLenSwapOpen(true); setSkillOpen(false); return; }
+      setLenCopySel(true); setSkillOpen(false); return;
+    }
+    // ---------- ไวท์เล็น (patch 2.2 beta) ----------
+    if (tier === "basic" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
+    if (tier === "secondary" && ch?.id === "lenwhite") {
+      if (nightNow) { setLwBankOpen(true); setSkillOpen(false); return; }
+      setLwTierOpen(true); setSkillOpen(false); return;
+    }
+    if (tier === "ultimate" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
     // ซาโตรุ อาเคฟุ: สกิลพื้นฐาน/สกิลรอง เข้าโหมดเลือกเป้าหมาย — ท่าไม้ตายทำงานอัตโนมัติ กดเองไม่ได้
     if (tier === "basic" && ch?.id === "satoru") { setSaObSel(true); setSkillOpen(false); return; }
     if (tier === "secondary" && ch?.id === "satoru") { setSaLocaSel(true); setSkillOpen(false); return; }
@@ -1568,6 +1645,49 @@ export default function Game({ state, lowQ }) {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
     setNightSel(false);
   };
+  // ---------- เล็น (patch 2.2 beta) ----------
+  // เลือกเป้าหมายคัดลอกท่าไม้ตาย (ผลึกฝันบอกเหตุ กลางวัน) -> ส่งไป server ทันที (แนบ item = index ที่จะสลับออก ถ้าคลังเต็ม)
+  const pickLenCopy = (id) => {
+    const payload = { tier: "ultimate", targets: [id] };
+    if (lenSwapIdx != null) payload.item = lenSwapIdx;
+    socket.emit("useSkill", payload);
+    setLenCopySel(false);
+    setLenSwapIdx(null);
+  };
+  // เลือกอันที่จะสลับออก (คลังเต็ม 3/3) -> เข้าโหมดเลือกเป้าหมายต่อ
+  const pickLenSwap = (idx) => {
+    setLenSwapIdx(idx);
+    setLenSwapOpen(false);
+    setLenCopySel(true);
+  };
+  // เลือกท่าในคลังมาเผาเป็นดาเมจ (ฝันดีนะคะ) -> ส่งไป server ทันที
+  const pickLenDrain = (idx) => {
+    socket.emit("useSkill", { tier: "secondary", item: idx });
+    setLenBankOpen(false);
+  };
+  // เลือกท่าจากคลังมาสวมร่างรอไว้ (ผลึกฝันบอกเหตุ กลางคืน — ยังไม่เสียแต้ม รอกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยัน)
+  const pickLenLoad = (idx) => {
+    socket.emit("lenSelectBank", { index: idx });
+    setLenNightOpen(false);
+  };
+  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
+  // เลือกจะขโมยสกิลพื้นฐาน/สกิลรอง (ฉันขอรับไปนะคะ กลางวัน) -> เข้าโหมดเลือกเป้าหมายต่อ
+  const pickLwTier = (t) => {
+    setLwStealTier(t);
+    setLwTierOpen(false);
+    setLwStealSel(true);
+  };
+  // เลือกเป้าหมายขโมยสกิล -> ส่งไป server ทันที
+  const pickLwSteal = (id) => {
+    socket.emit("useSkill", { tier: "secondary", targets: [id], item: lwStealTier });
+    setLwStealSel(false);
+    setLwStealTier(null);
+  };
+  // เลือกของในคลังมาใช้จริง (ฉันขอรับไปนะคะ กลางคืน) -> ส่งไป server ทันที
+  const pickLwUse = (idx) => {
+    socket.emit("useSkill", { tier: "secondary", item: idx });
+    setLwBankOpen(false);
+  };
   // เลือกเป้าหมาย Sekai ichi kawaii watashi (โคโตเนะ patch 2.1.3) -> ส่งไป server ทันที
   const pickKawaii = (id) => {
     socket.emit("useSkill", { tier: "ultimate", targets: [id] });
@@ -1601,6 +1721,27 @@ export default function Game({ state, lowQ }) {
   useEffect(() => {
     if (bgSel && (phase !== "PLAYING" || me?.skillUsed || done)) setBgSel(false);
   }, [bgSel, phase, me?.skillUsed, done]);
+  useEffect(() => {
+    if (lenCopySel && (phase !== "PLAYING" || me?.skillUsed || done)) { setLenCopySel(false); setLenSwapIdx(null); }
+  }, [lenCopySel, phase, me?.skillUsed, done]);
+  useEffect(() => {
+    if (lwStealSel && (phase !== "PLAYING" || me?.skillUsed || done)) { setLwStealSel(false); setLwStealTier(null); }
+  }, [lwStealSel, phase, me?.skillUsed, done]);
+  useEffect(() => {
+    if (lenBankOpen && (phase !== "PLAYING" || done)) setLenBankOpen(false);
+  }, [lenBankOpen, phase, done]);
+  useEffect(() => {
+    if (lenNightOpen && (phase !== "PLAYING" || done)) setLenNightOpen(false);
+  }, [lenNightOpen, phase, done]);
+  useEffect(() => {
+    if (lenSwapOpen && (phase !== "PLAYING" || done)) setLenSwapOpen(false);
+  }, [lenSwapOpen, phase, done]);
+  useEffect(() => {
+    if (lwTierOpen && (phase !== "PLAYING" || done)) setLwTierOpen(false);
+  }, [lwTierOpen, phase, done]);
+  useEffect(() => {
+    if (lwBankOpen && (phase !== "PLAYING" || done)) setLwBankOpen(false);
+  }, [lwBankOpen, phase, done]);
   useEffect(() => {
     if (nightSel && (phase !== "PLAYING" || me?.skillUsed || done)) setNightSel(false);
   }, [nightSel, phase, me?.skillUsed, done]);
@@ -1700,9 +1841,9 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
-              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : socket.emit("attack", { targetId: id }))}
+              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
             />
           ))}
@@ -1730,6 +1871,18 @@ export default function Game({ state, lowQ }) {
             <span className="text-lg font-black text-echo-gold animate-pulse">🛡️ แตะเลือกเป้าหมาย Absorb shield</span>
             <button onClick={() => { clickSound(); pickBg(me.id); }} className="ml-3 text-sm font-bold bg-echo-gold text-gray-900 rounded-full px-3 py-1">เลือกตัวเอง</button>
             <button onClick={() => { clickSound(); setBgSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+          </div>
+        )}
+        {lenCopySel && (
+          <div className="shrink-0 text-center mt-1.5 text-hard">
+            <span className="text-lg font-black text-echo-gold animate-pulse">🔮 แตะเลือกเป้าหมายคัดลอกท่าไม้ตาย</span>
+            <button onClick={() => { clickSound(); setLenCopySel(false); setLenSwapIdx(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+          </div>
+        )}
+        {lwStealSel && (
+          <div className="shrink-0 text-center mt-1.5 text-hard">
+            <span className="text-lg font-black text-echo-gold animate-pulse">🤍 แตะเลือกเป้าหมายขโมยสกิล{lwStealTier === "basic" ? " (พื้นฐาน)" : " (รอง)"}</span>
+            <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {nightSel && (
@@ -2003,6 +2156,11 @@ export default function Game({ state, lowQ }) {
         {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
         {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
+        {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
+        {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
+        {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
+        {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
+        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเท่าราคาต้นฉบับของสกิลนั้น" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
         {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
@@ -2053,9 +2211,9 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
-          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : socket.emit("attack", { targetId: id }))}
+          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
         />
       ))}
@@ -2083,6 +2241,22 @@ export default function Game({ state, lowQ }) {
           <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🛡️ คลิกเลือกเป้าหมาย Absorb shield</span>
           <button onClick={() => { clickSound(); pickBg(me.id); }} className="ml-3 text-sm font-bold bg-echo-gold text-gray-900 rounded-full px-3 py-1">เลือกตัวเอง</button>
           <button onClick={() => { clickSound(); setBgSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+        </div>
+      )}
+
+      {/* เล็น (patch 2.2 beta): โหมดเลือกเป้าหมายคัดลอกท่าไม้ตาย (ผลึกฝันบอกเหตุ กลางวัน) */}
+      {lenCopySel && (
+        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
+          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🔮 คลิกเลือกเป้าหมายคัดลอกท่าไม้ตาย</span>
+          <button onClick={() => { clickSound(); setLenCopySel(false); setLenSwapIdx(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+        </div>
+      )}
+
+      {/* ไวท์เล็น (patch 2.2 beta): โหมดเลือกเป้าหมายขโมยสกิล (ฉันขอรับไปนะคะ กลางวัน) */}
+      {lwStealSel && (
+        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
+          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🤍 คลิกเลือกเป้าหมายขโมยสกิล{lwStealTier === "basic" ? " (พื้นฐาน)" : " (รอง)"}</span>
+          <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
         </div>
       )}
 
@@ -2399,6 +2573,11 @@ export default function Game({ state, lowQ }) {
       {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
         {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
+        {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
+        {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
+        {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
+        {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
+        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเท่าราคาต้นฉบับของสกิลนั้น" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
       {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}

@@ -46,6 +46,10 @@ const FILES = {
   auqarion: "/characters/auqarion/auqarion_theme.mp3", // เพลงประจำตัวอควาเรียน (ระหว่างไปยังพฤกษาแห่งชีวิต)
   oguri: "/characters/oguri/oguri_theme.mp3",          // เพลงประจำตัวโอกูริ แคป (เริ่มตอนเข้าร่าง Zone — เล่นค้างระหว่างอยู่ร่าง)
   wonderofu: "/characters/satoru/wonderofu_theme.mp3", // เพลง Wonder of U (ซาโตรุ — เล่นค้างตราบใดที่มีคนติด Calamity)
+  lenVoice: "/characters/len/len_voice.m4a", // เสียงพากย์ตอนเล็นเริ่มคัดลอกท่าไม้ตาย
+  lenwhiteVoice1: "/characters/lenwhite/lenwhite_voice1.m4a", // เสียงพากย์สุ่มตอนไวท์เล็นเริ่มคัดลอกสกิล
+  lenwhiteVoice2: "/characters/lenwhite/lenwhite_voice2.m4a",
+  lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
   action_button: "/effect_sound/action_button.wav",
   trun_change: "/effect_sound/trun_change.wav",
   attack: "/effect_sound/attack.wav",
