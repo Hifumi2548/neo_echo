@@ -1476,6 +1476,12 @@ function displayImg(p) {
     const trueCh = CHAR_BY_ID[lenTrueId(p)];
     if (trueCh && trueCh.catImg) return trueCh.catImg;
   }
+  // เล็น/ไวท์เล็น (patch 2.2 beta): ระหว่าง "สวมร่าง" ท่าที่ขโมยมา — ภาพยังคงเป็นภาพของตัวเองเสมอ
+  //  ไม่สลับไปตามท่าที่ยืมมา แม้ท่านั้นจะเปลี่ยนชื่อ/ภาพเจ้าของท่าปกติก็ตาม (characterId ที่สลับไว้มีผลแค่ตรรกะภายใน)
+  if (p.lenBorrowOriginalId) {
+    const trueCh = CHAR_BY_ID[p.lenBorrowOriginalId];
+    if (trueCh) return trueCh.img;
+  }
   // โอเบรอน: ร่างสลับตามช่วงเวลากลางวัน/กลางคืนเสมอ
   if (p.characterId === "oberon") return isNightRound(roundNumber) ? OBERON_NIGHT_IMG : OBERON_MORNING_IMG;
   // ชเรด เอลัน: รวมร่างทำนองเพลงแล้ว = ร่างอควาเรียน สปาด้า ถาวร
@@ -1532,11 +1538,6 @@ function displayImg(p) {
   }
   // บานาจ ลิงก์ (patch 2.1.2): หน้าเลือกตัวละคร/ล็อบบี้ใช้ p.img เดิม — ลงสนามแล้วเปลี่ยนเป็น unicorn_new.png
   if (p.characterId === "banagher" && gameState !== "LOBBY") return BANAGHER_BASE_IMG;
-  // เล็น/ไวท์เล็น (patch 2.2 beta): ระหว่าง "สวมร่าง" ท่าที่ขโมยมา — p.img ตัวเองใช้ไม่ได้แล้ว (สลับ characterId ชั่วคราว)
-  if (p.lenBorrowOriginalId) {
-    const srcCh = CHAR_BY_ID[p.characterId];
-    if (srcCh) return srcCh.img;
-  }
   return p.img;
 }
 // เพลงสกิล: Beat Mode (ex_guts) ทับทุกเพลงจนผู้ใช้ตาย > คนที่เปิดร่างล่าสุด
@@ -2084,7 +2085,9 @@ function buildStateFor(viewerId) {
       const promoShow = (p.statuses.promo || 0) > 0;
       // นายยังมีอนาคตอีกยาวไกล (ริดดี้ patch 2.0.9): คู่พันธมิตรเห็นแต้มการ์ดของกันและกันได้ตลอด
       const allyShow = !!(viewer && viewer.alive && p.alive && p.allyId === viewer.id && viewer.allyId === p.id);
-      const ch = CHAR_BY_ID[p.characterId] || {};
+      // เล็น/ไวท์เล็น (patch 2.2 beta): ระหว่าง "สวมร่าง" ท่าที่ขโมยมา — โชว์ชื่อ/ภาพ/สกิลของตัวเองเสมอ
+      //  (characterId ที่สลับไว้มีผลแค่ตรรกะภายในเอนจิน เช่น โบนัสพลังโจมตีตอนโจมตี — ไม่ใช่สิ่งที่ส่งให้ client แสดง)
+      const ch = CHAR_BY_ID[lenTrueId(p)] || {};
       const pub = (s) => (s ? { name: s.name, desc: s.desc, cost: s.cost, img: s.img, ammo: s.ammo } : null);
       // สกิลพื้นฐานสลับกลางคืน (โคโตเนะ) + Apple guy: ปกสกิลพื้นฐานเปลี่ยนตามของส่งมอบที่เลือกอยู่
       let basicPub = pub(nightNow && ch.basicNight ? ch.basicNight : ch.basic);
@@ -4013,7 +4016,7 @@ function useSkill(id, tier, targets, item) {
         info: {
           playerId: p.id, name: p.name,
           img: lenCh.modelImg, color: POSITION_COLORS[p.position] || "#9B4F96",
-          video: null, title: "ผลึกฝันบอกเหตุ", label: "เริ่มคัดลอกท่าไม้ตายแล้ว",
+          video: null, title: "ผลึกฝันบอกเหตุ", label: "คัดลอกพลัง!",
           voice: voiceKeys.length ? voiceKeys[Math.floor(Math.random() * voiceKeys.length)] : null,
           kind: "lenCopy", announce: true,
         },
@@ -4049,7 +4052,7 @@ function useSkill(id, tier, targets, item) {
         info: {
           playerId: p.id, name: p.name,
           img: lwCh.modelImg, color: POSITION_COLORS[p.position] || "#9B4F96",
-          video: null, title: "ฉันขอรับไปนะคะ", label: "เริ่มคัดลอกสกิลแล้ว",
+          video: null, title: "ฉันขอรับไปนะคะ", label: "คัดลอกพลัง!",
           voice: voiceKeys.length ? voiceKeys[Math.floor(Math.random() * voiceKeys.length)] : null,
           kind: "lenwhiteCopy", announce: true,
         },

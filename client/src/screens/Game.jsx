@@ -162,7 +162,7 @@ function TransformAnnounce({ cs }) {
           <img src={cs.img} alt="" className="w-full h-full object-cover" />
         </div>
         <div className="text-3xl sm:text-5xl font-black" style={{ color: red ? "#ff5747" : "#4ade80" }}>
-          <span style={{ color: cs.color }}>{cs.name}</span> เปลี่ยนร่าง!
+          <span style={{ color: cs.color }}>{cs.name}</span> {cs.label || "เปลี่ยนร่าง!"}
         </div>
         <div className="text-xl sm:text-2xl font-bold bg-black/55 rounded-full px-5 py-1">{cs.title}</div>
       </div>
@@ -777,6 +777,58 @@ const REIJU_COMMANDS = [
 ];
 const reijuImg = (n) => `/characters/fujimaru/reiju${Math.max(0, Math.min(3, n ?? 0))}.jpg`;
 
+// เล็น/ไวท์เล็น (patch 2.2 beta): จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (Moonlight/Blood Moon กันตาย — สูงสุด 9/เกม)
+function CatUsesBadge({ me, ch }) {
+  if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
+  const isBlack = ch.id === "len";
+  return (
+    <span className="text-xs font-bold bg-black/55 rounded-full px-2 py-0.5 whitespace-nowrap" title={`${isBlack ? "แมวดำ" : "แมวขาว"} (Moonlight/Blood Moon) — จำนวนครั้งที่ยังกลายร่างกันตายได้`}>
+      {isBlack ? "🐈‍⬛" : "🐈"} {isBlack ? "แมวดำ" : "แมวขาว"} {me.catUses ?? 9}/9
+    </span>
+  );
+}
+// เล็น/ไวท์เล็น (patch 2.2 beta): ปุ่มเปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด ไม่ผูกกับสกิลรอง/ท่าไม้ตาย)
+function BankViewButton({ me, ch, onOpen }) {
+  if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
+  const isLen = ch.id === "len";
+  const bank = isLen ? (me.lenBank || []) : (me.lenwhiteBank || []);
+  const max = isLen ? 3 : 6;
+  return (
+    <button
+      onClick={() => { clickSound(); onOpen(); }}
+      className="text-xs font-bold bg-black/55 hover:bg-black/75 transition rounded-full px-2 py-0.5 whitespace-nowrap border border-white/20"
+      title="เปิดดูคลังสกิลที่เก็บไว้"
+    >
+      📦 คลัง {bank.length}/{max}
+    </button>
+  );
+}
+// เล็น/ไวท์เล็น: หน้าต่างดูคลังสกิลที่เก็บไว้ (แบบดูอย่างเดียว — ไม่ใช้เพื่อกดใช้งาน)
+function BankViewModal({ title, items, onClose }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="text-lg font-black text-echo-gold">{title}</div>
+        {items.length === 0 ? (
+          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto mt-2">
+            {items.map((it, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl border px-3 py-2 bg-white/5 border-white/15">
+                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
+                <div>
+                  <div className="font-bold text-echo-gold">{it.skillName}</div>
+                  <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+      </div>
+    </div>
+  );
+}
 function ReijuButton({ me, usable, onOpen, className = "" }) {
   return (
     <button
@@ -1326,6 +1378,7 @@ export default function Game({ state, lowQ }) {
   const [lwStealTier, setLwStealTier] = useState(null); // ไวท์เล็น: tier ที่เลือกไว้ รอเลือกเป้าหมาย
   const [lwStealSel, setLwStealSel] = useState(false); // ไวท์เล็น: โหมดเลือกเป้าหมายขโมยสกิล (กลางวัน)
   const [lwBankOpen, setLwBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของในคลังมาใช้จริง (กลางคืน)
+  const [bankViewOpen, setBankViewOpen] = useState(false); // เล็น/ไวท์เล็น: เปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
@@ -1995,6 +2048,8 @@ export default function Game({ state, lowQ }) {
               <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-2">
                 <LifeBar p={me} />
                 <StatusChips p={me} left />
+                <CatUsesBadge me={me} ch={ch} />
+                <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
                 <span className="ml-auto flex items-center gap-1.5">
                   <span className="flex gap-1 p-1 rounded-lg bg-black/25">
                     {Array.from({ length: me.maxSkill }, (_, i) => (
@@ -2167,6 +2222,13 @@ export default function Game({ state, lowQ }) {
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
         {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
+        {bankViewOpen && me && (
+          <BankViewModal
+            title={ch?.id === "len" ? "🔮 คลังท่าไม้ตายของเล็น" : "🤍 คลังสกิลของไวท์เล็น"}
+            items={ch?.id === "len" ? (me.lenBank || []) : (me.lenwhiteBank || [])}
+            onClose={() => setBankViewOpen(false)}
+          />
+        )}
         {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
@@ -2361,6 +2423,10 @@ export default function Game({ state, lowQ }) {
               </div>
               <div className="font-bold text-base mt-1 leading-tight">{me.character.name}</div>
               <button onClick={() => { clickSound(); setShowChar(true); }} className="text-xs underline opacity-80">รายละเอียดตัวละคร</button>
+              <div className="mt-1 flex flex-col items-center gap-1">
+                <CatUsesBadge me={me} ch={ch} />
+                <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
+              </div>
               {isFuji && <ReijuButton me={me} usable={reijuUsable} onOpen={() => setReijuOpen(true)} className="w-20 h-16 mt-1.5" />}
               {isHakuno && <HakunoCommandButton me={me} usable={hakunoCmdUsable} onOpen={() => setHakunoCmdOpen(true)} className="w-20 h-16 mt-1.5" />}
             </div>
@@ -2584,6 +2650,13 @@ export default function Game({ state, lowQ }) {
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
         {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
+        {bankViewOpen && me && (
+          <BankViewModal
+            title={ch?.id === "len" ? "🔮 คลังท่าไม้ตายของเล็น" : "🤍 คลังสกิลของไวท์เล็น"}
+            items={ch?.id === "len" ? (me.lenBank || []) : (me.lenwhiteBank || [])}
+            onClose={() => setBankViewOpen(false)}
+          />
+        )}
       {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
