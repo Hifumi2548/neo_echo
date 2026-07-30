@@ -538,6 +538,7 @@ const STATUS_INFO = {
   // ---------- สถานะ Universal (patch 2.2.1) ----------
   invert:     { icon: "🔄", label: "ผกผัน", cls: "bg-echo-hp", desc: "ผกผัน: ฟื้นเลือด/เกราะ กลายเป็นเสียแทน — เพิ่มพลังโจมตี กลายเป็นลดแทน ตามจำนวนเทิร์นที่เหลือ" },
   norecover:  { icon: "☠️", label: "ไร้ทางเยียวยา", cls: "bg-echo-hp", desc: "ไร้ทางเยียวยา: ฟื้นพลังชีวิตไม่ได้ ตามจำนวนเทิร์นที่เหลือ" },
+  decay:      { icon: "🥀", label: "ผุพัง", cls: "bg-echo-hp", desc: "ผุพัง: เกราะฟื้นไม่ได้ ตามจำนวนเทิร์นที่เหลือ" },
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   hakunoInvertReady:   { icon: "🌓", label: "ข้าขอบัญชา", cls: "bg-echo-cyan text-gray-900", desc: "ข้าขอบัญชา: การโจมตีปกติครั้งถัดไปทำให้เป้าหมายติดผกผัน 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี" },
   hakunoNoRegenReady:  { icon: "🌕", label: "ข้าขอบัญชา", cls: "bg-echo-magenta", desc: "ข้าขอบัญชา: การโจมตีปกติครั้งถัดไปทำให้เป้าหมายเกราะไม่ฟื้น + ไร้ทางเยียวยา — คงอยู่จนกว่าจะได้โจมตี" },
@@ -819,6 +820,7 @@ function BankViewModal({ title, items, onClose }) {
                 <div>
                   <div className="font-bold text-echo-gold">{it.skillName}</div>
                   <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
+                  {it.hasEffect === false && <div className="text-xs text-echo-hp font-bold mt-0.5">⚠️ ท่านี้ไม่มีผลตอนสวมร่างใช้จริง — เผาเป็นดาเมจได้อย่างเดียว</div>}
                 </div>
               </div>
             ))}
@@ -1058,6 +1060,7 @@ function BankPickModal({ title, desc, items, onPick, onClose }) {
                 <div>
                   <div className="font-bold text-echo-gold">{it.skillName}</div>
                   <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
+                  {it.hasEffect === false && <div className="text-xs text-echo-hp font-bold mt-0.5">⚠️ ไม่มีผลตอนสวมร่างใช้จริง</div>}
                 </div>
               </button>
             ))}
@@ -1068,18 +1071,35 @@ function BankPickModal({ title, desc, items, onPick, onClose }) {
     </div>
   );
 }
-// ไวท์เล็น: เลือกจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมาย (เลือกก่อน แล้วค่อยเลือกเป้าหมาย)
-function LwTierModal({ onPick, onClose }) {
+// ไวท์เล็น: เลือกเป้าหมายก่อน แล้วโชว์สกิลพื้นฐาน/สกิลรองจริงของเป้าหมายคนนั้นให้เลือกขโมย (เห็นหน้าตาก่อนตัดสินใจ — ไม่ใช่เลือกแบบสุ่มเดา)
+function LwStealChoiceModal({ target, onPick, onClose }) {
+  const basic = target?.character?.basic;
+  const secondary = target?.character?.secondary;
+  const Tile = ({ label, skill, tier }) => (
+    <button
+      onClick={() => { if (skill) { clickSound(); onPick(tier); } }}
+      disabled={!skill}
+      className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
+        skill ? "bg-white/5 hover:bg-white/15 border-white/15" : "bg-white/5 border-white/10 opacity-50 cursor-not-allowed"
+      }`}
+    >
+      {skill?.img && <img src={skill.img} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
+      <div>
+        <div className="text-xs opacity-70">{label}</div>
+        <div className="font-bold text-echo-gold">{skill?.name || "—"}</div>
+        {skill && <div className="text-sm opacity-80">ราคาต้นฉบับ {skill.cost} แต้ม</div>}
+      </div>
+    </button>
+  );
   return (
     <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
       <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">🤍 ฉันขอรับไปนะคะ — จะขโมยสกิลไหน?</div>
-        <div className="text-sm opacity-80 mb-3">เลือกแล้วค่อยแตะเลือกเป้าหมาย</div>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => { clickSound(); onPick("basic"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15 font-bold text-echo-gold">สกิลพื้นฐาน</button>
-          <button onClick={() => { clickSound(); onPick("secondary"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15 font-bold text-echo-gold">สกิลรอง</button>
+        <div className="text-lg font-black text-echo-gold">🤍 ฉันขอรับไปนะคะ — จะขโมยสกิลไหนของ {target?.name}?</div>
+        <div className="flex flex-col gap-2 mt-2">
+          <Tile label="สกิลพื้นฐาน" skill={basic} tier="basic" />
+          <Tile label="สกิลรอง" skill={secondary} tier="secondary" />
         </div>
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ยกเลิก</Button>
       </div>
     </div>
   );
@@ -1374,9 +1394,9 @@ export default function Game({ state, lowQ }) {
   const [lenSwapOpen, setLenSwapOpen] = useState(false); // เล็น: เมนูเลือกอันที่จะสลับออก (คลังเต็ม — ก่อนเลือกเป้าหมาย)
   const [lenBankOpen, setLenBankOpen] = useState(false); // เล็น: เมนูเลือกท่าในคลังมาเผาเป็นดาเมจ (ฝันดีนะคะ)
   const [lenNightOpen, setLenNightOpen] = useState(false); // เล็น: เมนูเลือกท่าจากคลังมาสวมร่าง (กลางคืน — ก่อนกดยืนยัน)
-  const [lwTierOpen, setLwTierOpen] = useState(false); // ไวท์เล็น: เมนูเลือกจะขโมยสกิลพื้นฐาน/สกิลรอง (กลางวัน)
-  const [lwStealTier, setLwStealTier] = useState(null); // ไวท์เล็น: tier ที่เลือกไว้ รอเลือกเป้าหมาย
-  const [lwStealSel, setLwStealSel] = useState(false); // ไวท์เล็น: โหมดเลือกเป้าหมายขโมยสกิล (กลางวัน)
+  const [lwStealSel, setLwStealSel] = useState(false); // ไวท์เล็น: โหมดเลือกเป้าหมายขโมยสกิล (กลางวัน — เลือกเป้าหมายก่อน)
+  const [lwChoiceTargetId, setLwChoiceTargetId] = useState(null); // ไวท์เล็น: เป้าหมายที่เลือกแล้ว รอเลือกว่าจะขโมยสกิลพื้นฐาน/สกิลรอง
+  const [lwChoiceOpen, setLwChoiceOpen] = useState(false); // ไวท์เล็น: เมนูเลือกสกิลพื้นฐาน/สกิลรองของเป้าหมาย (เห็นหน้าตาสกิลจริงก่อนตัดสินใจ)
   const [lwBankOpen, setLwBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของในคลังมาใช้จริง (กลางคืน)
   const [bankViewOpen, setBankViewOpen] = useState(false); // เล็น/ไวท์เล็น: เปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
@@ -1612,7 +1632,8 @@ export default function Game({ state, lowQ }) {
         if (me?.lwLoadedIndex == null) { setLwBankOpen(true); setSkillOpen(false); return; }
         socket.emit("useSkill", { tier }); setSkillOpen(false); return;
       }
-      setLwTierOpen(true); setSkillOpen(false); return;
+      // เลือกเป้าหมายก่อน แล้วค่อยให้ดูว่าจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมายคนนั้น (เห็นหน้าตาสกิลจริงก่อนตัดสินใจ)
+      setLwStealSel(true); setSkillOpen(false); return;
     }
     if (tier === "ultimate" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
     // ซาโตรุ อาเคฟุ: สกิลพื้นฐาน/สกิลรอง เข้าโหมดเลือกเป้าหมาย — ท่าไม้ตายทำงานอัตโนมัติ กดเองไม่ได้
@@ -1731,16 +1752,17 @@ export default function Game({ state, lowQ }) {
   };
   // ---------- ไวท์เล็น (patch 2.2 beta) ----------
   // เลือกจะขโมยสกิลพื้นฐาน/สกิลรอง (ฉันขอรับไปนะคะ กลางวัน) -> เข้าโหมดเลือกเป้าหมายต่อ
-  const pickLwTier = (t) => {
-    setLwStealTier(t);
-    setLwTierOpen(false);
-    setLwStealSel(true);
-  };
-  // เลือกเป้าหมายขโมยสกิล -> ส่งไป server ทันที
+  // เลือกเป้าหมายขโมยสกิลแล้ว -> เปิดเมนูให้ดูว่าจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมายคนนั้น
   const pickLwSteal = (id) => {
-    socket.emit("useSkill", { tier: "secondary", targets: [id], item: lwStealTier });
+    setLwChoiceTargetId(id);
     setLwStealSel(false);
-    setLwStealTier(null);
+    setLwChoiceOpen(true);
+  };
+  // เลือกแล้วว่าจะขโมยสกิลพื้นฐาน/สกิลรอง -> ส่งไป server ทันที
+  const pickLwChoice = (tier) => {
+    if (lwChoiceTargetId) socket.emit("useSkill", { tier: "secondary", targets: [lwChoiceTargetId], item: tier });
+    setLwChoiceOpen(false);
+    setLwChoiceTargetId(null);
   };
   // เลือกของในคลังมาเตรียมใช้จริง (ฉันขอรับไปนะคะ กลางคืน — ยังไม่เสียแต้ม รอกดปุ่มสกิลรองอีกครั้งเพื่อยืนยัน)
   const pickLwUse = (idx) => {
@@ -1784,7 +1806,7 @@ export default function Game({ state, lowQ }) {
     if (lenCopySel && (phase !== "PLAYING" || me?.skillUsed || done)) { setLenCopySel(false); setLenSwapIdx(null); }
   }, [lenCopySel, phase, me?.skillUsed, done]);
   useEffect(() => {
-    if (lwStealSel && (phase !== "PLAYING" || me?.skillUsed || done)) { setLwStealSel(false); setLwStealTier(null); }
+    if (lwStealSel && (phase !== "PLAYING" || me?.skillUsed || done)) setLwStealSel(false);
   }, [lwStealSel, phase, me?.skillUsed, done]);
   useEffect(() => {
     if (lenBankOpen && (phase !== "PLAYING" || done)) setLenBankOpen(false);
@@ -1796,8 +1818,8 @@ export default function Game({ state, lowQ }) {
     if (lenSwapOpen && (phase !== "PLAYING" || done)) setLenSwapOpen(false);
   }, [lenSwapOpen, phase, done]);
   useEffect(() => {
-    if (lwTierOpen && (phase !== "PLAYING" || done)) setLwTierOpen(false);
-  }, [lwTierOpen, phase, done]);
+    if (lwChoiceOpen && (phase !== "PLAYING" || me?.skillUsed || done)) { setLwChoiceOpen(false); setLwChoiceTargetId(null); }
+  }, [lwChoiceOpen, phase, me?.skillUsed, done]);
   useEffect(() => {
     if (lwBankOpen && (phase !== "PLAYING" || done)) setLwBankOpen(false);
   }, [lwBankOpen, phase, done]);
@@ -1940,7 +1962,7 @@ export default function Game({ state, lowQ }) {
         )}
         {lwStealSel && (
           <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">🤍 แตะเลือกเป้าหมายขโมยสกิล{lwStealTier === "basic" ? " (พื้นฐาน)" : " (รอง)"}</span>
+            <span className="text-lg font-black text-echo-gold animate-pulse">🤍 แตะเลือกเป้าหมายขโมยสกิล</span>
             <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
@@ -2220,7 +2242,13 @@ export default function Game({ state, lowQ }) {
         {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
         {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
-        {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
+        {lwChoiceOpen && (
+          <LwStealChoiceModal
+            target={others.find((o) => o.id === lwChoiceTargetId)}
+            onPick={pickLwChoice}
+            onClose={() => { setLwChoiceOpen(false); setLwChoiceTargetId(null); }}
+          />
+        )}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
         {bankViewOpen && me && (
           <BankViewModal
@@ -2323,7 +2351,7 @@ export default function Game({ state, lowQ }) {
       {/* ไวท์เล็น (patch 2.2 beta): โหมดเลือกเป้าหมายขโมยสกิล (ฉันขอรับไปนะคะ กลางวัน) */}
       {lwStealSel && (
         <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
-          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🤍 คลิกเลือกเป้าหมายขโมยสกิล{lwStealTier === "basic" ? " (พื้นฐาน)" : " (รอง)"}</span>
+          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🤍 คลิกเลือกเป้าหมายขโมยสกิล</span>
           <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
         </div>
       )}
@@ -2648,7 +2676,13 @@ export default function Game({ state, lowQ }) {
         {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
         {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
-        {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
+        {lwChoiceOpen && (
+          <LwStealChoiceModal
+            target={others.find((o) => o.id === lwChoiceTargetId)}
+            onPick={pickLwChoice}
+            onClose={() => { setLwChoiceOpen(false); setLwChoiceTargetId(null); }}
+          />
+        )}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
         {bankViewOpen && me && (
           <BankViewModal

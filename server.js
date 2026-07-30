@@ -169,12 +169,15 @@ function currentSkillOf(target, tier) {
   } else if (ch.id === "aquarion") {
     if (tier === "secondary") key = target.fused ? "secondaryRevert" : "secondary";
     else if (tier === "ultimate") {
+      // อควาเรียนไม่มี ch.ultimate ตรงๆ (มีแต่ 4 ท่าตามร่าง) — ยังไม่รวมร่างก็ยังคัดลอกได้ (เอาไว้เผาสกิลรองของเล็น)
+      //  โดยอิงจากผู้นำที่เลือกอยู่ตอนนี้ ไม่ต้องรอให้รวมร่างจริงก่อน
       key = (target.statuses.godwing || 0) > 0 ? "ultimateGodwing"
-        : (target.fused && target.leader === "sirius") ? "ultimateMars"
-        : (target.fused && target.leader === "rena") ? "ultimateLuna"
-        : (target.fused && target.leader === "apollo") ? "ultimateSolar"
-        : null;
+        : target.leader === "sirius" ? "ultimateMars"
+        : target.leader === "rena" ? "ultimateLuna"
+        : "ultimateSolar";
     }
+  } else if (ch.id === "bard" && tier === "ultimate") {
+    return null; // Bard ไม่มีท่าไม้ตายจริง (ช่องประพันธ์เพลง) — คัดลอกไม่ได้
   }
   if (tier === "ultimate" && ch.ultimateNight && isNightRound(roundNumber)) key = "ultimateNight";
   if (tier === "secondary" && ch.secondaryNight && isNightRound(roundNumber)) key = "secondaryNight";
@@ -201,6 +204,11 @@ function castBorrowedSkill(p, entry) {
   if (statusKey && TRANSFORMS[statusKey]) {
     p.transformAt = ++transformCounter;
     triggerCutscene(p, statusKey);
+    // สำคัญ: ต้องตั้ง p.seen[key] = true ทันที เหมือนที่โค้ดต้นฉบับของแต่ละตัวละครทำตอนเปิดท่า
+    //  ไม่งั้น voidUltimateOnBust() จะเข้าใจผิดว่า "ยังไม่เคยเห็นผลท่านี้เลย" แล้วลบสถานะทิ้งทันทีที่เล็น/ไวท์เล็น
+    //  ไพ่แตกในเทิร์นถัดๆ ไป (บั๊ก: ท่าที่คัดลอกมาปิดหายไปเร็วกว่าปกติ)
+    p.seen = p.seen || {};
+    p.seen[statusKey] = true;
   }
   lastLog.push(`👻 ${p.name} สวมร่าง ${srcCh.name} ใช้ "${skill.name}"!`);
 }
@@ -2199,9 +2207,9 @@ function buildStateFor(viewerId) {
         appleGiveUses: p.appleGiveUses != null ? p.appleGiveUses : APPLE_GIVE_USES, // Apple guy: จำนวนใช้ เอาไปสิ คงเหลือ
         coins: p.coins || 0,               // โคโตเนะ: coin ในกระปุกออมสิน (สูงสุด 6)
         // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
-        lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
+        lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
         lenLoadedIndex: p.lenLoadedIndex != null ? p.lenLoadedIndex : null, // เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
-        lenwhiteBank: (p.lenwhiteBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId })), // ไวท์เล็น: คลังสกิลที่ขโมยมา
+        lenwhiteBank: (p.lenwhiteBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // ไวท์เล็น: คลังสกิลที่ขโมยมา
         lwLoadedIndex: p.lwLoadedIndex != null ? p.lwLoadedIndex : null, // ไวท์เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
         catForm: !!p.catForm,   // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (Moonlight/Blood Moon)
         catUses: p.catUses != null ? p.catUses : CAT_MAX_USES, // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้
@@ -4002,6 +4010,7 @@ function useSkill(id, tier, targets, item) {
     const entry = {
       sourceCharId: lenCopyFound.sourceCharId, sourceOwnerId: lenCopyTarget.id, skillKey: lenCopyFound.skillKey,
       skillName: lenCopyFound.skill.name, skillImg: lenCopyFound.skill.img, cost: lenCopyFound.skill.cost,
+      hasEffect: !!lenCopyFound.skill.effect, // ท่าที่ effect เป็น null (จัดการใน engine ของเจ้าของท่าโดยตรง) — สวมร่างใช้จริงจะไม่มีผล เผาเป็นดาเมจได้อย่างเดียว
     };
     const swapIdx = p.lenBank.length >= LEN_BANK_MAX ? Number(item) : -1;
     if (swapIdx >= 0 && swapIdx < p.lenBank.length) p.lenBank.splice(swapIdx, 1, entry);
@@ -4040,6 +4049,7 @@ function useSkill(id, tier, targets, item) {
     p.lenwhiteBank.push({
       sourceCharId: lwStealFound.sourceCharId, sourceOwnerId: lwStealTarget.id, skillKey: lwStealFound.skillKey,
       skillName: lwStealFound.skill.name, skillImg: lwStealFound.skill.img, cost: lwStealFound.skill.cost,
+      hasEffect: !!lwStealFound.skill.effect, // ท่าที่ effect เป็น null (จัดการใน engine ของเจ้าของท่าโดยตรง) — ใช้จริงจะไม่มีผล
     });
     lwStealTarget.statuses.decay = Math.max(lwStealTarget.statuses.decay || 0, LENWHITE_DECAY_TURNS);
     lastLog.push(`🤍 ${p.name} ฉันขอรับไปนะคะ — คัดลอก "${lwStealFound.skill.name}" ของ ${lwStealTarget.name} เก็บเข้าคลัง (${p.lenwhiteBank.length}/${LENWHITE_BANK_MAX}) — ${lwStealTarget.name} ติดผุพัง ${LENWHITE_DECAY_TURNS} เทิร์น (เกราะไม่ฟื้น)`);
