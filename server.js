@@ -195,6 +195,13 @@ function castBorrowedSkill(p, entry) {
   if (!p.lenBorrowOriginalId) p.lenBorrowOriginalId = p.characterId;
   p.characterId = entry.sourceCharId;
   applyEffect(p, skill.effect);
+  // เล่นวีดีโอ/ประกาศแปลงร่างเหมือนเจ้าของท่าเดิม — ถ้า effect เป็นสถานะที่มีคัตซีนคู่กันอยู่ใน TRANSFORMS
+  //  (ครั้งแรกของเล็น/ไวท์เล็นกับสถานะนี้ = วีดีโอเต็ม เหมือนเจ้าของท่าตอนกดครั้งแรก — ครั้งถัดไปแค่แจ้งเตือน)
+  const statusKey = skill.effect && !Array.isArray(skill.effect) && skill.effect.type === "status" ? skill.effect.status : null;
+  if (statusKey && TRANSFORMS[statusKey]) {
+    p.transformAt = ++transformCounter;
+    triggerCutscene(p, statusKey);
+  }
   lastLog.push(`👻 ${p.name} สวมร่าง ${srcCh.name} ใช้ "${skill.name}"!`);
 }
 
@@ -1857,6 +1864,7 @@ function resetCombat(p) {
   p.lenBank = [];           // เล็น: คลังท่าไม้ตายที่คัดลอกมา (สูงสุด 3 — ใช้ร่วมกับสกิลรอง)
   p.lenLoadedIndex = null;  // เล็น: index ในคลังที่เลือกไว้ตอนกลางคืน (รอกดยืนยันใช้จริง)
   p.lenwhiteBank = [];      // ไวท์เล็น: คลังสกิลที่ขโมยมา (สูงสุด 6)
+  p.lwLoadedIndex = null;   // ไวท์เล็น: index ในคลังที่เลือกไว้ตอนกลางคืน (รอกดยืนยันใช้จริง)
   p.catForm = false;        // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (อมตะ — Moonlight/Blood Moon)
   p.catUses = CAT_MAX_USES; // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (สูงสุด 9/เกม)
   p.lenBorrowOriginalId = null; // เล็น/ไวท์เล็น: ตัวตนจริงระหว่าง "สวมร่าง" ท่าที่ขโมยมาชั่วคราว (null = ไม่ได้สวมร่าง)
@@ -2142,6 +2150,16 @@ function buildStateFor(viewerId) {
         secondaryPub = pub(ntdOn ? ch.secondary2 : ch.secondary);
         ultimatePub = pub(p.phenexReborn ? ch.ultimate2 : ch.ultimate);
       }
+      // เล็น/ไวท์เล็น (patch 2.2 beta): เลือกท่า/ของจากคลังไว้แล้ว (กลางคืน รอกดยืนยันใช้จริง)
+      //  — ปุ่มสกิลโชว์รูป/แต้มของท่านั้นแทนท่าเริ่มต้น ให้เห็นชัดว่ากำลังจะใช้อะไร ราคาเท่าไหร่
+      if (ch.id === "len" && p.lenLoadedIndex != null && Array.isArray(p.lenBank) && p.lenBank[p.lenLoadedIndex]) {
+        const e = p.lenBank[p.lenLoadedIndex];
+        ultimatePub = { name: e.skillName, desc: `เตรียมสวมร่างใช้ท่านี้จริง — กดอีกครั้งเพื่อยืนยัน (จ่ายเพิ่ม ${e.cost} แต้ม)`, cost: e.cost, img: e.skillImg };
+      }
+      if (ch.id === "lenwhite" && p.lwLoadedIndex != null && Array.isArray(p.lenwhiteBank) && p.lenwhiteBank[p.lwLoadedIndex]) {
+        const e = p.lenwhiteBank[p.lwLoadedIndex];
+        secondaryPub = { name: e.skillName, desc: `เตรียมใช้ของชิ้นนี้จริง — กดอีกครั้งเพื่อยืนยัน (จ่ายเพิ่ม ${e.cost} แต้ม)`, cost: e.cost, img: e.skillImg };
+      }
       // กลางคืน (patch 2.1.7): สุ่มแล้วให้สกิลพื้นฐานหรือสกิลรอง (อย่างใดอย่างหนึ่ง) ใช้แต้มมากขึ้น +1 — ไม่เกิน 8 แต้ม ไม่มีผลกับท่าไม้ตาย
       if (p.nightTaxTier === "basic" && basicPub && basicPub.cost < 8) basicPub.cost += 1;
       if (p.nightTaxTier === "secondary" && secondaryPub && secondaryPub.cost < 8) secondaryPub.cost += 1;
@@ -2181,6 +2199,7 @@ function buildStateFor(viewerId) {
         lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
         lenLoadedIndex: p.lenLoadedIndex != null ? p.lenLoadedIndex : null, // เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
         lenwhiteBank: (p.lenwhiteBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId })), // ไวท์เล็น: คลังสกิลที่ขโมยมา
+        lwLoadedIndex: p.lwLoadedIndex != null ? p.lwLoadedIndex : null, // ไวท์เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
         catForm: !!p.catForm,   // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (Moonlight/Blood Moon)
         catUses: p.catUses != null ? p.catUses : CAT_MAX_USES, // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้
         leader: p.leader || "apollo",      // อควาเรียน: ผู้นำที่เลือกอยู่ (apollo/sirius/rena)
@@ -2915,6 +2934,18 @@ function lenSelectBank(id, index) {
   io.emit("skillFlash", { name: `เตรียมสวมร่าง — ${entry.skillName}`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
   broadcastState();
 }
+// ไวท์เล็น (patch 2.2 beta): กลางคืน — เลือกของในคลังมาเตรียมใช้จริง (ไม่เสียแต้ม) กดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง
+function lwSelectBank(id, index) {
+  const p = players[id];
+  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return;
+  if (!isNightRound(roundNumber)) return;
+  const idx = Number(index);
+  if (!(Array.isArray(p.lenwhiteBank) && idx >= 0 && idx < p.lenwhiteBank.length)) return;
+  p.lwLoadedIndex = idx;
+  const entry = p.lenwhiteBank[idx];
+  io.emit("skillFlash", { name: `เตรียมใช้ — ${entry.skillName}`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
+  broadcastState();
+}
 function useSkill(id, tier, targets, item) {
   const p = players[id];
   if (!p || !p.alive) return;
@@ -3089,7 +3120,7 @@ function useSkill(id, tier, targets, item) {
   if (isLWSleep && lwNight) return;
   if (isLWSleep && (p.statuses.lensleep || 0) > 0) return;
   const isLWSteal = isLW && tier === "secondary";
-  let lwStealTarget = null, lwStealFound = null, lwUseIdx = -1, lwUseEntry = null;
+  let lwStealTarget = null, lwStealFound = null, lwUseEntry = null;
   if (isLWSteal && !lwNight) {
     if (item !== "basic" && item !== "secondary") return; // ต้องเลือกว่าจะขโมยสกิลพื้นฐานหรือสกิลรอง
     const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
@@ -3101,9 +3132,10 @@ function useSkill(id, tier, targets, item) {
     if (p.lenwhiteBank.length >= LENWHITE_BANK_MAX) return; // คลังเต็ม
     lwStealTarget = t; lwStealFound = found;
   } else if (isLWSteal && lwNight) {
-    lwUseIdx = Number(item);
-    lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[lwUseIdx] : null;
-    if (!lwUseEntry) return;
+    // ต้องเลือกของจากคลังไว้ก่อน (ผ่าน event lwSelectBank) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
+    if (p.lwLoadedIndex == null) return;
+    lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[p.lwLoadedIndex] : null;
+    if (!lwUseEntry) { p.lwLoadedIndex = null; return; }
   }
   const isLWUlt = isLW && tier === "ultimate";
   if (isLWUlt && (p.lenwhiteBank || []).length < 2) return; // ต้องมีของในคลังอย่างน้อย 2 ชิ้น
@@ -4025,7 +4057,8 @@ function useSkill(id, tier, targets, item) {
     }
   }
   if (isLWSteal && lwNight && lwUseEntry) {
-    p.lenwhiteBank.splice(lwUseIdx, 1);
+    p.lenwhiteBank.splice(p.lwLoadedIndex, 1);
+    p.lwLoadedIndex = null;
     castBorrowedSkill(p, lwUseEntry);
   }
   if (isLWUlt) {
@@ -6610,6 +6643,7 @@ io.on("connection", (socket) => {
   socket.on("lock", () => lock(socket.id));
   socket.on("useSkill", ({ tier, targets, item } = {}) => useSkill(socket.id, tier, targets, item));
   socket.on("lenSelectBank", ({ index } = {}) => lenSelectBank(socket.id, index)); // เล็น: เลือกท่าจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
+  socket.on("lwSelectBank", ({ index } = {}) => lwSelectBank(socket.id, index)); // ไวท์เล็น: เลือกของจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
   socket.on("useReiju", ({ command } = {}) => useReiju(socket.id, command));
   socket.on("hakunoCommandSpell", ({ command } = {}) => hakunoCommandSpell(socket.id, command)); // คิชินามิ ฮาคุโนะ: อาคมบัญชาระดับ EX+
   socket.on("locaAnswer", ({ accept } = {}) => answerLoca(socket.id, !!accept)); // ซาโตรุ: ตอบข้อเสนอผลโลกากากา

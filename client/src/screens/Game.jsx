@@ -1395,6 +1395,9 @@ export default function Game({ state, lowQ }) {
   const aquaUltLocked = ch?.id === "aquarion" && !me?.fused;
   // MonsterLive (ฮิคารุ patch 2.1.3): ระหว่างมีผล ใช้สกิลรอง Ultlive Ultraman Ginga ไม่ได้
   const monsterMe = !!(me && ch?.id === "hikaru" && me.statuses?.monster);
+  // เล็น/ไวท์เล็น (patch 2.2 beta): กลางคืน + คลังมีของ + ยังไม่ได้เลือก — ขั้น "เลือกจากคลัง" ไม่เสียแต้ม ต้องกดเปิดได้เสมอ
+  const lenSelectMode = !!(me && ch?.id === "len" && nightNow && me.lenLoadedIndex == null && (me.lenBank || []).length > 0);
+  const lwSelectMode = !!(me && ch?.id === "lenwhite" && nightNow && me.lwLoadedIndex == null && (me.lenwhiteBank || []).length > 0);
   // Ginga Strium (ฮิคารุ patch 2.1.3): ต้องอยู่ในร่าง Ginga (สกิลรอง 1) และเป็นตอนกลางวันเท่านั้นถึงใช้ได้
   const hikaruUltLocked = ch?.id === "hikaru" && !((me?.statuses?.ginga || 0) > 0 && !nightNow);
   // Ohger Finish (คุวากาตะ): ต้องมีทั้งสวมเกราะราชัน และ ประกายเขี้ยวปฏิปักษ์ (+1 ความเสียหาย)
@@ -1552,7 +1555,10 @@ export default function Game({ state, lowQ }) {
     // ---------- ไวท์เล็น (patch 2.2 beta) ----------
     if (tier === "basic" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
     if (tier === "secondary" && ch?.id === "lenwhite") {
-      if (nightNow) { setLwBankOpen(true); setSkillOpen(false); return; }
+      if (nightNow) {
+        if (me?.lwLoadedIndex == null) { setLwBankOpen(true); setSkillOpen(false); return; }
+        socket.emit("useSkill", { tier }); setSkillOpen(false); return;
+      }
       setLwTierOpen(true); setSkillOpen(false); return;
     }
     if (tier === "ultimate" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
@@ -1683,9 +1689,9 @@ export default function Game({ state, lowQ }) {
     setLwStealSel(false);
     setLwStealTier(null);
   };
-  // เลือกของในคลังมาใช้จริง (ฉันขอรับไปนะคะ กลางคืน) -> ส่งไป server ทันที
+  // เลือกของในคลังมาเตรียมใช้จริง (ฉันขอรับไปนะคะ กลางคืน — ยังไม่เสียแต้ม รอกดปุ่มสกิลรองอีกครั้งเพื่อยืนยัน)
   const pickLwUse = (idx) => {
-    socket.emit("useSkill", { tier: "secondary", item: idx });
+    socket.emit("lwSelectBank", { index: idx });
     setLwBankOpen(false);
   };
   // เลือกเป้าหมาย Sekai ichi kawaii watashi (โคโตเนะ patch 2.1.3) -> ส่งไป server ทันที
@@ -2002,8 +2008,8 @@ export default function Game({ state, lowQ }) {
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatMe || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : me.puddingUses} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || monsterMe} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} />}
+                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || monsterMe)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={lenSelectMode ? 0 : undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2160,7 +2166,7 @@ export default function Game({ state, lowQ }) {
         {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
         {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
-        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเท่าราคาต้นฉบับของสกิลนั้น" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
+        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
         {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
@@ -2395,8 +2401,8 @@ export default function Game({ state, lowQ }) {
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
                   <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatMe || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : me.puddingUses} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || monsterMe || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} />}
+                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || monsterMe || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={lenSelectMode ? 0 : undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2577,7 +2583,7 @@ export default function Game({ state, lowQ }) {
         {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
         {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
         {lwTierOpen && <LwTierModal onPick={pickLwTier} onClose={() => setLwTierOpen(false)} />}
-        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเท่าราคาต้นฉบับของสกิลนั้น" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
+        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
       {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
