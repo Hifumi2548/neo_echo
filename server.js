@@ -3046,6 +3046,69 @@ function useSkill(id, tier, targets, item) {
   if ((p.statuses.noskill || 0) > 0) return; // โดนหอกลองกินัสปัก: เทิร์นนี้ใช้สกิลไม่ได้
   if ((p.statuses.stagger || 0) > 0) return; // ชะงัก (โอกูริ patch 2.0.8.1): ใช้สกิลไม่ได้
 
+  // ---------- เล็น (patch 2.2 beta) ----------
+  //  (ประกาศไว้ก่อนคำนวณ cost — สกิลรอง/ท่าไม้ตายกลางคืนต้องใช้ lenCastEntry/lwUseEntry ทับ cost ตั้งแต่ก่อนเช็คแต้มพอไหม)
+  const isLen = p.characterId === "len";
+  const lenNight = isNightRound(roundNumber);
+  const isLenSleep = isLen && tier === "basic";
+  if (isLenSleep && lenNight) return; // ขอพักสักหน่อยนะคะ: ใช้ได้แค่ตอนกลางวัน
+  if (isLenSleep && (p.statuses.lensleep || 0) > 0) return; // หลับอยู่แล้ว กดซ้ำไม่ได้
+  const isLenDrain = isLen && tier === "secondary";
+  let lenDrainIdx = -1, lenDrainEntry = null;
+  if (isLenDrain) {
+    lenDrainIdx = Number(item);
+    lenDrainEntry = Array.isArray(p.lenBank) ? p.lenBank[lenDrainIdx] : null;
+    if (!lenDrainEntry) return; // ต้องเลือกท่าในคลังที่มีจริง
+  }
+  const isLenUlt = isLen && tier === "ultimate";
+  let lenCopyFound = null, lenCopyTarget = null, lenCastEntry = null;
+  if (isLenUlt && !lenNight) {
+    // กลางวัน: เลือกเป้าหมาย 1 คน คัดลอกท่าไม้ตายเก็บคลัง (สูงสุด 3 ห้ามซ้ำ — เต็มแล้วต้องระบุ item = index ที่จะสลับ)
+    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
+    const t = tgs.length === 1 ? players[tgs[0]] : null;
+    if (!t || !t.alive || t.id === p.id) return;
+    const found = currentSkillOf(t, "ultimate");
+    if (!found) return;
+    p.lenBank = p.lenBank || [];
+    if (p.lenBank.some((e) => e.sourceCharId === found.sourceCharId && e.skillKey === found.skillKey)) return; // ห้ามซ้ำ
+    if (p.lenBank.length >= LEN_BANK_MAX) {
+      const swapIdx = Number(item);
+      if (!(swapIdx >= 0 && swapIdx < p.lenBank.length)) return; // คลังเต็ม ต้องเลือกอันที่จะสลับออก
+    }
+    lenCopyFound = found; lenCopyTarget = t;
+  } else if (isLenUlt && lenNight) {
+    // กลางคืน: ต้องเลือกท่าจากคลังไว้ก่อน (ผ่าน event lenSelectBank) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
+    if (p.lenLoadedIndex == null) return;
+    lenCastEntry = Array.isArray(p.lenBank) ? p.lenBank[p.lenLoadedIndex] : null;
+    if (!lenCastEntry) { p.lenLoadedIndex = null; return; }
+  }
+  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
+  const isLW = p.characterId === "lenwhite";
+  const lwNight = isNightRound(roundNumber);
+  const isLWSleep = isLW && tier === "basic";
+  if (isLWSleep && lwNight) return;
+  if (isLWSleep && (p.statuses.lensleep || 0) > 0) return;
+  const isLWSteal = isLW && tier === "secondary";
+  let lwStealTarget = null, lwStealFound = null, lwUseIdx = -1, lwUseEntry = null;
+  if (isLWSteal && !lwNight) {
+    if (item !== "basic" && item !== "secondary") return; // ต้องเลือกว่าจะขโมยสกิลพื้นฐานหรือสกิลรอง
+    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
+    const t = tgs.length === 1 ? players[tgs[0]] : null;
+    if (!t || !t.alive || t.id === p.id) return;
+    const found = currentSkillOf(t, item);
+    if (!found) return;
+    p.lenwhiteBank = p.lenwhiteBank || [];
+    if (p.lenwhiteBank.length >= LENWHITE_BANK_MAX) return; // คลังเต็ม
+    lwStealTarget = t; lwStealFound = found;
+  } else if (isLWSteal && lwNight) {
+    lwUseIdx = Number(item);
+    lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[lwUseIdx] : null;
+    if (!lwUseEntry) return;
+  }
+  const isLWUlt = isLW && tier === "ultimate";
+  if (isLWUlt && (p.lenwhiteBank || []).length < 2) return; // ต้องมีของในคลังอย่างน้อย 2 ชิ้น
+  if (isLWUlt && (p.statuses.arcdrive || 0) > 0) return; // กดซ้ำไม่ได้ระหว่างทำงานอยู่
+
   // เวลาทอง (แกมเบลอร์): แต้มที่ใช้ของสกิลพื้นฐาน/สกิลรองลดครึ่งหนึ่ง
   const isGambler = p.characterId === "gambler";
   const goldenOn = (p.statuses.golden || 0) > 0;
@@ -3276,68 +3339,6 @@ function useSkill(id, tier, targets, item) {
     if ((t.statuses.nanayaSeal || 0) > 0) return; // เป้าหมายเดิมยังติดผลอยู่ — เลือกซ้ำไม่ได้จนกว่าจะหมดฤทธิ์
     nanayaSilenceTarget = t;
   }
-
-  // ---------- เล็น (patch 2.2 beta) ----------
-  const isLen = p.characterId === "len";
-  const lenNight = isNightRound(roundNumber);
-  const isLenSleep = isLen && tier === "basic";
-  if (isLenSleep && lenNight) return; // ขอพักสักหน่อยนะคะ: ใช้ได้แค่ตอนกลางวัน
-  if (isLenSleep && (p.statuses.lensleep || 0) > 0) return; // หลับอยู่แล้ว กดซ้ำไม่ได้
-  const isLenDrain = isLen && tier === "secondary";
-  let lenDrainIdx = -1, lenDrainEntry = null;
-  if (isLenDrain) {
-    lenDrainIdx = Number(item);
-    lenDrainEntry = Array.isArray(p.lenBank) ? p.lenBank[lenDrainIdx] : null;
-    if (!lenDrainEntry) return; // ต้องเลือกท่าในคลังที่มีจริง
-  }
-  const isLenUlt = isLen && tier === "ultimate";
-  let lenCopyFound = null, lenCopyTarget = null, lenCastEntry = null;
-  if (isLenUlt && !lenNight) {
-    // กลางวัน: เลือกเป้าหมาย 1 คน คัดลอกท่าไม้ตายเก็บคลัง (สูงสุด 3 ห้ามซ้ำ — เต็มแล้วต้องระบุ item = index ที่จะสลับ)
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    const found = currentSkillOf(t, "ultimate");
-    if (!found) return;
-    p.lenBank = p.lenBank || [];
-    if (p.lenBank.some((e) => e.sourceCharId === found.sourceCharId && e.skillKey === found.skillKey)) return; // ห้ามซ้ำ
-    if (p.lenBank.length >= LEN_BANK_MAX) {
-      const swapIdx = Number(item);
-      if (!(swapIdx >= 0 && swapIdx < p.lenBank.length)) return; // คลังเต็ม ต้องเลือกอันที่จะสลับออก
-    }
-    lenCopyFound = found; lenCopyTarget = t;
-  } else if (isLenUlt && lenNight) {
-    // กลางคืน: ต้องเลือกท่าจากคลังไว้ก่อน (ผ่าน event lenSelectBank) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
-    if (p.lenLoadedIndex == null) return;
-    lenCastEntry = Array.isArray(p.lenBank) ? p.lenBank[p.lenLoadedIndex] : null;
-    if (!lenCastEntry) { p.lenLoadedIndex = null; return; }
-  }
-  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
-  const isLW = p.characterId === "lenwhite";
-  const lwNight = isNightRound(roundNumber);
-  const isLWSleep = isLW && tier === "basic";
-  if (isLWSleep && lwNight) return;
-  if (isLWSleep && (p.statuses.lensleep || 0) > 0) return;
-  const isLWSteal = isLW && tier === "secondary";
-  let lwStealTarget = null, lwStealFound = null, lwUseIdx = -1, lwUseEntry = null;
-  if (isLWSteal && !lwNight) {
-    if (item !== "basic" && item !== "secondary") return; // ต้องเลือกว่าจะขโมยสกิลพื้นฐานหรือสกิลรอง
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    const found = currentSkillOf(t, item);
-    if (!found) return;
-    p.lenwhiteBank = p.lenwhiteBank || [];
-    if (p.lenwhiteBank.length >= LENWHITE_BANK_MAX) return; // คลังเต็ม
-    lwStealTarget = t; lwStealFound = found;
-  } else if (isLWSteal && lwNight) {
-    lwUseIdx = Number(item);
-    lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[lwUseIdx] : null;
-    if (!lwUseEntry) return;
-  }
-  const isLWUlt = isLW && tier === "ultimate";
-  if (isLWUlt && (p.lenwhiteBank || []).length < 2) return; // ต้องมีของในคลังอย่างน้อย 2 ชิ้น
-  if (isLWUlt && (p.statuses.arcdrive || 0) > 0) return; // กดซ้ำไม่ได้ระหว่างทำงานอยู่
 
   if (st === "beam" && (p.beamAmmo || 0) <= 0) return; // Beam Magnum กระสุนหมด ใช้ไม่ได้
   if (st === "beamplus" && (p.beamAmmo || 0) <= 0) return; // Beam Magnum Plus (ริดดี้) กระสุนหมด ใช้ไม่ได้
