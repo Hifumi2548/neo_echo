@@ -804,6 +804,19 @@ function BankViewButton({ me, ch, onOpen }) {
     </button>
   );
 }
+// ไวท์เล็น: ปุ่มแปลงของในคลังเป็นแต้มการ์ด (ฟรี ไม่เสียแต้มสกิล) — แยกจากปุ่มท่าไม้ตายโดยเจตนา
+function LwCardBurnButton({ me, ch, onOpen }) {
+  if (!ch || ch.id !== "lenwhite" || !(me.lenwhiteBank || []).length) return null;
+  return (
+    <button
+      onClick={() => { clickSound(); onOpen(); }}
+      className="text-xs font-bold bg-black/55 hover:bg-black/75 transition rounded-full px-2 py-0.5 whitespace-nowrap border border-white/20"
+      title="แปลงของในคลังเป็นแต้มการ์ด (ฟรี ไม่เสียแต้มสกิล)"
+    >
+      🃏 แต้มการ์ด
+    </button>
+  );
+}
 // เล็น/ไวท์เล็น: หน้าต่างดูคลังสกิลที่เก็บไว้ (แบบดูอย่างเดียว — ไม่ใช้เพื่อกดใช้งาน)
 function BankViewModal({ title, items, onClose }) {
   return (
@@ -1104,24 +1117,42 @@ function LwStealChoiceModal({ target, onPick, onClose }) {
     </div>
   );
 }
-// ไวท์เล็น: Arc Drive finish — เลือกโหมดก่อนว่าจะเผาของในคลังเป็นแต้มการ์ด หรือสะสมพลังโจมตี
-function LwArcModeModal({ onPick, onClose }) {
+// ไวท์เล็น: แปลงของในคลังเป็นแต้มการ์ด — การกระทำฟรี ไม่เสียแต้มสกิล เลือกได้หลายชิ้นพร้อมกัน
+function LwCardBurnModal({ items, onConfirm, onClose }) {
+  const [sel, setSel] = useState([]);
+  const toggle = (i) => { clickSound(); setSel((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i])); };
+  const total = sel.reduce((sum, i) => sum + (items[i]?.cost || 0), 0);
   return (
     <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
       <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">😾 Arc Drive finish — เลือกโหมดใช้งาน</div>
-        <div className="text-sm opacity-80 mb-3">เลือกแล้วค่อยเลือกของในคลังที่จะเผา — กดใช้ซ้ำได้หลายครั้งต่อเทิร์น</div>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => { clickSound(); onPick("card"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15">
-            <div className="font-bold text-echo-gold">🃏 แปลงเป็นแต้มการ์ด</div>
-            <div className="text-sm opacity-80">แต้มการ์ดที่ได้เท่ากับราคาต้นฉบับของสกิลที่เผา</div>
-          </button>
-          <button onClick={() => { clickSound(); onPick("atk"); }} className="text-left rounded-xl border px-3 py-2 bg-white/5 hover:bg-white/15 border-white/15">
-            <div className="font-bold text-echo-gold">🔥 สะสมพลังโจมตี</div>
-            <div className="text-sm opacity-80">เผาครบทุกๆ 2 ชิ้น พลังโจมตี +1 (คงอยู่จนกว่ากลางวันจะมาถึง)</div>
-          </button>
+        <div className="text-lg font-black text-echo-gold">🃏 แปลงของในคลังเป็นแต้มการ์ด</div>
+        <div className="text-sm opacity-80 mb-3">เลือกได้หลายชิ้น — ไม่เสียแต้มสกิล ไม่นับเป็นการใช้สกิลของเทิร์น (ใช้ได้ก่อนเปิดไพ่เท่านั้น)</div>
+        {items.length === 0 ? (
+          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto">
+            {items.map((it, i) => (
+              <button
+                key={i}
+                onClick={() => toggle(i)}
+                className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
+                  sel.includes(i) ? "bg-echo-gold/20 border-echo-gold" : "bg-white/5 hover:bg-white/15 border-white/15"
+                }`}
+              >
+                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
+                <div className="flex-1">
+                  <div className="font-bold text-echo-gold">{it.skillName}{sel.includes(i) ? " ✓" : ""}</div>
+                  <div className="text-sm opacity-80">แต้มการ์ด +{it.cost}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-3">
+          <span className="font-bold">รวม +{total} แต้มการ์ด</span>
+          <Button disabled={!sel.length} onClick={() => { clickSound(); onConfirm(sel); }}>ยืนยัน ({sel.length})</Button>
         </div>
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ยกเลิก</Button>
+        <Button className="mt-2 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
       </div>
     </div>
   );
@@ -1421,9 +1452,8 @@ export default function Game({ state, lowQ }) {
   const [lwChoiceOpen, setLwChoiceOpen] = useState(false); // ไวท์เล็น: เมนูเลือกสกิลพื้นฐาน/สกิลรองของเป้าหมาย (เห็นหน้าตาสกิลจริงก่อนตัดสินใจ)
   const [lwBankOpen, setLwBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของในคลังมาใช้จริง (กลางคืน)
   const [bankViewOpen, setBankViewOpen] = useState(false); // เล็น/ไวท์เล็น: เปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด)
-  const [lwArcModeOpen, setLwArcModeOpen] = useState(false); // ไวท์เล็น: เมนูเลือกโหมด Arc Drive finish (แต้มการ์ด/พลังโจมตี)
-  const [lwArcMode, setLwArcMode] = useState(null); // ไวท์เล็น: โหมดที่เลือกไว้ รอเลือกของจากคลัง
-  const [lwArcBankOpen, setLwArcBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของจากคลังมาเผา (หลังเลือกโหมดแล้ว)
+  const [lwArcBankOpen, setLwArcBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของจากคลังมาสละทิ้งเพื่อ Arc Drive finish
+  const [lwCardBurnOpen, setLwCardBurnOpen] = useState(false); // ไวท์เล็น: เมนูแปลงของในคลังเป็นแต้มการ์ด (ฟรี เลือกได้หลายชิ้น)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
@@ -1663,7 +1693,7 @@ export default function Game({ state, lowQ }) {
       setLwStealSel(true); setSkillOpen(false); return;
     }
     if (tier === "ultimate" && ch?.id === "lenwhite") {
-      if (me?.lwArcPendingIndex == null) { setLwArcModeOpen(true); setSkillOpen(false); return; }
+      if (me?.lwArcPendingIndex == null) { setLwArcBankOpen(true); setSkillOpen(false); return; }
       socket.emit("useSkill", { tier }); setSkillOpen(false); return;
     }
     // ซาโตรุ อาเคฟุ: สกิลพื้นฐาน/สกิลรอง เข้าโหมดเลือกเป้าหมาย — ท่าไม้ตายทำงานอัตโนมัติ กดเองไม่ได้
@@ -1799,17 +1829,15 @@ export default function Game({ state, lowQ }) {
     socket.emit("lwSelectBank", { index: idx });
     setLwBankOpen(false);
   };
-  // เลือกโหมด Arc Drive finish (แต้มการ์ด/พลังโจมตี) -> เข้าเมนูเลือกของจากคลังต่อ
-  const pickLwArcMode = (mode) => {
-    setLwArcMode(mode);
-    setLwArcModeOpen(false);
-    setLwArcBankOpen(true);
-  };
-  // เลือกของจากคลังมาเตรียมเผา (ยังไม่เสียแต้ม รอกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยัน — กดซ้ำได้หลายครั้งต่อเทิร์น)
+  // เลือกของจากคลังมาเตรียมสละทิ้ง (Arc Drive finish — ยังไม่เสียแต้ม รอกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยัน — กดซ้ำได้หลายครั้งต่อเทิร์น)
   const pickLwArcBank = (idx) => {
-    socket.emit("lwArcSelect", { index: idx, mode: lwArcMode });
+    socket.emit("lwArcSelect", { index: idx });
     setLwArcBankOpen(false);
-    setLwArcMode(null);
+  };
+  // ยืนยันแปลงของในคลังหลายชิ้นเป็นแต้มการ์ด (ฟรี ไม่เสียแต้มสกิล) -> ส่งไป server ทันที
+  const pickLwCardBurn = (indices) => {
+    socket.emit("lwCardBurn", { indices });
+    setLwCardBurnOpen(false);
   };
   // เลือกเป้าหมาย Sekai ichi kawaii watashi (โคโตเนะ patch 2.1.3) -> ส่งไป server ทันที
   const pickKawaii = (id) => {
@@ -1864,11 +1892,11 @@ export default function Game({ state, lowQ }) {
   }, [lwChoiceOpen, phase, me?.skillUsed, done]);
   useEffect(() => {
     // Arc Drive finish กดซ้ำได้หลายครั้งต่อเทิร์น — ไม่ปิดเมนูตาม me?.skillUsed เหมือนสกิลอื่น
-    if (lwArcModeOpen && (phase !== "PLAYING" || done)) setLwArcModeOpen(false);
-  }, [lwArcModeOpen, phase, done]);
-  useEffect(() => {
-    if (lwArcBankOpen && (phase !== "PLAYING" || done)) { setLwArcBankOpen(false); setLwArcMode(null); }
+    if (lwArcBankOpen && (phase !== "PLAYING" || done)) setLwArcBankOpen(false);
   }, [lwArcBankOpen, phase, done]);
+  useEffect(() => {
+    if (lwCardBurnOpen && (phase !== "PLAYING" || done)) setLwCardBurnOpen(false);
+  }, [lwCardBurnOpen, phase, done]);
   useEffect(() => {
     if (lwBankOpen && (phase !== "PLAYING" || done)) setLwBankOpen(false);
   }, [lwBankOpen, phase, done]);
@@ -2121,6 +2149,7 @@ export default function Game({ state, lowQ }) {
                 <StatusChips p={me} left />
                 <CatUsesBadge me={me} ch={ch} />
                 <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
+                <LwCardBurnButton me={me} ch={ch} onOpen={() => setLwCardBurnOpen(true)} />
                 <span className="ml-auto flex items-center gap-1.5">
                   <span className="flex gap-1 p-1 rounded-lg bg-black/25">
                     {Array.from({ length: me.maxSkill }, (_, i) => (
@@ -2299,14 +2328,20 @@ export default function Game({ state, lowQ }) {
           />
         )}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
-        {lwArcModeOpen && <LwArcModeModal onPick={pickLwArcMode} onClose={() => setLwArcModeOpen(false)} />}
         {lwArcBankOpen && me && (
           <BankPickModal
-            title={`😾 Arc Drive finish — เลือกของที่จะเผา (${lwArcMode === "card" ? "แต้มการ์ด" : "พลังโจมตี"})`}
-            desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง"
+            title="😾 Arc Drive finish — เลือกของที่จะสละทิ้ง"
+            desc="สละทิ้งครบทุกๆ 2 ชิ้น พลังโจมตี +1 (คงอยู่จนกว่าจะหมดช่วงเวลาปัจจุบัน) — เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง"
             items={me.lenwhiteBank || []}
             onPick={pickLwArcBank}
-            onClose={() => { setLwArcBankOpen(false); setLwArcMode(null); }}
+            onClose={() => setLwArcBankOpen(false)}
+          />
+        )}
+        {lwCardBurnOpen && me && (
+          <LwCardBurnModal
+            items={me.lenwhiteBank || []}
+            onConfirm={pickLwCardBurn}
+            onClose={() => setLwCardBurnOpen(false)}
           />
         )}
         {bankViewOpen && me && (
@@ -2513,6 +2548,7 @@ export default function Game({ state, lowQ }) {
               <div className="mt-1 flex flex-col items-center gap-1">
                 <CatUsesBadge me={me} ch={ch} />
                 <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
+                <LwCardBurnButton me={me} ch={ch} onOpen={() => setLwCardBurnOpen(true)} />
               </div>
               {isFuji && <ReijuButton me={me} usable={reijuUsable} onOpen={() => setReijuOpen(true)} className="w-20 h-16 mt-1.5" />}
               {isHakuno && <HakunoCommandButton me={me} usable={hakunoCmdUsable} onOpen={() => setHakunoCmdOpen(true)} className="w-20 h-16 mt-1.5" />}
@@ -2743,14 +2779,20 @@ export default function Game({ state, lowQ }) {
           />
         )}
         {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
-        {lwArcModeOpen && <LwArcModeModal onPick={pickLwArcMode} onClose={() => setLwArcModeOpen(false)} />}
         {lwArcBankOpen && me && (
           <BankPickModal
-            title={`😾 Arc Drive finish — เลือกของที่จะเผา (${lwArcMode === "card" ? "แต้มการ์ด" : "พลังโจมตี"})`}
-            desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง"
+            title="😾 Arc Drive finish — เลือกของที่จะสละทิ้ง"
+            desc="สละทิ้งครบทุกๆ 2 ชิ้น พลังโจมตี +1 (คงอยู่จนกว่าจะหมดช่วงเวลาปัจจุบัน) — เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง"
             items={me.lenwhiteBank || []}
             onPick={pickLwArcBank}
-            onClose={() => { setLwArcBankOpen(false); setLwArcMode(null); }}
+            onClose={() => setLwArcBankOpen(false)}
+          />
+        )}
+        {lwCardBurnOpen && me && (
+          <LwCardBurnModal
+            items={me.lenwhiteBank || []}
+            onConfirm={pickLwCardBurn}
+            onClose={() => setLwCardBurnOpen(false)}
           />
         )}
         {bankViewOpen && me && (
