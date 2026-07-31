@@ -1887,8 +1887,7 @@ function resetCombat(p) {
   p.catUses = CAT_MAX_USES; // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (สูงสุด 9/เกม)
   p.catSaveRound = 0;       // เล็น/ไวท์เล็น: รอบล่าสุดที่กันตายทำงาน (กันหักแมวซ้ำถ้าโดนดาเมจหลายแต้มในการโจมตีเดียวกัน)
   p.lwStealCount = 0;       // ไวท์เล็น: จำนวนครั้งที่ขโมยสกิลสะสม (ขโมยครบทุกๆ 2 ครั้ง เสียแมวขาว 1 หน่วย)
-  p.arcAtkBurns = 0;        // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish (ครบทุกๆ 2 ชิ้น +1 ATK — รีเซ็ตทุกครั้งที่เปลี่ยนช่วงกลางวัน/กลางคืน)
-  p.lwArcPendingIndex = null; // ไวท์เล็น: index ในคลังที่เลือกไว้รอยืนยันใช้ Arc Drive finish
+  p.arcAtkBurns = 0;        // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish โหมด 2 (ครบทุกๆ 2 ชิ้น +1 ATK — รีเซ็ตทุกครั้งที่เปลี่ยนช่วงกลางวัน/กลางคืน)
   // ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
   p.leader = "apollo";      // ผู้นำที่เลือกไว้ (apollo/sirius/rena) — กำหนดร่างที่จะรวมร่างด้วย
   p.fused = false;          // กำลังรวมร่างหุ่นศักดิ์สิทธิ์อยู่ไหม
@@ -2183,10 +2182,6 @@ function buildStateFor(viewerId) {
         const e = p.lenwhiteBank[p.lwLoadedIndex];
         secondaryPub = { name: e.skillName, desc: `เตรียมใช้ของชิ้นนี้จริง — กดอีกครั้งเพื่อยืนยัน (จ่ายเพิ่ม ${e.cost} แต้ม)`, cost: e.cost, img: e.skillImg };
       }
-      if (ch.id === "lenwhite" && p.lwArcPendingIndex != null && Array.isArray(p.lenwhiteBank) && p.lenwhiteBank[p.lwArcPendingIndex]) {
-        const e = p.lenwhiteBank[p.lwArcPendingIndex];
-        ultimatePub = { name: `สละทิ้ง "${e.skillName}"`, desc: `เตรียมสละทิ้งเพื่อสะสมพลังโจมตี — กดอีกครั้งเพื่อยืนยัน (จ่าย ${LENWHITE_ARC_COST} แต้ม)`, cost: LENWHITE_ARC_COST, img: e.skillImg };
-      }
       // กลางคืน (patch 2.1.7): สุ่มแล้วให้สกิลพื้นฐานหรือสกิลรอง (อย่างใดอย่างหนึ่ง) ใช้แต้มมากขึ้น +1 — ไม่เกิน 8 แต้ม ไม่มีผลกับท่าไม้ตาย
       if (p.nightTaxTier === "basic" && basicPub && basicPub.cost < 8) basicPub.cost += 1;
       if (p.nightTaxTier === "secondary" && secondaryPub && secondaryPub.cost < 8) secondaryPub.cost += 1;
@@ -2227,8 +2222,7 @@ function buildStateFor(viewerId) {
         lenLoadedIndex: p.lenLoadedIndex != null ? p.lenLoadedIndex : null, // เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
         lenwhiteBank: (p.lenwhiteBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // ไวท์เล็น: คลังสกิลที่ขโมยมา
         lwLoadedIndex: p.lwLoadedIndex != null ? p.lwLoadedIndex : null, // ไวท์เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
-        lwArcPendingIndex: p.lwArcPendingIndex != null ? p.lwArcPendingIndex : null, // ไวท์เล็น: index ในคลังที่เลือกไว้รอยืนยัน Arc Drive finish
-        arcAtkBurns: p.arcAtkBurns || 0, // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish (สะสม +1 ATK ทุกๆ 2 ชิ้น)
+        arcAtkBurns: p.arcAtkBurns || 0, // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish โหมด 2 (สะสม +1 ATK ทุกๆ 2 ชิ้น)
         catForm: !!p.catForm,   // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (Moonlight/Blood Moon)
         catUses: p.catUses != null ? p.catUses : CAT_MAX_USES, // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้
         leader: p.leader || "apollo",      // อควาเรียน: ผู้นำที่เลือกอยู่ (apollo/sirius/rena)
@@ -2990,36 +2984,52 @@ function lwSelectBank(id, index) {
   io.emit("skillFlash", { name: `เตรียมใช้ — ${entry.skillName}`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
   broadcastState();
 }
-// ไวท์เล็น (patch 2.2 beta): เลือกของ+โหมด Arc Drive finish มาเตรียมไว้ (ไม่เสียแต้ม) กดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง
-//  ใช้ได้ทั้งกลางวัน/กลางคืน — ไม่ผูกกับ isNightRound เหมือน lwSelectBank (สกิลรอง)
-function lwArcSelect(id, index) {
+// ไวท์เล็น (patch 2.2 beta): ตรวจสอบ+หักแต้มสกิลร่วมของ Arc Drive finish ทั้ง 2 โหมด (จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง ไม่ว่าจะเลือกกี่ชิ้นในครั้งนั้น)
+//  คืน { p, bank, idxList } ถ้าใช้ได้ (และหักแต้มไปแล้ว) หรือ null ถ้าใช้ไม่ได้ — เรียกจาก lwCardBurn/lwAtkBurn เท่านั้น
+function lwArcCheckAndPay(id, indices) {
   const p = players[id];
-  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return;
-  const idx = Number(index);
-  if (!(Array.isArray(p.lenwhiteBank) && idx >= 0 && idx < p.lenwhiteBank.length)) return;
-  p.lwArcPendingIndex = idx;
-  const entry = p.lenwhiteBank[idx];
-  io.emit("skillFlash", { name: `เตรียมใช้ Arc Drive — สละทิ้ง "${entry.skillName}"`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
-  broadcastState();
-}
-// ไวท์เล็น (patch 2.2 beta): แปลงของในคลังเป็นแต้มการ์ด — การกระทำฟรี ไม่เสียแต้มสกิล ไม่นับเป็นการใช้สกิลของเทิร์น
-//  เลือกได้หลายชิ้นพร้อมกัน (indices) ใช้ได้ก่อนเปิดไพ่เท่านั้น (ยังไม่ได้กดล็อก/จั่วจบ)
-function lwCardBurn(id, indices) {
-  const p = players[id];
-  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return;
+  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return null;
+  if (p.skillPoints < LENWHITE_ARC_COST) return null;
   const bank = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank : [];
   const idxList = Array.isArray(indices)
     ? [...new Set(indices.map((n) => Number(n)))].filter((n) => Number.isInteger(n) && n >= 0 && n < bank.length)
     : [];
-  if (!idxList.length) return;
+  if (!idxList.length) return null;
+  p.skillPoints -= LENWHITE_ARC_COST;
+  return { p, bank, idxList };
+}
+// ไวท์เล็น (patch 2.2 beta): Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด เลือกได้หลายชิ้นพร้อมกัน ยืนยันครั้งเดียว
+//  แต้มการ์ดที่ได้ = ผลรวมราคาต้นฉบับของทุกชิ้นที่เลือก บวกทันทีไม่มีเพดาน (เกิน 21 บัสต์ทันที) — จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง
+function lwCardBurn(id, indices) {
+  const paid = lwArcCheckAndPay(id, indices);
+  if (!paid) return;
+  const { p, bank, idxList } = paid;
   idxList.sort((a, b) => b - a); // ลบจากดัชนีสูงไปต่ำ กัน index เลื่อนระหว่างลบ
   const burned = idxList.map((i) => bank[i]);
   let total = 0;
   for (const i of idxList) { total += bank[i].cost; bank.splice(i, 1); }
   p.cardBonus = (p.cardBonus || 0) + total;
   p.busted = bustedOf(p);
-  lastLog.push(`🃏 ${p.name} แปลงของในคลัง ${burned.length} ชิ้นเป็นแต้มการ์ด +${total} (คลังเหลือ ${bank.length})${p.busted ? " — ไพ่แตก!" : ""}`);
+  lastLog.push(`🃏 ${p.name} Arc Drive finish — แปลงของในคลัง ${burned.length} ชิ้นเป็นแต้มการ์ด +${total} (คลังเหลือ ${bank.length})${p.busted ? " — ไพ่แตก!" : ""}`);
   if (p.busted) { p.locked = true; voidUltimateOnBust(p); maybeMoonBurst(p); }
+  broadcastState();
+  checkAllLocked();
+}
+// ไวท์เล็น (patch 2.2 beta): Arc Drive finish โหมด 2 — สละของในคลังแลกพลังโจมตี เลือกได้หลายชิ้นพร้อมกัน ยืนยันครั้งเดียว
+//  สละครบทุกๆ 2 ชิ้น พลังโจมตี +1 หน่วย (สะสมไม่จำกัด แต่หมดอายุทุกครั้งที่เปลี่ยนช่วงกลางวัน/กลางคืน — ดู dealRound) — จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง
+function lwAtkBurn(id, indices) {
+  const paid = lwArcCheckAndPay(id, indices);
+  if (!paid) return;
+  const { p, bank, idxList } = paid;
+  idxList.sort((a, b) => b - a);
+  const burned = idxList.map((i) => bank[i]);
+  for (const i of idxList) bank.splice(i, 1);
+  const before = p.arcAtkBurns || 0;
+  p.arcAtkBurns = before + burned.length;
+  const stackBefore = Math.floor(before / LENWHITE_ARC_ATK_PER_BURNS);
+  const stackNow = Math.floor(p.arcAtkBurns / LENWHITE_ARC_ATK_PER_BURNS);
+  const gained = stackNow - stackBefore;
+  lastLog.push(`🔥 ${p.name} Arc Drive finish — สละของในคลัง ${burned.length} ชิ้นเพื่อพลังโจมตี (${p.arcAtkBurns % LENWHITE_ARC_ATK_PER_BURNS || (burned.length ? LENWHITE_ARC_ATK_PER_BURNS : 0)}/${LENWHITE_ARC_ATK_PER_BURNS}${gained > 0 ? ` — พลังโจมตี +${gained}! (รวม +${stackNow})` : ""}) (คลังเหลือ ${bank.length})`);
   broadcastState();
   checkAllLocked();
 }
@@ -3213,16 +3223,8 @@ function useSkill(id, tier, targets, item) {
     lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[p.lwLoadedIndex] : null;
     if (!lwUseEntry) { p.lwLoadedIndex = null; return; }
   }
-  // Arc Drive finish (ไวท์เล็น patch 2.2 beta): สละทิ้งของ 1 ชิ้นจากคลัง สะสมพลังโจมตี (ครบทุกๆ 2 ชิ้น +1)
-  //  ต้องเลือกของไว้ก่อน (ผ่าน event lwArcSelect) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
-  //  กดใช้ซ้ำได้หลายครั้งต่อเทิร์น — ไม่นับเป็นการใช้สกิลของเทิร์น (ดูจุดยกเว้น skillUsedRound ด้านล่าง)
-  const isLWUlt = isLW && tier === "ultimate";
-  let lwArcEntry = null;
-  if (isLWUlt) {
-    if (p.lwArcPendingIndex == null) return;
-    lwArcEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[p.lwArcPendingIndex] : null;
-    if (!lwArcEntry) { p.lwArcPendingIndex = null; return; }
-  }
+  // Arc Drive finish (ไวท์เล็น patch 2.2 beta): ย้ายไปเป็น event แยก lwCardBurn/lwAtkBurn ทั้งคู่ — ไม่ผ่าน useSkill()/tier="ultimate" อีกต่อไป
+  //  (แต่ละโหมดเช็คแต้ม/หักแต้มของตัวเองตรงๆ ไม่ใช้ระบบ cost ของ useSkill()) ดู lwCardBurn/lwAtkBurn ด้านล่าง
 
   // เวลาทอง (แกมเบลอร์): แต้มที่ใช้ของสกิลพื้นฐาน/สกิลรองลดครึ่งหนึ่ง
   const isGambler = p.characterId === "gambler";
@@ -3305,7 +3307,7 @@ function useSkill(id, tier, targets, item) {
   // เธอ/นาย คือฉันหรอ? (คิชินามิ ฮาคุโนะ สกิลพื้นฐาน): สลับเพศ — ไม่นับเป็นการใช้สกิลของเทิร์น แต่กดสลับได้แค่ 1 ครั้งต่อเทิร์น
   const isHakunoGender = p.characterId === "hakuno" && tier === "basic";
   if (isHakunoGender && p.hakunoGenderSwitched) return;
-  if (p.skillUsedRound && !mageRepeat && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isLWUlt) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้) — Arc Drive finish (ไวท์เล็น) กดซ้ำได้ยกเว้น
+  if (p.skillUsedRound && !mageRepeat && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
   if (isMage && (p.mageUses || 0) >= MAGE_USES_PER_TURN) return;
   // จอมเวทย์ฝึกหัด: ระหว่างเปิด Everything For Humanity ใช้ไม่ได้
   if (isMage && (p.statuses.humanity || 0) > 0) return;
@@ -3487,7 +3489,7 @@ function useSkill(id, tier, targets, item) {
     if (p.statuses.freecast <= 0) delete p.statuses.freecast;
     lastLog.push(`🎁 ${p.name} พรแห่งการจั่ว — ใช้สกิลนี้โดยไม่เสียแต้มสกิล`);
   }
-  if (!isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isLWUlt) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / เปลี่ยนหัวหน้า / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ? / Arc Drive finish (ไวท์เล็น): ไม่นับเป็นการใช้สกิลของเทิร์น (กดซ้ำได้หลายครั้ง)
+  if (!isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / เปลี่ยนหัวหน้า / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ?
 
   // ---------- นายมีฝีมือแค่ไหนหรอ? (ชิกิ patch 2.0.6): ยกเลิกท่าไม้ตายทันทีที่มีผู้เล่นอื่นกด ----------
   //  มีชิกิถือชาร์จ godslay อยู่บนสนาม -> ท่าไม้ตายของผู้เล่นอื่นที่เพิ่งกดถูกยกเลิกทันที
@@ -4153,17 +4155,6 @@ function useSkill(id, tier, targets, item) {
     p.lwLoadedIndex = null;
     castBorrowedSkill(p, lwUseEntry);
   }
-  if (isLWUlt && lwArcEntry) {
-    // Arc Drive finish: สละทิ้งของ 1 ชิ้น สะสมพลังโจมตี — เผาครบทุกๆ 2 ชิ้น พลังโจมตี +1 (คงอยู่จนกว่าจะหมดช่วงเวลาปัจจุบัน)
-    const idx = p.lenwhiteBank.indexOf(lwArcEntry);
-    if (idx >= 0) p.lenwhiteBank.splice(idx, 1);
-    p.lwArcPendingIndex = null;
-    p.arcAtkBurns = (p.arcAtkBurns || 0) + 1;
-    const stackNow = Math.floor(p.arcAtkBurns / LENWHITE_ARC_ATK_PER_BURNS);
-    const gained = stackNow > Math.floor((p.arcAtkBurns - 1) / LENWHITE_ARC_ATK_PER_BURNS);
-    lastLog.push(`🔥 ${p.name} Arc Drive finish — สละทิ้ง "${lwArcEntry.skillName}" (${p.arcAtkBurns % LENWHITE_ARC_ATK_PER_BURNS || LENWHITE_ARC_ATK_PER_BURNS}/${LENWHITE_ARC_ATK_PER_BURNS}${gained ? ` — พลังโจมตี +1! (รวม +${stackNow})` : ""}) (คลังเหลือ ${p.lenwhiteBank.length})`);
-  }
-
   // ---------- บานาจ ลิงก์ (patch 2.1.2) ----------
   // Absorb shield: มอบโล่ + ผูกเจ้าของสกิลไว้ (โล่แตกระหว่างมีผล -> ฟื้นเลือดให้เจ้าของสกิลตามที่เสีย)
   if (isBanagherShield && banagherShieldTarget) {
@@ -6729,8 +6720,8 @@ io.on("connection", (socket) => {
   socket.on("useSkill", ({ tier, targets, item } = {}) => useSkill(socket.id, tier, targets, item));
   socket.on("lenSelectBank", ({ index } = {}) => lenSelectBank(socket.id, index)); // เล็น: เลือกท่าจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
   socket.on("lwSelectBank", ({ index } = {}) => lwSelectBank(socket.id, index)); // ไวท์เล็น: เลือกของจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
-  socket.on("lwArcSelect", ({ index } = {}) => lwArcSelect(socket.id, index)); // ไวท์เล็น: เลือกของ Arc Drive finish (ก่อนกดยืนยันใช้จริง)
-  socket.on("lwCardBurn", ({ indices } = {}) => lwCardBurn(socket.id, indices)); // ไวท์เล็น: แปลงของในคลังเป็นแต้มการ์ด (ฟรี เลือกได้หลายชิ้น)
+  socket.on("lwCardBurn", ({ indices } = {}) => lwCardBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด (เลือกหลายชิ้น ยืนยันครั้งเดียว)
+  socket.on("lwAtkBurn", ({ indices } = {}) => lwAtkBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 2 — สละของในคลังแลกพลังโจมตี (เลือกหลายชิ้น ยืนยันครั้งเดียว)
   socket.on("useReiju", ({ command } = {}) => useReiju(socket.id, command));
   socket.on("hakunoCommandSpell", ({ command } = {}) => hakunoCommandSpell(socket.id, command)); // คิชินามิ ฮาคุโนะ: อาคมบัญชาระดับ EX+
   socket.on("locaAnswer", ({ accept } = {}) => answerLoca(socket.id, !!accept)); // ซาโตรุ: ตอบข้อเสนอผลโลกากากา
