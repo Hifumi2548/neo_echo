@@ -6402,8 +6402,10 @@ function doAttack(byId, targetId) {
     }
   }
   // หนูจะทำให้พี่ตาสว่างเอง (อาริมะ มิยาโกะ): เล่นวีดีโอก่อนสรุปผล — เป้าหมายมีความสามารถสังหารทันทีติดตัวไหม
-  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> "ย๊ากก!" พลังโจมตี +1 (แก้บัค: ลงหมัดนี้ทันทีผ่าน miyakoAtkBonusOn ด้านบน
-  //  ไม่ใช่หมัดถัดไปแบบเดิม — กันบัคตอนรวมกับเพลงหมัดอาริมะ โบนัสไปโผล่หมัดที่ 2 แทนหมัดแรกที่ปิดสังหารเป้าหมาย) + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
+  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> "ย๊ากก!" พลังโจมตี +1 ลงหมัดนี้ทันที (ผ่าน miyakoAtkBonusOn ด้านบน)
+  //  และตั้งสถานะ yaak ต่อไว้ให้ — ถ้ากำลังต่อคอมโบเพลงหมัดอาริมะอยู่ (miyakoCombo) yaak จะไม่ถูกล้างจนกว่าคอมโบจะจบ
+  //  ทำให้ทุกหมัดที่เหลือในคอมโบเดียวกันได้โบนัสด้วย (นับทั้งคอมโบเป็นการโจมตีครั้งเดียวตามที่ตั้งใจไว้) — ไม่ใช่คอมโบก็เคลียร์ทิ้งหลังหมัดนี้ตามปกติ
+  //  + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
   if (miyakoUltAtk) {
     triggerCutscene(attacker, "miyakoUlt");
     delete attacker.statuses.miyakoUlt;
@@ -6414,7 +6416,8 @@ function doAttack(byId, targetId) {
       } else {
         target.statuses.armorSeal = Math.max(target.statuses.armorSeal || 0, MIYAKO_ARMOR_SEAL_TURNS);
         target.statuses.decay = Math.max(target.statuses.decay || 0, MIYAKO_ULT_DECAY_TURNS);
-        lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตีหมัดนี้ +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
+        attacker.statuses.yaak = 1;
+        lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตี +${MIYAKO_ATK_BONUS} (ตลอดคอมโบนี้ถ้ากำลังต่อเพลงหมัดอาริมะอยู่) และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
       }
     }
   }
@@ -6955,7 +6958,7 @@ function endTurn() {
       if (k === "ohger") continue;   // โอเจอร์ชาร์จ (คุวากาตะ patch 2.2 alpha): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "evade") continue;   // หลบหลีก (Bard): คงอยู่จนกว่าจะถูกเลือกโจมตี (ซ้อนทับสูงสุด 3, หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "empower") continue; // เสริมพลัง (Rejuvenation): คงอยู่จนกว่าจะได้โจมตี (ไม่ซ้อนทับ)
-      if (k === "miyakoHeal" || k === "miyakoCombo") continue; // อาริมะ มิยาโกะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
+      if (k === "miyakoHeal" || k === "miyakoCombo" || k === "miyakoUlt") continue; // อาริมะ มิยาโกะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น) — miyakoUlt เดิมหลุดหายไปเองหลัง 1 เทิร์นถ้ายังไม่ได้โจมตี (บัค)
       if (k === "hakunoInvertReady" || k === "hakunoNoRegenReady") continue; // คิชินามิ ฮาคุโนะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "kotoneAtk") continue; // โคโตเนะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น — เหมือน empower)
       if (k === "freecast") continue; // พรแห่งการจั่ว (patch 2.0.8): ใช้สกิลไม่เสียแต้ม — คงอยู่จนกว่าจะได้ใช้
