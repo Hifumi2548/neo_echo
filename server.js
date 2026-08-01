@@ -6199,7 +6199,10 @@ function doAttack(byId, targetId) {
   //  ซ้อนกับโบนัส +1 ของสกิลติดตัว 1 ได้ (เกิดใหม่แล้ว NTD จะถาวรเสมอ) รวมเป็น +2 (โจมตีปกติ 3)
   const phenexNtdAtk = attacker.characterId === "phenex" && ((attacker.statuses.phenexNtd || 0) > 0 || attacker.phenexNtdPermanent);
 
-  const miyakoAtkBonusOn = attacker.characterId === "miyako" && (attacker.statuses.yaak || 0) > 0;
+  // แก้บัค: เดิม ย๊ากก! ผูกกับสถานะ yaak ที่เพิ่งตั้งหลังโจมตี ทำให้โบนัสไปลงที่การโจมตีถัดไปแทน
+  //  (พอรวมกับเพลงหมัดอาริมะที่ตีต่อเนื่องหลายครั้งในตาเดียว โบนัสเลยไปโผล่ที่หมัดที่ 2 แทนที่จะเป็นหมัดแรกที่ปิดสังหารเป้าหมาย)
+  //  ตอนนี้เช็ค miyakoUltAtk ตรงๆ -> ได้โบนัสทันทีที่หมัดที่ปิดสังหารเป้าหมาย (หมัดเดียว ไม่สะสม เพราะ miyakoUlt ถูกลบทิ้งหลังหมัดนี้)
+  const miyakoAtkBonusOn = attacker.characterId === "miyako" && ((attacker.statuses.yaak || 0) > 0 || miyakoUltAtk);
   // สวมเกราะราชัน / คิงโอเจอร์ (คุวากาตะ patch 2.2 alpha): พลังโจมตีปกติ +1 ระหว่างร่าง
   const rachanAtk = (attacker.statuses.rachan || 0) > 0 ? KUWAGATA_RACHAN_ATK : 0;
   // Fourth Impact (เอวา 13 patch 2.2 alpha): พลังโจมตีปกติ +2 ระหว่างร่าง
@@ -6399,7 +6402,8 @@ function doAttack(byId, targetId) {
     }
   }
   // หนูจะทำให้พี่ตาสว่างเอง (อาริมะ มิยาโกะ): เล่นวีดีโอก่อนสรุปผล — เป้าหมายมีความสามารถสังหารทันทีติดตัวไหม
-  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> "ย๊ากก!" พลังโจมตี +1 การโจมตีปกติครั้งถัดไป (patch 2.2.1 alpha: ใช้ครั้งเดียวแล้วหมด ไม่ใช่ถาวร) + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
+  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> "ย๊ากก!" พลังโจมตี +1 (แก้บัค: ลงหมัดนี้ทันทีผ่าน miyakoAtkBonusOn ด้านบน
+  //  ไม่ใช่หมัดถัดไปแบบเดิม — กันบัคตอนรวมกับเพลงหมัดอาริมะ โบนัสไปโผล่หมัดที่ 2 แทนหมัดแรกที่ปิดสังหารเป้าหมาย) + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
   if (miyakoUltAtk) {
     triggerCutscene(attacker, "miyakoUlt");
     delete attacker.statuses.miyakoUlt;
@@ -6410,8 +6414,7 @@ function doAttack(byId, targetId) {
       } else {
         target.statuses.armorSeal = Math.max(target.statuses.armorSeal || 0, MIYAKO_ARMOR_SEAL_TURNS);
         target.statuses.decay = Math.max(target.statuses.decay || 0, MIYAKO_ULT_DECAY_TURNS);
-        attacker.statuses.yaak = 1;
-        lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที การโจมตีปกติครั้งถัดไป +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
+        lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตีหมัดนี้ +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
       }
     }
   }
