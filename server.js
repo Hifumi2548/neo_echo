@@ -2638,13 +2638,13 @@ function startMatch() {
 }
 
 // ---------- ร้านค้ามายา (patch 2.2 full) ----------
-// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 22.5% / โชคลาภ 5% (หายากลง) / ต้านสถานะ 22.5% / ฟื้นแต้มสกิล 22.5% (สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 27.5%
+// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 20% / โชคลาภ 5% (หายากสุด) / ต้านสถานะ 20% / ฟื้นแต้มสกิล 35% (เยอะกว่าอันอื่น สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 20%
 function rollShopItem() {
   const roll = Math.random();
-  if (roll < 0.225) return { type: "cardPoint", value: 1 + Math.floor(Math.random() * 10), price: SHOP_CARD_POINT_PRICE };
-  if (roll < 0.275) return { type: "fortune", price: SHOP_FORTUNE_PRICE };
-  if (roll < 0.50) return { type: "resist", price: SHOP_RESIST_PRICE };
-  if (roll < 0.725) {
+  if (roll < 0.20) return { type: "cardPoint", value: 1 + Math.floor(Math.random() * 10), price: SHOP_CARD_POINT_PRICE };
+  if (roll < 0.25) return { type: "fortune", price: SHOP_FORTUNE_PRICE };
+  if (roll < 0.45) return { type: "resist", price: SHOP_RESIST_PRICE };
+  if (roll < 0.80) {
     const s = SHOP_SKILL_SIZES[Math.floor(Math.random() * SHOP_SKILL_SIZES.length)];
     return { type: "skillPoint", size: s.size, value: s.amount, price: s.price };
   }
