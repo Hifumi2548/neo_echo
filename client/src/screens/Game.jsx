@@ -1411,50 +1411,6 @@ function PhenexReleaseModal({ ask, onPick }) {
     </div>
   );
 }
-// มุซาชิ ฮารุโนะ (สกิลติดตัว): มีคนตายที่ไม่เคยโจมตีเรา — จะฟื้นคืนชีพให้ไหม (1 ครั้งต่อเกม)
-function MusashiReviveModal({ ask, onAnswer }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4">
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl border-2 border-echo-gold">
-        <div className="flex items-center gap-3 mb-3">
-          <img src={ask.img} alt="" className="w-16 h-16 object-cover rounded-xl shrink-0" />
-          <div>
-            <div className="text-lg font-black text-echo-gold">✨ ทุกคนควรได้โอกาส</div>
-            <div className="text-sm opacity-80"><span className="font-bold" style={{ color: ask.color }}>{ask.targetName}</span> เสียชีวิตแล้วและไม่เคยโจมตีใส่คุณเลย — ฟื้นคืนชีพให้ไหม? (ใช้ได้ 1 ครั้งต่อเกม)</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <Button variant="gold" className="py-3" onClick={() => { clickSound(); onAnswer(true); }}>✅ ฟื้นคืนชีพ</Button>
-          <Button variant="ghost" className="py-3" onClick={() => { clickSound(); onAnswer(false); }}>❌ ไม่ฟื้น</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-// เป้าหมายออร่าแห่งความเมตตา (มุซาชิ ฮารุโนะ): จะยอมแพ้หรือสู้ต่อ
-function MusashiMercyModal({ ask, onAnswer }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4">
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl border-2" style={{ borderColor: ask.color }}>
-        <div className="flex items-center gap-3 mb-3">
-          {ask.img && <img src={ask.img} alt="" className="w-16 h-16 object-cover rounded-xl shrink-0" />}
-          <div>
-            <div className="text-lg font-black text-echo-gold">🕊️ ออร่าแห่งความเมตตา</div>
-            <div className="text-sm opacity-80"><span className="font-bold" style={{ color: ask.color }}>{ask.from}</span> ให้คุณเลือก — จะยอมแพ้ หรือ จะสู้ต่อ?</div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 text-sm mb-3">
-          <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2">🕊️ <b>ยอมแพ้</b> — ติดผุพัง 3 เทิร์น แต่คุณจะมีสิทธิ์เลือกโจมตีเขาได้ 2 เทิร์น</div>
-          <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2">⚔️ <b>สู้ต่อ</b> — รับความเสียหาย (คิดเกราะด้วย) ตามความเมตตาที่สะสม (สูงสุด 5) แล้วความเมตตาจะถูกล้าง</div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="gold" className="py-3" onClick={() => { clickSound(); onAnswer("yield"); }}>🕊️ ยอมแพ้</Button>
-          <Button variant="ghost" className="py-3" onClick={() => { clickSound(); onAnswer("fight"); }}>⚔️ สู้ต่อ</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 // บานาจ: ข้อเสนอพันธมิตรจากริดดี้ — ตอบรับ/ปฏิเสธ (ไม่ตอบก่อนเปิดไพ่ = ปฏิเสธ)
 function AllyOfferModal({ offer, onAnswer }) {
   return (
@@ -1656,7 +1612,6 @@ export default function Game({ state, lowQ }) {
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
   const [skSel, setSkSel] = useState(false);         // ชิกิ: โหมดเลือกเป้าหมาย นายมีฝีมือแค่ไหนหรอ? (เลือกตัวเองไม่ได้)
-  const [musashiSel, setMusashiSel] = useState(false); // มุซาชิ ฮารุโนะ: โหมดเลือกเป้าหมายสกิลรอง (ทั้งฉันเองก็เห็นใจนายนะ/ออร่าแห่งความเมตตา)
   const [doomSel, setDoomSel] = useState(false); // DoomGuy: โหมดเลือกเป้าหมาย Weapon (เฉพาะอาวุธที่ต้องเลือกเป้าหมาย)
   const DOOM_TARGET_WEAPONS = ["shotgun", "heavy", "supershotgun", "rocket"];
   const [saObSel, setSaObSel] = useState(false);     // ซาโตรุ: โหมดเลือกเป้าหมาย Obla Di, Obla Da (เลือกตัวเองไม่ได้)
@@ -1779,8 +1734,6 @@ export default function Game({ state, lowQ }) {
   // สกิลติดตัว: ไม่ติดคูลดาวน์การใช้สกิล — Quick Swap (สกิลพื้นฐาน) และ Weapon (สกิลรอง) ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน
   const doomBasicLocked = isDoomguy && !!me?.doomQuickSwapUsed; // Quick Swap เอง ยังจำกัด 1 ครั้ง/เทิร์นตามปกติ
   const doomNoEffectLocked = isDoomguy && me?.doomWeaponHasEffect === false; // ปืนกระบอกนี้ไม่มีความสามารถพิเศษให้กด (Plasma Rifle/BFG 9000)
-  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-  const musashiCosmosOn = ch?.id === "musashi" && (me?.statuses?.cosmos || 0) > 0;
   // ---------- ฟุจิมารุ ----------
   const isFuji = ch?.id === "fujimaru";
   const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
@@ -1900,8 +1853,6 @@ export default function Game({ state, lowQ }) {
     if (tier === "secondary" && ch?.id === "shrade_elan") { setShSel(true); setSkillOpen(false); return; }
     // เรียวกิ ชิกิ: สกิลรอง (นายมีฝีมือแค่ไหนหรอ?) เข้าโหมดเลือกเป้าหมายก่อนส่งไป server
     if (tier === "secondary" && ch?.id === "shiki") { setSkSel(true); setSkillOpen(false); return; }
-    // มุซาชิ ฮารุโนะ: สกิลรอง (ฉันเองก็เห็นใจนายนะ / ออร่าแห่งความเมตตา) เข้าโหมดเลือกเป้าหมายก่อนส่งไป server
-    if (tier === "secondary" && ch?.id === "musashi") { setMusashiSel(true); setSkillOpen(false); return; }
     // DoomGuy: สกิลรอง Weapon — บางอาวุธต้องเลือกเป้าหมายก่อนส่งไป server (Combat Shotgun / Heavy Cannon / Super Shotgun / Rocket Launcher)
     if (tier === "secondary" && ch?.id === "doomguy") {
       if (DOOM_TARGET_WEAPONS.includes(me?.doomWeapon)) { setDoomSel(true); setSkillOpen(false); return; }
@@ -1960,11 +1911,6 @@ export default function Game({ state, lowQ }) {
   const pickSk = (id) => {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
     setSkSel(false);
-  };
-  // เลือกเป้าหมายสกิลรองของมุซาชิ ฮารุโนะ (แปรตามร่างฝั่ง server เอง) -> ส่งไป server ทันที
-  const pickMusashi = (id) => {
-    socket.emit("useSkill", { tier: "secondary", targets: [id] });
-    setMusashiSel(false);
   };
   // เลือกเป้าหมาย Weapon ของ DoomGuy -> ส่งไป server ทันที
   const pickDoom = (id) => {
@@ -2172,9 +2118,6 @@ export default function Game({ state, lowQ }) {
     if (skSel && (phase !== "PLAYING" || me?.skillUsed || done)) setSkSel(false);
   }, [skSel, phase, me?.skillUsed, done]);
   useEffect(() => {
-    if (musashiSel && (phase !== "PLAYING" || me?.skillUsed || done)) setMusashiSel(false);
-  }, [musashiSel, phase, me?.skillUsed, done]);
-  useEffect(() => {
     if (doomSel && (phase !== "PLAYING" || me?.skillUsed || done)) setDoomSel(false);
   }, [doomSel, phase, me?.skillUsed, done]);
   useEffect(() => {
@@ -2258,9 +2201,9 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || (musashiSel && (!musashiCosmosOn || (p.statuses?.mercy || 0) >= 5)) || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
-              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
             />
           ))}
@@ -2336,12 +2279,6 @@ export default function Game({ state, lowQ }) {
           <div className="shrink-0 text-center mt-1.5 text-hard">
             <span className="text-lg font-black text-echo-hp animate-pulse">🔪 แตะเลือกเป้าหมาย นายมีฝีมือแค่ไหนหรอ?</span>
             <button onClick={() => { clickSound(); setSkSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-          </div>
-        )}
-        {musashiSel && (
-          <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">💞 แตะเลือกเป้าหมาย: {ch?.secondary?.name || "สกิลรอง"}{musashiCosmosOn ? " (เฉพาะคนที่มีความเมตตาสะสมครบ 5)" : ""}</span>
-            <button onClick={() => { clickSound(); setMusashiSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {doomSel && (
@@ -2641,8 +2578,6 @@ export default function Game({ state, lowQ }) {
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
-        {state.musashiReviveAsk && <MusashiReviveModal ask={state.musashiReviveAsk} onAnswer={(a) => socket.emit("musashiReviveAnswer", { accept: a })} />}
-        {state.musashiMercyAsk && <MusashiMercyModal ask={state.musashiMercyAsk} onAnswer={(c) => socket.emit("musashiMercyAnswer", { choice: c })} />}
         {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
         {state.allyBreakAsk && me?.alive && <AllyBreakModal ask={state.allyBreakAsk} onAnswer={(c) => socket.emit("allyBreakAnswer", { cancel: c })} />}
         {state.allyFinalAsk && me?.alive && <AllyFinalModal ask={state.allyFinalAsk} onAnswer={(k) => socket.emit("allyFinalAnswer", { keep: k })} />}
@@ -2690,9 +2625,9 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || (musashiSel && (!musashiCosmosOn || (p.statuses?.mercy || 0) >= 5)) || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
-          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
         />
       ))}
@@ -2819,14 +2754,6 @@ export default function Game({ state, lowQ }) {
         <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
           <span className="text-xl font-black text-echo-hp animate-pulse bg-black/60 rounded-full px-5 py-1.5">👁️ คลิกเลือกเป้าหมาย อันนี้ของนายรึเปล่า</span>
           <button onClick={() => { clickSound(); setNanayaSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-        </div>
-      )}
-
-      {/* มุซาชิ ฮารุโนะ (patch 2.2 full): โหมดเลือกเป้าหมายสกิลรอง (ฉันเองก็เห็นใจนายนะ / ออร่าแห่งความเมตตา) */}
-      {musashiSel && (
-        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
-          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">💞 คลิกเลือกเป้าหมาย: {ch?.secondary?.name || "สกิลรอง"}{musashiCosmosOn ? " (เฉพาะคนที่มีความเมตตาสะสมครบ 5)" : ""}</span>
-          <button onClick={() => { clickSound(); setMusashiSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
         </div>
       )}
 
@@ -3124,8 +3051,6 @@ export default function Game({ state, lowQ }) {
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
       {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
-        {state.musashiReviveAsk && <MusashiReviveModal ask={state.musashiReviveAsk} onAnswer={(a) => socket.emit("musashiReviveAnswer", { accept: a })} />}
-        {state.musashiMercyAsk && <MusashiMercyModal ask={state.musashiMercyAsk} onAnswer={(c) => socket.emit("musashiMercyAnswer", { choice: c })} />}
         {shopOpen && <ShopModal shop={state.shop} me={me} onClose={() => setShopOpen(false)} />}
         {bagOpen && <InventoryModal me={me} onClose={() => setBagOpen(false)} />}
       {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}

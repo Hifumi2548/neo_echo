@@ -81,22 +81,6 @@ const DOOM_CHARGE_CHANCE = 0.10;
 const DOOM_TIE_ATTACK_CHANCE = 0.50;
 const DOOM_TURN_FORTUNE_CHANCE = 0.20;
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
-// ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-const MUSASHI_HEAL_ALL = 1;
-const MUSASHI_HEAL_SELF = 2;
-const MUSASHI_BASIC_CD_TURNS = 3;
-const MUSASHI_SKILL_REGEN_CAP = 3; // ระหว่างคูลดาวน์สกิลพื้นฐาน: แต้มสกิลจบเทิร์นสูงสุด 3
-const MUSASHI_MERCY_GAIN = 1;      // ฉันเองก็เห็นใจนายนะ: มอบความเมตตา +1
-const MUSASHI_NORECOVER_TURNS = 2;
-const MUSASHI_MERCY_NEED = 5;      // ออร่าแห่งความเมตตา: ต้องมีความเมตตาสะสมครบ 5 ถึงจะเลือกเป้าหมายได้
-const MUSASHI_MERCY_CAP = 5;
-const MUSASHI_YIELD_DECAY_TURNS = 3;
-const MUSASHI_YIELD_REVENGE_TURNS = 2;
-const MUSASHI_FIGHT_HEAL_SELF = 2;
-const MUSASHI_COSMOS_TURNS = 5;
-const MUSASHI_COSMOS_ATK = 1;
-const MUSASHI_COSMOS_MERCY_GAIN = 2;
-const MUSASHI_COSMOS_FORTUNE = 1;
 // สุ่มอาวุธถัดไปแบบถ่วงน้ำหนัก (ไม่สุ่มซ้ำกระบอกเดิม)
 function rollDoomWeapon(excludeId) {
   const total = DOOM_WEAPON_IDS.reduce((n, id) => n + (id === excludeId ? 0 : DOOM_WEAPONS[id].weight), 0);
@@ -1188,8 +1172,6 @@ const TRANSFORMS = {
   // fourth: ท่าไม้ตายเอวา 13 (หลังเปิดไพ่) — วีดีโอ 10 วิ + เพลงค้างระหว่างมีผล
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: true }, // patch 2.2 full: ทำงานหลังเปิดไพ่
-  cosmos: { img: "/characters/musashi/cosmos.jpg", video: "/characters/musashi/skill3/musashi_skill3.mp4", title: "คอสมอส!!!!!", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "musashi", afterReveal: false }, // patch 2.2 full: ทำงานทันทีก่อนเปิดไพ่
-  musashiMercy: { img: "/characters/musashi/musashi.webp", video: "/characters/musashi/skill2/musashi_skill2.2.mp4", title: "ออร่าแห่งความเมตตา", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -1498,61 +1480,6 @@ function resolvePhenexRelease(p, target, pain) {
     if (!target.alive) lastLog.push(`💀 ${target.name} เลือดจริงหมด ตกรอบ!`);
   }
 }
-// ออร่าแห่งความเมตตา (มุซาชิ ฮารุโนะ patch 2.2 full): เป้าหมายตอบว่าจะยอมแพ้หรือสู้ต่อ
-function resolveMusashiMercy(id, choice) {
-  const t = players[id];
-  if (!t || !t.musashiMercyAsk) return;
-  const asker = players[t.musashiMercyAsk.by];
-  t.musashiMercyAsk = null;
-  if (!asker) return;
-  if (choice === "yield") {
-    t.statuses.decay = Math.max(t.statuses.decay || 0, MUSASHI_YIELD_DECAY_TURNS);
-    // เหลือแค่มุซาชิกับเป้าหมายออร่าแห่งความเมตตาบนสนาม -> ยอมแพ้ = จบเกมชนะทั้งคู่ทันที (เหมือนสกิลติดตัว 2 ริดดี้)
-    //  ป้องกันบัค: ถ้าไม่จบเกม เป้าหมายจะยังมีตาปกติเหลืออยู่ และเลือกโจมตีมุซาชิกลับได้ทั้งที่เพิ่งยอมแพ้ไป
-    const stillAlive = alivePlayers();
-    if (stillAlive.length === 2 && stillAlive.some((p) => p.id === asker.id) && stillAlive.some((p) => p.id === t.id)) {
-      allyWinFlag = true;
-      lastLog.push(`🕊️👑 เหลือเพียง ${asker.name} กับ ${t.name} บนสนาม — ${t.name} เลือกยอมแพ้ ถือว่าทั้งคู่ชนะไปด้วยกัน!`);
-      clearPhaseTimer();
-      gameState = "GAMEOVER";
-      timeLeft = 0;
-      broadcastState();
-      return;
-    }
-    t.statuses.musashiRevenge = MUSASHI_YIELD_REVENGE_TURNS;
-    lastLog.push(`🕊️ ${t.name} เลือกยอมแพ้ต่อ ${asker.name} — ติดผุพัง ${MUSASHI_YIELD_DECAY_TURNS} เทิร์น และมีสิทธิ์เลือกโจมตี ${asker.name} ได้ ${MUSASHI_YIELD_REVENGE_TURNS} เทิร์น`);
-  } else {
-    const dmg = Math.min(t.statuses.mercy || 0, MUSASHI_MERCY_CAP);
-    delete t.statuses.mercy;
-    if (t.statusAmt) delete t.statusAmt.mercy;
-    dealMixed(t, dmg);
-    maybeBeatSave(t); maybeBeatMode(t); maybeEva3(t); maybeWakeKotone(t);
-    t.wasAttacked = true;
-    const heal = healHp(asker, MUSASHI_FIGHT_HEAL_SELF);
-    lastLog.push(`⚔️ ${t.name} เลือกสู้ต่อ! รับความเสียหาย -${dmg} จากความเมตตาที่สะสม (คิดเกราะด้วย)${heal > 0 ? ` — ${asker.name} ฟื้นพลังชีวิต +${heal}` : ""}`);
-    if (t.alive && t.hp <= 0) { instantDeath(t); if (!t.alive) lastLog.push(`💀 ${t.name} เลือดจริงหมด ตกรอบ!`); }
-  }
-  broadcastState();
-}
-// ทุกคนควรได้โอกาส (มุซาชิ ฮารุโนะ patch 2.2 full): ตอบว่าจะฟื้นคืนชีพให้ผู้เล่นที่ตายไปหรือไม่
-function resolveMusashiRevive(id, accept) {
-  const m = players[id];
-  if (!m || !m.musashiReviveAsk) return;
-  const target = players[m.musashiReviveAsk.targetId];
-  m.musashiReviveAsk = null;
-  if (!target) return;
-  if (accept) {
-    m.musashiRevived = true;
-    target.alive = true;
-    target.hp = 1; target.armor = 0; target.skillPoints = 0; target.shield = 0;
-    target.statuses = {}; target.seen = {};
-    target.locked = false; target.busted = false; target.result = null;
-    lastLog.push(`✨ ${m.name} ทุกคนควรได้โอกาส — ฟื้นคืนชีพให้ ${target.name}! (เลือด 1 เกราะ 0 แต้มสกิล 0)`);
-  } else {
-    lastLog.push(`${m.name} เลือกที่จะไม่ฟื้นคืนชีพให้ ${target.name}`);
-  }
-  broadcastState();
-}
 function phenexReleasePain(p) {
   const pain = p.phenexPain || 0;
   p.phenexPain = 0;
@@ -1576,11 +1503,6 @@ function instantDeath(p) {
   //  phenexTauntGrace: หมดเวลาพอดีเทิร์นที่ตาย (เช่น เทิร์นที่ 3) ก็ยังนับว่าตายขณะท่าไม้ตายทำงาน
   if (p.characterId === "phenex" && (p.phenexPain || 0) > 0 && ((p.statuses.phenexTaunt || 0) > 0 || p.phenexTauntGrace)) phenexReleasePain(p);
   p.hp = 0; p.alive = false; p.result = "dead"; p.locked = true;
-  // มุซาชิ ฮารุโนะ (สกิลติดตัว patch 2.2 full): มีผู้เล่นตายแล้วไม่เคยโจมตีใส่เราเลย -> ถามว่าจะฟื้นคืนชีพให้ไหม (1 ครั้งต่อเกม)
-  const musashi = Object.values(players).find((m) => m.alive && m.characterId === "musashi" && !m.musashiRevived && !m.musashiReviveAsk);
-  if (musashi && musashi.id !== p.id && !p.attackedMusashi) {
-    musashi.musashiReviveAsk = { targetId: p.id };
-  }
 }
 
 // ---------- เอวานเกเลี่ยน หมายเลข 13 ----------
@@ -1707,7 +1629,7 @@ function displayImg(p) {
   // ไรโด ฮิคารุ (patch 2.1.6): แก้บั๊ก — MonsterLive (ไคจู Black King) เคยเปลี่ยนภาพได้ก่อน patch 2.1.3 แล้วหายไป คืนให้กลับมาเปลี่ยนภาพอีกครั้ง
   //  ลำดับความสำคัญ: Ginga Strium > ไคจู Black King > Ginga (ตามที่ระบุไว้ในคอมเมนต์ด้านบนฟังก์ชันนี้)
   if (p.characterId === "hikaru" && (p.statuses.monster || 0) > 0) return TRANSFORMS.monster.img;
-  for (const key of ["ginga", "rachan", "golden", "cosmos"]) {
+  for (const key of ["ginga", "rachan", "golden"]) {
     if (p.seen && p.seen[key] && (p.statuses[key] || 0) > 0) return TRANSFORMS[key].img;
   }
   // บานาจ ลิงก์ (patch 2.1.2): หน้าเลือกตัวละคร/ล็อบบี้ใช้ p.img เดิม — ลงสนามแล้วเปลี่ยนเป็น unicorn_new.png
@@ -1793,7 +1715,7 @@ function activeSkillMusic() {
   }
   if (bestWou) return bestWou;
   let best = null;
-  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "humanity", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "cosmos", "doomCrucible"]) {
+  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "humanity", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible"]) {
     const t = TRANSFORMS[key];
     if (!t.music) continue;
     for (const p of alivePlayers()) {
@@ -2057,13 +1979,6 @@ function resetCombat(p) {
   if (p.characterId === "doomguy") p.doomWeapon = DOOM_STARTING_WEAPON; // เริ่มเกมได้ Combat Shotgun เสมอ
   p.doomQuickSwapUsed = false; // Quick Swap: 1 ครั้งต่อเทิร์น
   p.doomCharge = 0;            // ชาร์จสำหรับปลดล็อก Crucible (ครบ 5)
-  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-  p.musashiBasicCd = 0;        // คูลดาวน์ ทุกๆคนก็มีชีวิตเหมือนกัน
-  p.musashiRevived = false;    // ทุกคนควรได้โอกาส: ฟื้นคืนชีพได้ 1 ครั้งต่อเกม
-  p.musashiReviveAsk = null;   // รอเลือกว่าจะฟื้นคืนชีพให้ใครไหม
-  p.attackedMusashi = false;   // เคยโจมตีใส่มุซาชิหรือยัง (เงื่อนไขฟื้นคืนชีพ)
-  p.musashiExposed = false;    // ฉันเองก็เห็นใจนายนะ: แต้มการ์ดถูกเปิดเผยให้ทุกคนเห็น
-  p.musashiMercyAsk = null;    // ออร่าแห่งความเมตตา: รอเลือกว่าจะยอมแพ้หรือสู้ต่อ { by }
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
   p.noDrawNext = 0;       // จำนวนเทิร์นที่จั่วเพิ่มไม่ได้ เริ่มเทิร์นถัดไป (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -2287,20 +2202,7 @@ function buildStateFor(viewerId) {
       if (b) allyFinalAskUi = { partner: b.name, color: POSITION_COLORS[b.position] || "#9B4F96", img: RIDDHE_BANSHEE_IMG };
     }
   }
-  // มุซาชิ ฮารุโนะ (patch 2.2 full): ป๊อปอัพรอตอบ 2 แบบ — ฟื้นคืนชีพ (ฝั่งมุซาชิ) / ยอมแพ้หรือสู้ต่อ (ฝั่งเป้าหมาย)
-  let musashiReviveAsk = null;
-  if (viewer && viewer.musashiReviveAsk) {
-    const t = players[viewer.musashiReviveAsk.targetId];
-    if (t) musashiReviveAsk = { targetName: t.name, color: POSITION_COLORS[t.position] || "#9B4F96", img: displayImg(t) };
-  }
-  let musashiMercyAsk = null;
-  if (viewer && viewer.musashiMercyAsk) {
-    const by = players[viewer.musashiMercyAsk.by];
-    musashiMercyAsk = { from: by ? by.name : "มุซาชิ", color: by ? (POSITION_COLORS[by.position] || "#9B4F96") : "#9B4F96", img: by ? displayImg(by) : null };
-  }
   return {
-    musashiReviveAsk, // มุซาชิ: มีคนตายที่ไม่เคยโจมตีเรา — จะฟื้นคืนชีพให้ไหม
-    musashiMercyAsk,  // เป้าหมายออร่าแห่งความเมตตา: จะยอมแพ้หรือสู้ต่อ
     allyChoices,   // ริดดี้: รายชื่อบานาจให้เลือกยื่นข้อเสนอพันธมิตร
     allyOfferAsk,  // บานาจ: ข้อเสนอพันธมิตรที่รอเราตอบ
     allyBreakAsk: allyBreakAskUi, // ฝ่ายถูกคู่พันธมิตรตี: เลือกยกเลิกพันธมิตรไหม
@@ -2430,10 +2332,6 @@ function buildStateFor(viewerId) {
         }[w.effect] || "ไม่มีความสามารถพิเศษ";
         secondaryPub = { name: `Weapon: ${w.name}`, desc: `ถือ ${w.name} อยู่ — โจมตีปกติ${w.pierce ? "เจาะเกราะ" : ""} ${w.atk} หน่วย. ${effDesc}`, cost: w.cost, img: w.img };
       }
-      // มุซาชิ ฮารุโนะ (patch 2.2 full): ระหว่างร่างคอสมอส — สกิลรอง 1 เปลี่ยนเป็นออร่าแห่งความเมตตาถาวร
-      if (ch.id === "musashi" && (p.statuses.cosmos || 0) > 0) {
-        secondaryPub = pub(ch.secondary2);
-      }
       // กลางคืน (patch 2.1.7): สุ่มแล้วให้สกิลพื้นฐานหรือสกิลรอง (อย่างใดอย่างหนึ่ง) ใช้แต้มมากขึ้น +1 — ไม่เกิน 8 แต้ม ไม่มีผลกับท่าไม้ตาย
       if (p.nightTaxTier === "basic" && basicPub && basicPub.cost < 8) basicPub.cost += 1;
       if (p.nightTaxTier === "secondary" && secondaryPub && secondaryPub.cost < 8) secondaryPub.cost += 1;
@@ -2445,11 +2343,11 @@ function buildStateFor(viewerId) {
         position: p.position,
         color: POSITION_COLORS[p.position] || "#888",
         locked: p.locked,
-        busted: (show || promoShow || allyShow || p.musashiExposed) ? bustedOf(p) : false,
+        busted: (show || promoShow || allyShow) ? bustedOf(p) : false,
         result: p.result,
         cardCount: p.cards.length,
         cards: mine ? p.cards : null,
-        score: (show || promoShow || allyShow || p.musashiExposed) ? scoreOf(p) : null,
+        score: (show || promoShow || allyShow) ? scoreOf(p) : null,
         hp: p.hp, maxHp: maxHpOf(p), // Locacaca (ซาโตรุ): Max HP ลดถาวรได้
         armor: p.armor, maxArmor: maxArmorOf(p),
         shield: p.shield,
@@ -2754,7 +2652,6 @@ function dealRound() {
       }
     }
     if ((p.wouGuardCd || 0) > 0) p.wouGuardCd--; // ซาโตรุ (patch 2.0.8.3): คูลดาวน์ลบล้างลดลงทุกต้นเทิร์น (2 เทิร์นต่อการใช้)
-    if ((p.musashiBasicCd || 0) > 0) p.musashiBasicCd--; // มุซาชิ ฮารุโนะ: คูลดาวน์ ทุกๆคนก็มีชีวิตเหมือนกัน ลดลงทุกต้นเทิร์น
     p.bardNotesUsed = 0;      // Bard: นับโน้ตใหม่ทุกเทิร์น (จำกัด 2 — มิติวิญญาณไม่จำกัด)
     p.mageUses = 0;           // จอมเวทย์ฝึกหัด: นับใหม่ทุกเทิร์น (กดได้ 3 ครั้งต่อเทิร์น)
     p.anataTargets = null;
@@ -3699,26 +3596,6 @@ function useSkill(id, tier, targets, item) {
   if (st === "fourth" && !eva3Active(p)) return;
   // Crucible (DoomGuy patch 2.2 full): ใช้ได้เมื่อชาร์จครบ 5 เท่านั้น
   if (st === "doomCrucible" && (p.doomCharge || 0) < DOOM_CRUCIBLE_CHARGE_NEED) return;
-  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-  const musashiCosmosOn = p.characterId === "musashi" && (p.statuses.cosmos || 0) > 0;
-  const isMusashiBasic = p.characterId === "musashi" && tier === "basic";
-  if (isMusashiBasic && (p.musashiBasicCd || 0) > 0) return; // คูลดาวน์ยังไม่หมด
-  const isMusashiHeartfelt = p.characterId === "musashi" && tier === "secondary" && !musashiCosmosOn;
-  const isMusashiMercyAura = p.characterId === "musashi" && tier === "secondary" && musashiCosmosOn;
-  let musashiTarget = null;
-  if (isMusashiHeartfelt) {
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    musashiTarget = t;
-  }
-  if (isMusashiMercyAura) {
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    if ((t.statuses.mercy || 0) < MUSASHI_MERCY_NEED) return; // ต้องมีความเมตตาสะสมครบ 5 ก่อน
-    musashiTarget = t;
-  }
   // ม่านแห่งราตรี (โอเบรอน): กดซ้ำไม่ได้จนกว่าผลเพิ่มพลังโจมตีจะหมด
   const isVeil = p.characterId === "oberon" && tier === "basic";
   if (isVeil && (p.statuses.veil || 0) > 0) return;
@@ -4605,27 +4482,6 @@ function useSkill(id, tier, targets, item) {
       lastLog.push(`💥 ${p.name} ${wname} — ทำดาเมจทุกคน -${DOOM_BALLISTA_DMG}`);
     }
   }
-  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-  if (isMusashiBasic) {
-    p.musashiBasicCd = MUSASHI_BASIC_CD_TURNS;
-    for (const o of alivePlayers()) {
-      const heal = healHp(o, o.id === p.id ? MUSASHI_HEAL_SELF : MUSASHI_HEAL_ALL);
-      if (heal > 0) lastLog.push(`💗 ${o.name} ได้รับการรักษาจาก ${p.name} +${heal}`);
-    }
-  }
-  if (isMusashiHeartfelt && musashiTarget) {
-    const t = musashiTarget;
-    t.musashiExposed = true;
-    t.statuses.norecover = Math.max(t.statuses.norecover || 0, MUSASHI_NORECOVER_TURNS);
-    t.statuses.mercy = Math.min(MUSASHI_MERCY_CAP, (t.statuses.mercy || 0) + MUSASHI_MERCY_GAIN);
-    lastLog.push(`💞 ${p.name} ฉันเองก็เห็นใจนายนะ — เปิดเผยแต้มการ์ดของ ${t.name} ให้ทุกคนเห็น ติดไร้ทางเยียวยา ${MUSASHI_NORECOVER_TURNS} เทิร์น และความเมตตา +${MUSASHI_MERCY_GAIN} (${t.statuses.mercy}/${MUSASHI_MERCY_CAP})`);
-  }
-  if (isMusashiMercyAura && musashiTarget) {
-    const t = musashiTarget;
-    t.musashiMercyAsk = { by: p.id };
-    triggerCutscene(p, "musashiMercy");
-    lastLog.push(`🕊️ ${p.name} ออร่าแห่งความเมตตา — ${t.name} ต้องเลือกว่าจะยอมแพ้หรือสู้ต่อ`);
-  }
   // Full Assault: ตีหมู่ทุกคนทันที 1 หน่วย (เทิร์นถัดไปอีก 2 ครั้งผ่าน dealRound) แล้วเล่นวีดีโอ
   if (st === "fullassault") {
     p.transformAt = ++transformCounter;
@@ -4859,16 +4715,6 @@ function useSkill(id, tier, targets, item) {
     p.transformAt = ++transformCounter;
     triggerCutscene(p, "fourth");
     lastLog.push(`☄️ ${p.name} Fourth Impact — พลังโจมตีปกติ +${EVA13_FOURTH_ATK} คงอยู่ ${EVA13_FOURTH_TURNS} เทิร์น`);
-  }
-  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
-  // คอสมอส: แปลงร่างทันทีก่อนเปิดไพ่ทั้งหมด (วีดีโอ/ภาพ/เพลง)
-  if (st === "cosmos") {
-    p.seen.cosmos = true;
-    p.transformAt = ++transformCounter;
-    triggerCutscene(p, "cosmos");
-    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + MUSASHI_COSMOS_FORTUNE);
-    p.fortuneIdle = 0;
-    lastLog.push(`🌌 ${p.name} คอสมอส!!!!! — เปลี่ยนร่างคงอยู่ ${MUSASHI_COSMOS_TURNS} เทิร์น พลังโจมตีปกติ +${MUSASHI_COSMOS_ATK} และได้รับโชคลาภ +${MUSASHI_COSMOS_FORTUNE}`);
   }
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   // ข้าขอบัญชา (ชาย): การโจมตีปกติครั้งถัดไปติดผกผันให้เป้าหมาย 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี + แต้มคำสาปแห่งดวงจันทร์ +1
@@ -6207,8 +6053,6 @@ function doAttack(byId, targetId) {
   const rachanAtk = (attacker.statuses.rachan || 0) > 0 ? KUWAGATA_RACHAN_ATK : 0;
   // Fourth Impact (เอวา 13 patch 2.2 alpha): พลังโจมตีปกติ +2 ระหว่างร่าง
   const fourthAtk = (attacker.statuses.fourth || 0) > 0 ? EVA13_FOURTH_ATK : 0;
-  // คอสมอส (มุซาชิ ฮารุโนะ patch 2.2 full): พลังโจมตีปกติ +1 ระหว่างร่าง
-  const cosmosAtk = (attacker.statuses.cosmos || 0) > 0 ? MUSASHI_COSMOS_ATK : 0;
   // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): กลางคืนพลังโจมตี +1 ถาวร
   const lenNightAtk = ((attacker.characterId === "len" || attacker.characterId === "lenwhite") && isNightRound(roundNumber)) ? 1 : 0;
   // Arc Drive finish (ไวท์เล็น patch 2.2 beta): โหมดสะสมพลังโจมตี — เผาครบทุกๆ 2 ชิ้น +1 (สะสมได้เรื่อยๆ จนกว่ากลางวันจะมาถึง)
@@ -6223,7 +6067,7 @@ function doAttack(byId, targetId) {
     : 1;
   // หอกลองกินัส (เอวา 13) ล็อคเป้า (DoomGuy Heavy Cannon): ดาเมจแรงขึ้น +1 ครั้งเดียวเมื่อโจมตีเป้าหมายที่ติดล็อคเป้า
   const doomLockonAtk = (attacker.characterId === "doomguy" && (target.statuses.doomLockon || 0) > 0) ? DOOM_LOCKON_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + cosmosAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -6615,13 +6459,6 @@ function doAttack(byId, targetId) {
       }
     }
   }
-  // มุซาชิ ฮารุโนะ (สกิลติดตัว patch 2.2 full): จำไว้ว่าเคยโจมตีใส่มุซาชิแล้ว (เงื่อนไขฟื้นคืนชีพ)
-  if (target.characterId === "musashi") attacker.attackedMusashi = true;
-  // คอสมอส (มุซาชิ ฮารุโนะ patch 2.2 full): การโจมตีปกติมอบความเมตตาให้เป้าหมาย +2 (สะสมถาวร สูงสุด 5)
-  if ((attacker.statuses.cosmos || 0) > 0 && target.alive) {
-    target.statuses.mercy = Math.min(MUSASHI_MERCY_CAP, (target.statuses.mercy || 0) + MUSASHI_COSMOS_MERCY_GAIN);
-    lastLog.push(`🌌 ${attacker.name} คอสมอส — มอบความเมตตาให้ ${target.name} +${MUSASHI_COSMOS_MERCY_GAIN} (${target.statuses.mercy}/${MUSASHI_MERCY_CAP})`);
-  }
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
   let deathlineReset = false;
@@ -6949,7 +6786,6 @@ function endTurn() {
       if (k === "godtree") continue; // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด/ยกเลิกเอง ไม่ลดเทิร์น
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
-      if (k === "mercy") continue;   // ความเมตตา (มุซาชิ ฮารุโนะ): สแตคถาวร จนกว่าจะถูกล้างด้วยออร่าแห่งความเมตตา
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "rsHopper") continue; // RS-Hopper (เอวา 13): สแตคชาร์จ ไม่ใช่ตัวนับเทิร์น — ฟื้นเองทุก 3 เทิร์น (ดูด้านบน)
       if (k === "cassius") continue; // หอกแห่งแคสเซียส (เอวา 13): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
@@ -7054,8 +6890,6 @@ function endTurn() {
     if (p.characterId === "satoru" && !passiveSealed(p)) gain += 1;
     // คิชินามิ ฮาคุโนะ (patch 2.2.1): ร่างหญิง — แต้มสกิลฟื้นเพิ่ม +1 ทุกเทิร์น
     if (p.characterId === "hakuno" && p.hakunoGender === "female") gain += 1;
-    // มุซาชิ ฮารุโนะ (สกิลติดตัว patch 2.2 full): ระหว่างรอสกิลพื้นฐานคูลดาวน์ แต้มสกิลจบเทิร์นสูงสุด 3
-    if (p.characterId === "musashi" && (p.musashiBasicCd || 0) > 0) gain = Math.min(MUSASHI_SKILL_REGEN_CAP, gain + 1);
     // ค่าปรับปฏิเสธข้อเสนอ (เจ้าแห่งเน็ตบ้าน): แต้มสกิลหลังจบเทิร์นลด 1
     if ((p.skillDrain || 0) > 0) {
       gain = Math.max(0, gain - 1);
@@ -7327,8 +7161,6 @@ io.on("connection", (socket) => {
       beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       gold: 0, inventory: [],
       doomWeapon: ch.id === "doomguy" ? DOOM_STARTING_WEAPON : null, doomQuickSwapUsed: false, doomCharge: 0,
-      musashiBasicCd: 0, musashiRevived: false, musashiReviveAsk: null, attackedMusashi: false,
-      musashiExposed: false, musashiMercyAsk: null,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
@@ -7367,8 +7199,6 @@ io.on("connection", (socket) => {
   socket.on("useSkill", ({ tier, targets, item } = {}) => useSkill(socket.id, tier, targets, item));
   socket.on("buyShopItem", ({ itemId } = {}) => buyShopItem(socket.id, itemId));
   socket.on("useInventoryItem", ({ uid } = {}) => useInventoryItem(socket.id, uid));
-  socket.on("musashiMercyAnswer", ({ choice } = {}) => resolveMusashiMercy(socket.id, choice));
-  socket.on("musashiReviveAnswer", ({ accept } = {}) => resolveMusashiRevive(socket.id, !!accept));
   socket.on("lenSelectBank", ({ index } = {}) => lenSelectBank(socket.id, index)); // เล็น: เลือกท่าจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
   socket.on("lwSelectBank", ({ index } = {}) => lwSelectBank(socket.id, index)); // ไวท์เล็น: เลือกของจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
   socket.on("lwCardBurn", ({ indices } = {}) => lwCardBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด (เลือกหลายชิ้น ยืนยันครั้งเดียว)

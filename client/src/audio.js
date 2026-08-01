@@ -51,7 +51,6 @@ const FILES = {
   lenwhiteVoice2: "/characters/lenwhite/lenwhite_voice2.m4a",
   lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
   doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)
-  musashi: "/characters/musashi/musashi_theme.mp3", // เพลงระหว่างท่าไม้ตาย คอสมอส (มุซาชิ ฮารุโนะ)
   // เสียงอาวุธ DoomGuy (patch 2.2 full): เสียงโจมตี/เสียงใช้สกิลรอง Weapon แยกตามอาวุธที่ถืออยู่
   doomguy_cs_shoot: "/characters/doomguy/sound/CS Shoot.mp3",
   doomguy_cs_skill: "/characters/doomguy/sound/CS Skill.mp3",
