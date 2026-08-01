@@ -561,6 +561,7 @@ function statusEntries(p, full) {
   if ((p.profit || 0) > 0) out.push({ key: "profit", v: p.profit, icon: "💰", label: "กำไร", cls: "bg-echo-gold text-gray-900", desc: "กำไรเท่าตัวโว้ย: การโจมตีครั้งถัดไป +N และทะลุเกราะ (คงอยู่จนได้ตี)" });
   if ((p.appleAtk || 0) > 0) out.push({ key: "appleAtk", v: p.appleAtk, icon: "🍎", label: "มอบของ", cls: "bg-echo-gold text-gray-900", desc: "เอาไปสิ: พลังโจมตีเพิ่มจากการมอบของ (ไม่ซ้อนทับ) — มอบชิ้นเดิมให้คนเดิมซ้ำ บัฟหายไป" });
   if ((p.coins || 0) > 0) out.push({ key: "coins", v: p.coins, icon: "🐷", label: "Coin", cls: "bg-echo-gold text-gray-900", desc: "กระปุกออมสินน้องหมูน้อย: coin สะสม (สูงสุด 6) — ตอนโจมตีแปลงเป็นความเสียหาย 3 coin = +1 (ใช้แล้วเหรียญหมดไป)" });
+  if ((p.gold || 0) > 0) out.push({ key: "gold", v: p.gold, icon: "🪙", label: "เหรียญ", cls: "bg-echo-gold text-gray-900", desc: "เหรียญสะสม (เพดาน 30) — ใช้ซื้อของที่ร้านค้ามายา (เปิดทุก 5 เทิร์น)" });
   // โอกูริ แคป: Stamina สะสม (โชว์เสมอ — ทรัพยากรหลักของตัวละคร)
   if (p.character?.id === "oguri") out.push({ key: "stamina", v: 1, icon: "🏇", label: `Stamina ${p.stamina || 0}/16`, cls: "bg-echo-cyan text-gray-900", desc: "Stamina: ทรัพยากรของโอกูริ แคป (สะสมสูงสุด 16) — Training ใช้ 4 / The Beat of Victory ใช้ 8 / Ashen Trail ใช้ 12 — เติมได้จาก Breakfast (+4), A Big Meal (เต็ม 16) และ GrayBeast (+1/เทิร์น)" });
   // คิชินามิ ฮาคุโนะ (patch 2.2.1): แต้มคำสาปแห่งดวงจันทร์ — สะสมครบ 3 เพื่อเปิด MOON*CELL
@@ -654,6 +655,87 @@ function StatusModal({ p, onClose }) {
                 </div>
               ) : null
             )}
+          </div>
+        )}
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------- ร้านค้ามายา + คลังผู้เล่น (patch 2.2 full) ----------
+const SHOP_ITEM_INFO = {
+  cardPoint: { icon: "🃏", label: (it) => `แต้มการ์ด +${it.value}`, desc: "บวกเข้าแต้มไพ่ที่กำลังจั่วอยู่ทันที (ใช้ได้เฉพาะช่วงกำลังจั่วไพ่และยังไม่ล็อก)" },
+  fortune: { icon: "🍀", label: () => "ยาโชคลาภ", desc: "ได้รับโชคลาภ +2 หน่วย (การจั่วครั้งถัดไปได้ไพ่ที่ดีที่สุด)" },
+  resist: { icon: "🛡️", label: () => "ยาต้านสถานะ", desc: "ต้านสถานะผิดปกติทุกประเภท 3 เทิร์น (ป้องกันล่วงหน้าเท่านั้น ไม่ใช่ยารักษา)" },
+  skillPoint: { icon: "⚡", label: (it) => `ยาฟื้นแต้มสกิล +${it.value}`, desc: "ฟื้นแต้มสกิลทันที (เกินเพดานจะหายทิ้งส่วนที่เกิน)" },
+  armor: { icon: "🔧", label: (it) => `ยาฟื้นเกราะ +${it.value}`, desc: "ฟื้นเกราะทันที" },
+};
+function shopInfoOf(it) { return SHOP_ITEM_INFO[it.type] || { icon: "✦", label: () => "สินค้า", desc: "" }; }
+
+function ShopModal({ shop, me, onClose }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4" onClick={onClose}>
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-lg w-full shadow-2xl max-h-[85vh] overflow-y-auto border-2 border-echo-gold" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xl font-black text-echo-gold">🏪 ร้านค้ามายา</div>
+          <div className="text-sm font-bold bg-black/40 rounded-lg px-2 py-1">🪙 {me?.gold ?? 0} เหรียญ</div>
+        </div>
+        {(!shop || shop.length === 0) ? (
+          <div className="text-sm opacity-70 py-6 text-center">ร้านค้ายังไม่เปิด — จะเปิดทุกๆ 5 เทิร์น</div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {shop.map((it) => {
+              const info = shopInfoOf(it);
+              const sold = !!it.sold;
+              const afford = (me?.gold ?? 0) >= it.price;
+              return (
+                <div key={it.id} className={`rounded-xl border p-2 flex flex-col items-center text-center gap-1 ${sold ? "border-white/10 bg-white/5 opacity-50" : "border-echo-gold/50 bg-black/30"}`}>
+                  <div className="text-2xl">{info.icon}</div>
+                  <div className="text-xs font-bold leading-tight">{info.label(it)}</div>
+                  <div className="text-[11px] opacity-70 leading-snug">{info.desc}</div>
+                  <div className="text-xs font-bold text-echo-gold">🪙 {it.price}</div>
+                  <Button
+                    className="w-full py-1.5 text-xs"
+                    disabled={sold || !afford}
+                    onClick={() => { clickSound(); socket.emit("buyShopItem", { itemId: it.id }); }}
+                  >
+                    {sold ? "ขายแล้ว" : afford ? "ซื้อ" : "เหรียญไม่พอ"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
+      </div>
+    </div>
+  );
+}
+
+function InventoryModal({ me, onClose }) {
+  const items = me?.inventory || [];
+  return (
+    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4" onClick={onClose}>
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="text-xl font-black mb-3">🎒 กระเป๋าของ {me?.name}</div>
+        {items.length === 0 ? (
+          <div className="text-sm opacity-70 py-6 text-center">ยังไม่มีของในคลัง — ซื้อได้จากร้านค้ามายา</div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {items.map((it) => {
+              const info = shopInfoOf(it);
+              return (
+                <div key={it.uid} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+                  <span className="text-2xl shrink-0">{info.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-sm">{info.label(it)}</div>
+                    <div className="text-xs opacity-70 leading-snug">{info.desc}</div>
+                  </div>
+                  <Button className="px-3 py-1.5 text-xs shrink-0" onClick={() => { clickSound(); socket.emit("useInventoryItem", { uid: it.uid }); }}>ใช้</Button>
+                </div>
+              );
+            })}
           </div>
         )}
         <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
@@ -1315,6 +1397,50 @@ function PhenexReleaseModal({ ask, onPick }) {
     </div>
   );
 }
+// มุซาชิ ฮารุโนะ (สกิลติดตัว): มีคนตายที่ไม่เคยโจมตีเรา — จะฟื้นคืนชีพให้ไหม (1 ครั้งต่อเกม)
+function MusashiReviveModal({ ask, onAnswer }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4">
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl border-2 border-echo-gold">
+        <div className="flex items-center gap-3 mb-3">
+          <img src={ask.img} alt="" className="w-16 h-16 object-cover rounded-xl shrink-0" />
+          <div>
+            <div className="text-lg font-black text-echo-gold">✨ ทุกคนควรได้โอกาส</div>
+            <div className="text-sm opacity-80"><span className="font-bold" style={{ color: ask.color }}>{ask.targetName}</span> เสียชีวิตแล้วและไม่เคยโจมตีใส่คุณเลย — ฟื้นคืนชีพให้ไหม? (ใช้ได้ 1 ครั้งต่อเกม)</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <Button variant="gold" className="py-3" onClick={() => { clickSound(); onAnswer(true); }}>✅ ฟื้นคืนชีพ</Button>
+          <Button variant="ghost" className="py-3" onClick={() => { clickSound(); onAnswer(false); }}>❌ ไม่ฟื้น</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// เป้าหมายออร่าแห่งความเมตตา (มุซาชิ ฮารุโนะ): จะยอมแพ้หรือสู้ต่อ
+function MusashiMercyModal({ ask, onAnswer }) {
+  return (
+    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4">
+      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl border-2" style={{ borderColor: ask.color }}>
+        <div className="flex items-center gap-3 mb-3">
+          {ask.img && <img src={ask.img} alt="" className="w-16 h-16 object-cover rounded-xl shrink-0" />}
+          <div>
+            <div className="text-lg font-black text-echo-gold">🕊️ ออร่าแห่งความเมตตา</div>
+            <div className="text-sm opacity-80"><span className="font-bold" style={{ color: ask.color }}>{ask.from}</span> ให้คุณเลือก — จะยอมแพ้ หรือ จะสู้ต่อ?</div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 text-sm mb-3">
+          <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2">🕊️ <b>ยอมแพ้</b> — ติดผุพัง 3 เทิร์น แต่คุณจะมีสิทธิ์เลือกโจมตีเขาได้ 2 เทิร์น</div>
+          <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2">⚔️ <b>สู้ต่อ</b> — รับความเสียหาย (คิดเกราะด้วย) ตามความเมตตาที่สะสม (สูงสุด 5) แล้วความเมตตาจะถูกล้าง</div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="gold" className="py-3" onClick={() => { clickSound(); onAnswer("yield"); }}>🕊️ ยอมแพ้</Button>
+          <Button variant="ghost" className="py-3" onClick={() => { clickSound(); onAnswer("fight"); }}>⚔️ สู้ต่อ</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 // บานาจ: ข้อเสนอพันธมิตรจากริดดี้ — ตอบรับ/ปฏิเสธ (ไม่ตอบก่อนเปิดไพ่ = ปฏิเสธ)
 function AllyOfferModal({ offer, onAnswer }) {
   return (
@@ -1516,6 +1642,9 @@ export default function Game({ state, lowQ }) {
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
   const [skSel, setSkSel] = useState(false);         // ชิกิ: โหมดเลือกเป้าหมาย นายมีฝีมือแค่ไหนหรอ? (เลือกตัวเองไม่ได้)
+  const [musashiSel, setMusashiSel] = useState(false); // มุซาชิ ฮารุโนะ: โหมดเลือกเป้าหมายสกิลรอง (ทั้งฉันเองก็เห็นใจนายนะ/ออร่าแห่งความเมตตา)
+  const [doomSel, setDoomSel] = useState(false); // DoomGuy: โหมดเลือกเป้าหมาย Weapon (เฉพาะอาวุธที่ต้องเลือกเป้าหมาย)
+  const DOOM_TARGET_WEAPONS = ["shotgun", "heavy", "supershotgun", "rocket"];
   const [saObSel, setSaObSel] = useState(false);     // ซาโตรุ: โหมดเลือกเป้าหมาย Obla Di, Obla Da (เลือกตัวเองไม่ได้)
   const [saLocaSel, setSaLocaSel] = useState(false); // ซาโตรุ: โหมดเลือกเป้าหมาย Locacaca fruit (เลือกตัวเองได้)
   const [bardSel, setBardSel] = useState([]);        // Bard: เป้าหมายบทเพลงที่เลือกไว้ (บทเพลงต้องการ 1-2 คน)
@@ -1525,6 +1654,9 @@ export default function Game({ state, lowQ }) {
   const [reijuOpen, setReijuOpen] = useState(false); // ฟุจิมารุ: เมนูเลือกคำสั่งเรจูอาคมบัญชา
   const [hakunoCmdOpen, setHakunoCmdOpen] = useState(false); // คิชินามิ ฮาคุโนะ: เมนูเลือกคำสั่งอาคมบัญชาระดับ EX+
   const [statusViewId, setStatusViewId] = useState(null); // ดูสถานะผู้เล่นคนอื่น (แตะการ์ดตอนไม่ได้เลือกเป้า)
+  const [bagOpen, setBagOpen] = useState(false);     // ร้านค้ามายา (patch 2.2 full): เปิดดูคลังของตัวเอง
+  const [shopOpen, setShopOpen] = useState(false);   // ร้านค้ามายา: เปิดหน้าร้านค้า
+  const shopAutoShown = useRef(-1);                  // จำรอบร้านค้าที่เด้งอัตโนมัติไปแล้ว (กันเด้งซ้ำ)
   const vp = useViewport();
   const phase = state.gameState;
   const me = state.players.find((p) => p.id === state.youId);
@@ -1544,6 +1676,14 @@ export default function Game({ state, lowQ }) {
       playSfx(`nanayaVoice${1 + Math.floor(Math.random() * 5)}`);
     }
   }, [phase, winner, state.roundNumber]);
+  // ร้านค้ามายา (patch 2.2 full): เด้งหน้าร้านค้าอัตโนมัติครั้งเดียวทุกครั้งที่มีสินค้าชุดใหม่ (รอบร้านค้าเปลี่ยน)
+  useEffect(() => {
+    const seq = state.shop?.[0]?.id?.split("_")[1];
+    if (seq && shopAutoShown.current !== seq) {
+      shopAutoShown.current = seq;
+      setShopOpen(true);
+    }
+  }, [state.shop]);
   // ผู้เล่นที่กำลังเปิดดูสถานะ (ข้อมูลสดจาก state ทุกครั้งที่ re-render)
   const statusView = statusViewId ? state.players.find((x) => x.id === statusViewId) : null;
   // Beat Mode (คุวากาตะ เลือด < 3): ท่าไม้ตายใช้ไม่ได้เสมอ
@@ -1619,6 +1759,8 @@ export default function Game({ state, lowQ }) {
   const cassiusLocked = isEva && (me?.statuses?.cassius || 0) > 0;
   // Fourth Impact: ใช้ได้เมื่อสกิลติดตัว 3 ทำงาน (เลือด <= 4) เท่านั้น
   const fourthLocked = isEva && (me?.hp || 0) > 4;
+  // ---------- DoomGuy (patch 2.2 full) ----------
+  const doomUltLocked = ch?.id === "doomguy" && (me?.doomCharge || 0) < 5; // Crucible: ต้องมีชาร์จครบ 5
   // ---------- ฟุจิมารุ ----------
   const isFuji = ch?.id === "fujimaru";
   const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
@@ -1731,6 +1873,13 @@ export default function Game({ state, lowQ }) {
     if (tier === "secondary" && ch?.id === "shrade_elan") { setShSel(true); setSkillOpen(false); return; }
     // เรียวกิ ชิกิ: สกิลรอง (นายมีฝีมือแค่ไหนหรอ?) เข้าโหมดเลือกเป้าหมายก่อนส่งไป server
     if (tier === "secondary" && ch?.id === "shiki") { setSkSel(true); setSkillOpen(false); return; }
+    // มุซาชิ ฮารุโนะ: สกิลรอง (ฉันเองก็เห็นใจนายนะ / ออร่าแห่งความเมตตา) เข้าโหมดเลือกเป้าหมายก่อนส่งไป server
+    if (tier === "secondary" && ch?.id === "musashi") { setMusashiSel(true); setSkillOpen(false); return; }
+    // DoomGuy: สกิลรอง Weapon — บางอาวุธต้องเลือกเป้าหมายก่อนส่งไป server (Combat Shotgun / Heavy Cannon / Super Shotgun / Rocket Launcher)
+    if (tier === "secondary" && ch?.id === "doomguy") {
+      if (DOOM_TARGET_WEAPONS.includes(me?.doomWeapon)) { setDoomSel(true); setSkillOpen(false); return; }
+      socket.emit("useSkill", { tier }); setSkillOpen(false); return;
+    }
     // บานาจ ลิงก์ (patch 2.1.2): สกิลพื้นฐาน Absorb shield เข้าโหมดเลือกเป้าหมาย (เลือกตัวเองได้)
     if (tier === "basic" && ch?.id === "banagher") { setBgSel(true); setSkillOpen(false); return; }
     // ---------- เล็น (patch 2.2 beta) ----------
@@ -1784,6 +1933,16 @@ export default function Game({ state, lowQ }) {
   const pickSk = (id) => {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
     setSkSel(false);
+  };
+  // เลือกเป้าหมายสกิลรองของมุซาชิ ฮารุโนะ (แปรตามร่างฝั่ง server เอง) -> ส่งไป server ทันที
+  const pickMusashi = (id) => {
+    socket.emit("useSkill", { tier: "secondary", targets: [id] });
+    setMusashiSel(false);
+  };
+  // เลือกเป้าหมาย Weapon ของ DoomGuy -> ส่งไป server ทันที
+  const pickDoom = (id) => {
+    socket.emit("useSkill", { tier: "secondary", targets: [id] });
+    setDoomSel(false);
   };
   // เลือกเป้าหมายบทเพลง (Bard) — ครบจำนวนที่บทเพลงต้องการแล้วส่งไป server ทันที
   const pickBard = (id) => {
@@ -1986,6 +2145,12 @@ export default function Game({ state, lowQ }) {
     if (skSel && (phase !== "PLAYING" || me?.skillUsed || done)) setSkSel(false);
   }, [skSel, phase, me?.skillUsed, done]);
   useEffect(() => {
+    if (musashiSel && (phase !== "PLAYING" || me?.skillUsed || done)) setMusashiSel(false);
+  }, [musashiSel, phase, me?.skillUsed, done]);
+  useEffect(() => {
+    if (doomSel && (phase !== "PLAYING" || me?.skillUsed || done)) setDoomSel(false);
+  }, [doomSel, phase, me?.skillUsed, done]);
+  useEffect(() => {
     if (saObSel && (phase !== "PLAYING" || me?.skillUsed || done)) setSaObSel(false);
   }, [saObSel, phase, me?.skillUsed, done]);
   useEffect(() => {
@@ -2066,9 +2231,9 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || musashiSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
-              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
             />
           ))}
@@ -2144,6 +2309,18 @@ export default function Game({ state, lowQ }) {
           <div className="shrink-0 text-center mt-1.5 text-hard">
             <span className="text-lg font-black text-echo-hp animate-pulse">🔪 แตะเลือกเป้าหมาย นายมีฝีมือแค่ไหนหรอ?</span>
             <button onClick={() => { clickSound(); setSkSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+          </div>
+        )}
+        {musashiSel && (
+          <div className="shrink-0 text-center mt-1.5 text-hard">
+            <span className="text-lg font-black text-echo-gold animate-pulse">💞 แตะเลือกเป้าหมายสกิลรอง</span>
+            <button onClick={() => { clickSound(); setMusashiSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+          </div>
+        )}
+        {doomSel && (
+          <div className="shrink-0 text-center mt-1.5 text-hard">
+            <span className="text-lg font-black text-echo-cyan animate-pulse">🔫 แตะเลือกเป้าหมาย Weapon</span>
+            <button onClick={() => { clickSound(); setDoomSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {saObSel && (
@@ -2230,7 +2407,7 @@ export default function Game({ state, lowQ }) {
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                 <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || monsterMe)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || doomUltLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2272,6 +2449,11 @@ export default function Game({ state, lowQ }) {
                 </div>
               )}
 
+              {/* ร้านค้ามายา + คลัง (patch 2.2 full): ปุ่มใหญ่เท่าปุ่มจั่วการ์ด กดดูได้ตลอดทุกช่วงเกม */}
+              <div className="flex gap-2 mt-2">
+                <Button variant="gold" className="flex-1 py-4 text-lg" onClick={() => { clickSound(); setBagOpen(true); }}>🎒 กระเป๋า {me.inventory?.length ? `(${me.inventory.length})` : ""}</Button>
+                <Button variant="gold" className="flex-1 py-4 text-lg" onClick={() => { clickSound(); setShopOpen(true); }}>🏪 ร้านค้า · 🪙{me.gold ?? 0}</Button>
+              </div>
               {/* ปุ่มแอคชันใหญ่ (ล่างสุด เต็มความกว้าง) */}
               <div className="mt-2">
                 {phase === "PLAYING" && me.alive && !done ? (
@@ -2431,10 +2613,14 @@ export default function Game({ state, lowQ }) {
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
+        {state.musashiReviveAsk && <MusashiReviveModal ask={state.musashiReviveAsk} onAnswer={(a) => socket.emit("musashiReviveAnswer", { accept: a })} />}
+        {state.musashiMercyAsk && <MusashiMercyModal ask={state.musashiMercyAsk} onAnswer={(c) => socket.emit("musashiMercyAnswer", { choice: c })} />}
         {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
         {state.allyBreakAsk && me?.alive && <AllyBreakModal ask={state.allyBreakAsk} onAnswer={(c) => socket.emit("allyBreakAnswer", { cancel: c })} />}
         {state.allyFinalAsk && me?.alive && <AllyFinalModal ask={state.allyFinalAsk} onAnswer={(k) => socket.emit("allyFinalAnswer", { keep: k })} />}
         {statusView && <StatusModal p={statusView} onClose={() => setStatusViewId(null)} />}
+        {shopOpen && <ShopModal shop={state.shop} me={me} onClose={() => setShopOpen(false)} />}
+        {bagOpen && <InventoryModal me={me} onClose={() => setBagOpen(false)} />}
       </div>
     );
   }
@@ -2476,9 +2662,9 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || musashiSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
-          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
         />
       ))}
@@ -2665,7 +2851,7 @@ export default function Game({ state, lowQ }) {
                 <div className="grid grid-cols-3 gap-3 mt-2">
                   <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                   <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || doomUltLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2724,6 +2910,9 @@ export default function Game({ state, lowQ }) {
 
               {/* ปุ่มจั่ว/เปิดไพ่ (คอลัมน์ขวา) */}
               <div className="flex flex-col gap-3 justify-center shrink-0 w-32">
+                {/* ร้านค้ามายา + คลัง (patch 2.2 full): กดดูได้ตลอดทุกช่วงเกม */}
+                <Button variant="gold" className="px-3 py-4 text-sm" onClick={() => { clickSound(); setBagOpen(true); }}>🎒 กระเป๋า{me.inventory?.length ? ` (${me.inventory.length})` : ""}</Button>
+                <Button variant="gold" className="px-3 py-4 text-sm" onClick={() => { clickSound(); setShopOpen(true); }}>🏪 🪙{me.gold ?? 0}</Button>
                 {phase === "PLAYING" && me.alive && !done ? (
                   <>
                     {/* แต้มถึงเพดาน (เช่น 21 พอดี) = ปิดปุ่มจั่ว รอผู้ใช้เลือกสกิล/เปิดไพ่เอง */}
@@ -2890,6 +3079,8 @@ export default function Game({ state, lowQ }) {
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
       {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
+        {state.musashiReviveAsk && <MusashiReviveModal ask={state.musashiReviveAsk} onAnswer={(a) => socket.emit("musashiReviveAnswer", { accept: a })} />}
+        {state.musashiMercyAsk && <MusashiMercyModal ask={state.musashiMercyAsk} onAnswer={(c) => socket.emit("musashiMercyAnswer", { choice: c })} />}
       {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
       {state.allyBreakAsk && me?.alive && <AllyBreakModal ask={state.allyBreakAsk} onAnswer={(c) => socket.emit("allyBreakAnswer", { cancel: c })} />}
       {state.allyFinalAsk && me?.alive && <AllyFinalModal ask={state.allyFinalAsk} onAnswer={(k) => socket.emit("allyFinalAnswer", { keep: k })} />}

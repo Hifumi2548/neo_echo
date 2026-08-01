@@ -15,7 +15,7 @@ export default function Splash({ onEnter }) {
         aria-label="แตะเพื่อเริ่ม"
       >
         <img
-          src="/image/splash2.2beta.png"
+          src="/image/splash2.2full.png"
           alt="ECHO"
           className="absolute inset-0 w-full h-full object-contain sm:object-cover transition group-hover:brightness-110"
         />
@@ -24,7 +24,7 @@ export default function Splash({ onEnter }) {
           แตะที่รูปภาพเพื่อเริ่ม
         </div>
         <div className="absolute bottom-8 right-4 text-white font-bold text-sm drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
-          เวอร์ชัน 2.2.1 alpha
+          เวอร์ชัน 2.2.2 full
         </div>
       </button>
     </div>

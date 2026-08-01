@@ -50,6 +50,8 @@ const FILES = {
   lenwhiteVoice1: "/characters/lenwhite/lenwhite_voice1.m4a", // เสียงพากย์สุ่มตอนไวท์เล็นเริ่มคัดลอกสกิล
   lenwhiteVoice2: "/characters/lenwhite/lenwhite_voice2.m4a",
   lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
+  doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)
+  musashi: "/characters/musashi/musashi_theme.mp3", // เพลงระหว่างท่าไม้ตาย คอสมอส (มุซาชิ ฮารุโนะ)
   action_button: "/effect_sound/action_button.wav",
   trun_change: "/effect_sound/trun_change.wav",
   attack: "/effect_sound/attack.wav",
