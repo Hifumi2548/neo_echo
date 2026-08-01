@@ -1101,7 +1101,7 @@ const TRANSFORMS = {
   // seconds ≈ ความยาววิดีโอ (วีดีโอจบ = ตัดกลับจอปกติทันที ไม่ค้างเฟรม)
   //  เสียงพากย์ + เอฟเฟกต์ระเบิด + แจ้งเปลี่ยนร่าง จะเล่นบนจอปกติหลังวีดีโอจบ (ฝั่ง client)
   //  rachan: วีดีโอ 11.62 | beat: วีดีโอ 4.70
-  rachan:   { img: OHGER_FORM, video: "/characters/kuwagata/kuwagata_final.mp4",   title: "สวมเกราะราชัน",       label: "ปล่อยท่าไม้ตาย",   seconds: 12, music: "final_normal", voice: "normal_k", afterReveal: true },
+  rachan:   { img: OHGER_FORM, video: "/characters/kuwagata/kuwagata_final.mp4",   title: "สวมเกราะราชัน",       label: "ปล่อยท่าไม้ตาย",   seconds: 12, music: "final_normal", voice: "normal_k", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   beat:     { img: OHGER_FORM, video: "/characters/kuwagata/kuwagata_passive.mp4", title: "ประกายเขี้ยวปฏิปักษ์", label: "สกิลติดตัวทำงาน", seconds: 5,  music: "ex_guts",      voice: "ex_k",     afterReveal: false },
   // humanity: ท่าไม้ตายฟุจิมารุ — วีดีโอ 13 วิ แล้วเพลง fujimaru_final_theme เล่นค้างระหว่างมีผล
   humanity: { img: FUJIMARU_FINAL_IMG, video: "/characters/fujimaru/fujimaru_final.mp4", title: "EVERYTHING FOR HUMANITY", label: "ปล่อยท่าไม้ตาย", seconds: 13, music: "fujimaru_final", afterReveal: true },
@@ -1112,7 +1112,7 @@ const TRANSFORMS = {
   // golden: ท่าไม้ตายแกมเบลอร์ ทอยสำเร็จ -> เล่นทันทีก่อนเปิดไพ่ (แบบ monster) + เพลงค้างระหว่างมีผล — วีดีโอ 10 วิ
   golden:   { img: "/characters/gambler/gamnler_final.jpg", video: "/characters/gambler/gambler_final.mp4", title: "เวลาทองของพี่มาแล้ว 777", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "gambler", afterReveal: false },
   // fourth: ท่าไม้ตายเอวา 13 (หลังเปิดไพ่) — วีดีโอ 10 วิ + เพลงค้างระหว่างมีผล
-  fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: true },
+  fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -1766,7 +1766,7 @@ function eva13RsHopperBlock(p) {
   lastLog.push(`🦘 ${p.name} RS-HOPPER — ป้องกันความเสียหายจากสกิลได้ทั้งหมด! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
   return true;
 }
-// isNormalAttack: true เฉพาะที่ doAttack() เรียกด้วยดาเมจฐาน (ไม่มีโบนัสจากสกิล/สถานะเสริมพลังโจมตี) — ยกเว้นไม่ให้ RS-Hopper บล็อกเต็ม
+// isNormalAttack: true เฉพาะที่ doAttack() เรียก (การโจมตีจากการเลือกเป้าหมายในเทิร์นปกติ ไม่ว่าจะมีบัฟเสริมพลังหรือไม่) — RS-Hopper บล็อกเต็มไม่ได้ กันได้แค่ไม่ให้ต่ำกว่า 4 หน่วย
 function dealDirect(p, n, isNormalAttack) {
   if (sealActive(p)) return;
   if (!isNormalAttack && eva13RsHopperBlock(p)) return;
@@ -4453,13 +4453,24 @@ function useSkill(id, tier, targets, item) {
   // ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
   // สวมเกราะราชัน: เปลี่ยนร่างเป็นคิงโอเจอร์ 5 เทิร์น + มอบโชคลาภ 2 หน่วยสำหรับการจั่วการ์ด
   if (st === "rachan") {
-    // เล่นวีดีโอ/ฉากแปลงร่างทันทีก่อนเปิดไพ่ (patch 2.2.1 alpha — เดิมไปโผล่ตอนเปิดไพ่ผ่านระบบ afterResolve() sweep)
+    // แปลงร่างคิงโอเจอร์ทันทีก่อนเปิดไพ่ทั้งหมด (patch 2.2.1 alpha — วีดีโอ/ภาพ/เพลง/ลำดับความสำคัญ)
+    //  เดิมทั้งหมดนี้ผูกกับ p.seen.rachan ซึ่งเคยถูกตั้งค่าใน afterResolve() sweep หลังเปิดไพ่เท่านั้น
     const rachanFirstTime = !p.cutsceneShown.rachan;
+    p.seen.rachan = true;
+    p.transformAt = ++transformCounter;
     triggerCutscene(p, "rachan");
     if (rachanFirstTime) queueTransformAnnounce(p, "rachan");
     p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_RACHAN_FORTUNE);
     p.fortuneIdle = 0;
     lastLog.push(`👑 ${p.name} สวมเกราะราชัน — เปลี่ยนร่างเป็นคิงโอเจอร์ ${KUWAGATA_RACHAN_TURNS} เทิร์น พลังโจมตีปกติ +${KUWAGATA_RACHAN_ATK} และได้รับโชคลาภ +${KUWAGATA_RACHAN_FORTUNE}`);
+  }
+  // ---------- เอวานเกเลี่ยน หมายเลข 13 (patch 2.2.1 alpha) ----------
+  // Fourth Impact: แปลงร่างทันทีก่อนเปิดไพ่ทั้งหมด (วีดีโอ/ภาพ/เพลง) — เดิมผูกกับ afterResolve() sweep หลังเปิดไพ่เท่านั้น
+  if (st === "fourth") {
+    p.seen.fourth = true;
+    p.transformAt = ++transformCounter;
+    triggerCutscene(p, "fourth");
+    lastLog.push(`☄️ ${p.name} Fourth Impact — พลังโจมตีปกติ +${EVA13_FOURTH_ATK} คงอยู่ ${EVA13_FOURTH_TURNS} เทิร์น`);
   }
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   // ข้าขอบัญชา (ชาย): การโจมตีปกติครั้งถัดไปติดผกผันให้เป้าหมาย 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี + แต้มคำสาปแห่งดวงจันทร์ +1
@@ -5897,11 +5908,11 @@ function doAttack(byId, targetId) {
   // เชื่อมผล (patch 2.0.8): HP ที่เป้าหมายเสียจริงจะแชร์ให้คู่เชื่อมเท่ากันผ่าน loseHp — เก็บค่าก่อนตีไว้โชว์ผล
   const linkedBuddy = linkedBuddyOf(target);
   const buddyHpBefore = linkedBuddy ? linkedBuddy.hp : 0;
-  // RS-Hopper (เอวา 13 patch 2.2.1 alpha): "การโจมตีปกติ" = ไม่มีโบนัสจากสกิล/สถานะใดๆ เสริมพลังโจมตี (dmg เท่าค่าพื้นฐาน 1 หรือต่ำกว่า)
-  //  — ถ้าโจมตีนี้แรงกว่าฐาน 1 (มีโบนัสจากสกิลเสริมเข้ามา) ถือว่า "โดนสกิล" บล็อกได้
-  const isBareAttack = dmg <= 1;
-  if (attackerBeat || profitAtk > 0 || phenexPurgeAtk) dealDirect(target, dmg, isBareAttack); // ประกายเขี้ยวปฏิปักษ์ / กำไรเท่าตัวโว้ย / อย่าอยู่เลย แกน่ะ!: ทะลุเกราะเข้าเลือดจริง
-  else dealMixed(target, dmg, isBareAttack);               // กฎปกติ: ลดเกราะก่อน ถ้าไม่มีเกราะจึงเข้าเลือดจริง
+  // RS-Hopper (เอวา 13 patch 2.2.1 alpha): "การโจมตีปกติ" = การโจมตีจากการเลือกเป้าหมายในระบบเทิร์นปกติ (doAttack นี้เสมอ)
+  //  ไม่ว่าจะมีบัฟเสริมพลังโจมตีติดตัวหรือไม่ — กันเต็มไม่ได้ กันได้แค่ไม่ให้ต่ำกว่า 4 หน่วย (RS-Hopper พิเศษ ดูใน loseHp)
+  //  ส่วนความเสียหายจากสกิลประเภทโจมตี/เลือกเป้าหมายที่ไม่ผ่าน doAttack (เช่น ปลดปล่อยความเจ็บปวดของริต้า) กันเต็มได้ทันที
+  if (attackerBeat || profitAtk > 0 || phenexPurgeAtk) dealDirect(target, dmg, true); // ประกายเขี้ยวปฏิปักษ์ / กำไรเท่าตัวโว้ย / อย่าอยู่เลย แกน่ะ!: ทะลุเกราะเข้าเลือดจริง
+  else dealMixed(target, dmg, true);               // กฎปกติ: ลดเกราะก่อน ถ้าไม่มีเกราะจึงเข้าเลือดจริง
   // สกิลรอง (โคโตเนะ patch 2.2.2): บัฟพลังโจมตีพื้นฐาน +2 ใช้แล้วหมดไปทันทีเมื่อได้โจมตี
   if (kotoneAtk) {
     delete attacker.statuses.kotoneAtk;
