@@ -434,7 +434,7 @@ const STATUS_INFO = {
   paradise:  { icon: "🦄", label: "Paradise", cls: "bg-echo-gold text-gray-900", desc: "NewType Paradise: โจมตีด้วยพลัง NT-D (+1) ได้ทุกเป้าหมาย" },
   ntd:       { icon: "⚡", label: "NT-D", cls: "bg-echo-hp", desc: "NT-D System: การโจมตีสวนกลับคนที่ตีเราล่าสุด +1 หน่วย" },
   ohger:     { icon: "👑", label: "โอเจอร์ชาร์จ", cls: "bg-echo-gold text-gray-900", desc: "โอเจอร์ชาร์จ: การโจมตีปกติครั้งถัดไป +1 หน่วย แล้วมอบผุพัง 3 เทิร์นให้เป้าหมาย — คงอยู่จนกว่าจะได้โจมตี" },
-  rachan:    { icon: "🛡️", label: "คิงโอเจอร์", cls: "bg-echo-armor", desc: "สวมเกราะราชัน: เพดานเกราะ +3 พลังโจมตีปกติ +1 คงอยู่ 5 เทิร์น (ได้รับโชคลาภ +2 ตอนใช้)" },
+  rachan:    { icon: "🛡️", label: "คิงโอเจอร์", cls: "bg-echo-armor", desc: "สวมเกราะราชัน: พลังโจมตีปกติ +1 คงอยู่ 5 เทิร์น (ได้รับโชคลาภ +2 ตอนใช้)" },
   song:      { icon: "🎵", label: "Song", cls: "bg-echo-magenta", desc: "Song for you: พลังขิงตามชามที่ใช้ (1 ชาม = +1) — มีผลเฉพาะสกิลติดตัวโดนขิง (ขิงแบบไม่สนเกราะ)" },
   anata:     { icon: "🎤", label: "ANATA", cls: "bg-echo-gold text-gray-900", desc: "ANATA WAAAAAAAA: เป้าหมายลับจะถูกบังคับจั่ว 2 ใบหลังเปิดไพ่" },
   mage:      { icon: "🪄", label: "จอมเวทย์", cls: "bg-echo-cyan text-gray-900", desc: "จอมเวทย์ฝึกหัด: ความเสียหายจากการแพ้/แตกเทิร์นนี้ +1 ต่อสแตค (ฟื้นเลือดคืนเทิร์นหน้า)" },
