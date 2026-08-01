@@ -46,8 +46,8 @@ const SHOP_FORTUNE_PRICE = 5;
 const SHOP_FORTUNE_AMOUNT = 2;   // ยาโชคลาภ: ได้โชคลาภ +2 หน่วยเมื่อใช้
 const SHOP_RESIST_PRICE = 5;
 const SHOP_RESIST_TURNS = 3;     // ยาต้านสถานะ: ต้านสถานะผิดปกติ 3 เทิร์น
-const SHOP_ARMOR_PRICE = 4;
-const SHOP_ARMOR_AMOUNT = 3;     // ยาฟื้นเกราะ: ฟื้นเกราะ +3 หน่วย
+const SHOP_ARMOR_PRICE = 3;
+const SHOP_ARMOR_AMOUNT = 1;     // ยาฟื้นเกราะ: ฟื้นเกราะ +1 หน่วย
 const SHOP_SKILL_SIZES = [
   { size: "small", amount: 1, price: 2 },
   { size: "medium", amount: 4, price: 6 },
@@ -442,14 +442,13 @@ function applyBardSong(p, pattern, targets) {
       ts[1].statuses.linked = Math.max(ts[1].statuses.linked || 0, 3);
       lastLog.push(`🎼🔗 Resonance — ${ts[0].name} และ ${ts[1].name} ถูกเชื่อมผล 3 เทิร์น (HP/เกราะ โดนดาเมจ หรือฟื้นฟู แชร์ให้กันเท่ากัน 1:1)`);
       break;
-    case "JRJ": // Discord: ขัดแย้ง +1 ดาเมจ 3 เทิร์น
+    case "JRJ": // Discord: เปราะบาง +1 ดาเมจ 3 เทิร์น (patch 2.2 full: เปลี่ยนจากขัดแย้งเป็นเปราะบาง กันซ้อนทับกับมิติมายาโลหิตที่ก็ให้เปราะบางเหมือนกัน)
       if (!t) return;
-      if (resistActive(t)) {
-        lastLog.push(`🎼🛡️ ${t.name} ต้านสถานะผิดปกติ — ไม่ติดผลขัดแย้ง`);
+      if (!applyDebuff(t, "fragile", 1, 3)) { // 3 เทิร์น (patch 2.0.8.1: นับเทิร์นปัจจุบันเป็นเทิร์นแรก)
+        lastLog.push(`🎼🛡️ ${t.name} ต้านสถานะผิดปกติ — ไม่ติดผลเปราะบาง`);
         return;
       }
-      t.statuses.discord = Math.max(t.statuses.discord || 0, 3); // 3 เทิร์น (patch 2.0.8.1: นับเทิร์นปัจจุบันเป็นเทิร์นแรก)
-      lastLog.push(`🎼⚡ Discord — ${t.name} ติดสถานะขัดแย้ง (+1 ดาเมจที่ได้รับ) 3 เทิร์น`);
+      lastLog.push(`🎼⚡ Discord — ${t.name} ติดสถานะเปราะบาง (+1 ดาเมจที่ได้รับ) 3 เทิร์น`);
       break;
     case "RJJ": // Harmony: คุ้มครอง -1 ดาเมจ 3 เทิร์น
       if (!t) return;
