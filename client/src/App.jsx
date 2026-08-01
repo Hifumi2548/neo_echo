@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
-import { playMusic, playSfx, stopMusic, resetMusicPositions } from "./audio";
+import { playMusic, playSfx, stopMusic, resetMusicPositions, DOOM_WEAPON_SOUNDS } from "./audio";
 import Splash from "./screens/Splash";
 import Setup from "./screens/Setup";
 import CharacterSelect from "./screens/CharacterSelect";
@@ -95,8 +95,12 @@ export default function App() {
     if (prevPhase.current === "PLAYING" && phase && phase !== "PLAYING" && phase !== "CUTSCENE") {
       playSfx("trun_change");
     }
-    // เข้าเฟสโจมตี -> เสียง attack
-    if (prevPhase.current !== "ATTACKING" && phase === "ATTACKING") playSfx("attack");
+    // เข้าเฟสโจมตี -> เสียง attack (DoomGuy: เสียงยิงตามอาวุธที่ถืออยู่ตอนโจมตี แทนเสียงทั่วไป)
+    if (prevPhase.current !== "ATTACKING" && phase === "ATTACKING") {
+      const doomWeapon = state?.attack?.byDoomWeapon;
+      const doomShoot = doomWeapon && DOOM_WEAPON_SOUNDS[doomWeapon]?.shoot;
+      playSfx(doomShoot || "attack");
+    }
     prevPhase.current = phase;
   }, [stage, phase, cycle, skillMusic, skillMusicSeq, lowQ]);
 

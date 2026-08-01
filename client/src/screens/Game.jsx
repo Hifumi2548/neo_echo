@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { socket } from "../socket";
-import { clickSound, playSfx, videoVolume, onVolumeChange } from "../audio";
+import { clickSound, playSfx, videoVolume, onVolumeChange, DOOM_WEAPON_SOUNDS } from "../audio";
 
 // ขนาดจอ (อัปเดตเมื่อหมุน/ย่อขยาย) — ใช้ย่อทั้งกระดานให้พอดีจอ รองรับมือถือแนวตั้ง
 function useViewport() {
@@ -1832,7 +1832,14 @@ export default function Game({ state, lowQ }) {
 
   // สกิลช่วงจั่วการ์ด: server แจ้งมา -> เด้งทันที (ไม่ตัดเข้าจอดำ) แล้วหายเอง
   useEffect(() => {
-    const onFlash = (f) => setFlash({ ...f, id: Date.now() });
+    const onFlash = (f) => {
+      setFlash({ ...f, id: Date.now() });
+      // DoomGuy: เสียงใช้สกิล Weapon แยกตามอาวุธที่ถืออยู่ตอนกด
+      if (f.doomWeapon) {
+        const skillSound = DOOM_WEAPON_SOUNDS[f.doomWeapon]?.skill;
+        if (skillSound) playSfx(skillSound);
+      }
+    };
     socket.on("skillFlash", onFlash);
     return () => socket.off("skillFlash", onFlash);
   }, []);

@@ -52,6 +52,21 @@ const FILES = {
   lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
   doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)
   musashi: "/characters/musashi/musashi_theme.mp3", // เพลงระหว่างท่าไม้ตาย คอสมอส (มุซาชิ ฮารุโนะ)
+  // เสียงอาวุธ DoomGuy (patch 2.2 full): เสียงโจมตี/เสียงใช้สกิลรอง Weapon แยกตามอาวุธที่ถืออยู่
+  doomguy_cs_shoot: "/characters/doomguy/sound/CS Shoot.mp3",
+  doomguy_cs_skill: "/characters/doomguy/sound/CS Skill.mp3",
+  doomguy_hc_shoot: "/characters/doomguy/sound/HC Shoot.mp3",
+  doomguy_hc_skill: "/characters/doomguy/sound/HC SKill.mp3",
+  doomguy_pg_shoot: "/characters/doomguy/sound/PG Shoot.mp3",
+  doomguy_cg_shoot: "/characters/doomguy/sound/CG Shoot.mp3",
+  doomguy_cg_skill: "/characters/doomguy/sound/CG SKill.mp3",
+  doomguy_rk_shoot: "/characters/doomguy/sound/RK Shoot.mp3",
+  doomguy_rk_skill: "/characters/doomguy/sound/RK Skill.mp3",
+  doomguy_ss_shoot: "/characters/doomguy/sound/SS Shoot.mp3",
+  doomguy_ss_skill: "/characters/doomguy/sound/SS Skill.mp3",
+  doomguy_bt_shoot: "/characters/doomguy/sound/BT Shoot.mp3",
+  doomguy_bt_skill: "/characters/doomguy/sound/BT Skill.mp3",
+  doomguy_bfg_shoot: "/characters/doomguy/sound/BFG.mp3",
   action_button: "/effect_sound/action_button.wav",
   trun_change: "/effect_sound/trun_change.wav",
   attack: "/effect_sound/attack.wav",
@@ -149,6 +164,18 @@ export function playSfx(name) {
   a.play().catch(() => {});
 }
 export function clickSound() { playSfx("action_button"); }
+
+// DoomGuy (patch 2.2 full): อาวุธ id (ตาม server) -> ชื่อไฟล์เสียงยิง/เสียงสกิลใน FILES ด้านบน
+export const DOOM_WEAPON_SOUNDS = {
+  shotgun: { shoot: "doomguy_cs_shoot", skill: "doomguy_cs_skill" },
+  heavy: { shoot: "doomguy_hc_shoot", skill: "doomguy_hc_skill" },
+  plasma: { shoot: "doomguy_pg_shoot", skill: null },
+  chaingun: { shoot: "doomguy_cg_shoot", skill: "doomguy_cg_skill" },
+  rocket: { shoot: "doomguy_rk_shoot", skill: "doomguy_rk_skill" },
+  supershotgun: { shoot: "doomguy_ss_shoot", skill: "doomguy_ss_skill" },
+  ballista: { shoot: "doomguy_bt_shoot", skill: "doomguy_bt_skill" },
+  bfg: { shoot: "doomguy_bfg_shoot", skill: null },
+};
 
 function resumeCurrent() {
   if (currentMusic) {

@@ -4565,6 +4565,7 @@ function useSkill(id, tier, targets, item) {
   }
   if (isDoomWeapon) {
     const wname = doomW.name;
+    io.emit("skillFlash", { name: `🔫 ${wname}`, img: doomW.img, by: p.name, color: POSITION_COLORS[p.position] || "#888", doomWeapon: p.doomWeapon }); // เสียงสกิลอาวุธ (เฉพาะฝั่ง client แปลว่าเสียงตามอาวุธ)
     if (doomW.effect === "explode" && doomTarget) {
       doomTarget.statuses.doomExplode = 1;
       lastLog.push(`💣 ${p.name} ${wname} — ${doomTarget.name} ติดสถานะระเบิด! (โจมตีโดนเมื่อไหร่จะระเบิดใส่คนอื่นสุ่ม 2 คน -1)`);
@@ -5869,6 +5870,7 @@ function doAttack(byId, targetId) {
       lastLog.push(`💨 หลบหลีก! ${target.name} หลบการโจมตีของ ${attacker.name} ได้ (${evadePct}%) — เหลือหลบหลีกอีก ${target.statuses.evade || 0} ครั้ง`);
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, dodge: true,
         skills: [{ name: `หลบหลีก (${evadePct}%)`, img: BARD_CRIMSON_IMG, by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
@@ -5900,6 +5902,7 @@ function doAttack(byId, targetId) {
     lastLog.push(`👁️ ${attacker.name} จัดการเป้าหมายได้แล้ว — ฉันมองเห็นมันแล้ว ปิดลงทันที`);
     lastAttack = {
       byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
       targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
       dmg: 0, kill: !target.alive,
       skills: [{ name: "ฉันมองเห็นมันแล้ว — สังหารทันที", img: "/characters/shiki/shiki_skill3.jpg", by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888", side: "atk" }],
@@ -5940,6 +5943,7 @@ function doAttack(byId, targetId) {
       lastLog.push(`🥀 ${attacker.name} จัดการเป้าหมายได้แล้ว — ความตายที่โรยราจบลง และเส้นชีวิตที่สะสมช่วงท่าไม้ตายถูกลบออกให้ทุกคน`);
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, kill: !target.alive,
         skills: [{ name: "ความตายที่โรยรา — สังหารทันที", img: "/characters/shiki/shiki_skill3.2.jpg", by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888", side: "atk" }],
@@ -5974,6 +5978,7 @@ function doAttack(byId, targetId) {
       else lastLog.push(`👁️💀 Mystic eye of death perception — ${attacker.name} มองเห็นเส้นความตายของ ${target.name} — แต่ ${target.name} เกิดใหม่หนีความตายไปได้!`);
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, kill: !target.alive,
         skills: [{ name: "Mystic eye of death perception — สังหารทันที", img: TOHNO_DEATH_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888", side: "atk" }],
@@ -6008,6 +6013,7 @@ function doAttack(byId, targetId) {
       else lastLog.push(`👁️💀 Mystic eye of death perception — ${attacker.name} มองเห็นเส้นความตายของ ${target.name} — แต่ ${target.name} เกิดใหม่หนีความตายไปได้!`);
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, kill: !target.alive,
         skills: [{ name: "Mystic eye of death perception — สังหารทันที", img: "/characters/nanaya/nanaya.png", by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888", side: "atk" }],
@@ -6058,6 +6064,7 @@ function doAttack(byId, targetId) {
       }
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, dodge: true,
         skills: [{ name: "ชิวๆครับน้องๆ (หลบพ้น)", img: "/characters/appleguy/appleguy_skill3.jpg", by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
@@ -6081,6 +6088,7 @@ function doAttack(byId, targetId) {
       target.wasAttacked = true;
       lastAttack = {
         byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
         targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
         dmg: 0, dodge: true,
         skills: [{ name: "อย่าได้ไล่ตามหัวหน้า (การโจมตีถูกลบล้าง)", img: SATORU_PROFILE_IMG, by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
@@ -6284,6 +6292,7 @@ function doAttack(byId, targetId) {
     }
     lastAttack = {
       byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
       targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
       dmg: 0, reflect: true,
       skills: [{ name: `ฝันไปเถอะ — สะท้อน -${reflectDmg}`, img: "/characters/rita/skill2/phenex_skill2.jpg", by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
@@ -6826,6 +6835,7 @@ function doAttack(byId, targetId) {
   // อนิเมชันบอกว่าใครตีใคร
   lastAttack = {
     byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
     targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
     dmg, aoe: ginga || (attacker.statuses.solarburst || 0) > 0 || beamPlusAtk || unibeam2Atk || storiumAtk, revenge: isRevenge, skills: fxSkills,
   };
