@@ -3081,6 +3081,8 @@ export default function Game({ state, lowQ }) {
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
         {state.musashiReviveAsk && <MusashiReviveModal ask={state.musashiReviveAsk} onAnswer={(a) => socket.emit("musashiReviveAnswer", { accept: a })} />}
         {state.musashiMercyAsk && <MusashiMercyModal ask={state.musashiMercyAsk} onAnswer={(c) => socket.emit("musashiMercyAnswer", { choice: c })} />}
+        {shopOpen && <ShopModal shop={state.shop} me={me} onClose={() => setShopOpen(false)} />}
+        {bagOpen && <InventoryModal me={me} onClose={() => setBagOpen(false)} />}
       {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
       {state.allyBreakAsk && me?.alive && <AllyBreakModal ask={state.allyBreakAsk} onAnswer={(c) => socket.emit("allyBreakAnswer", { cancel: c })} />}
       {state.allyFinalAsk && me?.alive && <AllyFinalModal ask={state.allyFinalAsk} onAnswer={(k) => socket.emit("allyFinalAnswer", { keep: k })} />}
