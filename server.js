@@ -43,12 +43,28 @@ const BANAGHER_ULT2_TARGET_DMG = 6; // แสงที่ไม่อยู่�
 const BANAGHER_ULT2_SPLASH_DMG = 3; // แสงที่ไม่อยู่เพียงลำพัง: ตีหมู่ผู้เล่นอื่นที่เหลือ (ยกเว้นริดดี้พันธมิตร)
 const BANAGHER_ULT2_ALLY_COST = 8; // แสงที่ไม่อยู่เพียงลำพัง: หักแต้มสกิลริดดี้พันธมิตรด้วย 8 แต้ม (รวมคอสจริง 16 — ของตัวเอง 8 + พันธมิตร 8)
 const BANAGHER_BASE_IMG = "/characters/banagher/banagher_update/unicorn_new.png"; // ภาพเริ่มเกม (ลงสนามแล้ว) — หน้าเลือกตัวละครยังใช้ภาพเดิม
-const PUDDING_USES = 2; // Rainbow Pudding ใช้ได้ต่อเกม (คุวากาตะ)
 const REIJU_USES = 3;   // เรจูอาคมบัญชา ต่อเกม (ฟุจิมารุ)
 const MAGE_USES_PER_TURN = 3; // จอมเวทย์ฝึกหัด กดได้ 3 ครั้งต่อเทิร์น (ฟุจิมารุ)
 const GAMBLER_USES = 3; // วอสก้าหน่อยน้อง ใช้ได้ต่อเกม (แกมเบลอร์)
 const TEMP_HP_TURNS = 2; // เลือดชั่วคราว (แกมเบลอร์) หายเองภายใน 2 เทิร์น
-const EVA_BLAST_DMG = 5; // ระเบิด fourth impact (เอวา 13) ใส่ทุกคนในสนาม
+const EVA_BLAST_DMG = 8; // ระเบิด fourth impact (เอวา 13) ใส่ทุกคนในสนาม (patch 2.2 alpha — เดิม 5)
+// ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
+const KUWAGATA_PUDDING_FULL_AT = 3;    // Rainbow Pudding: กินครบทุกๆ 3 ครั้ง = อิ่ม
+const KUWAGATA_PUDDING_NODRAW_TURNS = 2; // อิ่ม: จั่วการ์ดเพิ่มไม่ได้ 2 เทิร์น
+const KUWAGATA_OHGER_DECAY_TURNS = 3;  // Ohger Finish: โจมตีโดนเป้าหมาย -> ติดผุพัง 3 เทิร์น
+const KUWAGATA_RACHAN_TURNS = 5;       // สวมเกราะราชัน: คงอยู่ 5 เทิร์น (เดิมถาวร)
+const KUWAGATA_RACHAN_ATK = 1;         // สวมเกราะราชัน (คิงโอเจอร์): พลังโจมตีปกติ +1
+const KUWAGATA_RACHAN_FORTUNE = 2;     // สวมเกราะราชัน: มอบโชคลาภ 2 หน่วย
+const KUWAGATA_BEAT_FORTUNE = 3;       // Beat Mode กันตายทำงาน: มอบโชคลาภ 3 หน่วย
+// ---------- เอวานเกเลี่ยน หมายเลข 13 (patch 2.2 alpha) ----------
+const EVA13_HP_THRESHOLD = 4;          // อย่าให้ฉันทำแบบนี้เลย / RS-Hopper: เกณฑ์พลังชีวิต (เดิม 3)
+const EVA13_ARMOR_HEAL = 2;            // อย่าให้ฉันทำแบบนี้เลย: ฟื้นเกราะทันที (เดิม 1)
+const EVA13_SPEAR_CHANCE = 0.5;        // หอกลองกินัส: โอกาสล็อกสกิลเป้าหมาย (คงที่ 50/50 เสมอ)
+const EVA13_SPEAR_LOCK_TURNS = 2;      // หอกลองกินัส: ล็อกสกิลเป้าหมาย 2 เทิร์น (เดิม 1)
+const EVA13_FOURTH_TURNS = 5;          // Fourth Impact: คงอยู่ 5 เทิร์น (เดิม 3)
+const EVA13_FOURTH_ATK = 2;            // Fourth Impact: พลังโจมตีปกติ +2 (ใหม่)
+const EVA13_RSHOPPER_MAX = 3;          // RS-Hopper: ชาร์จสูงสุด (เริ่มเกมเต็ม)
+const EVA13_RSHOPPER_REGEN_TURNS = 3;  // RS-Hopper: ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น
 
 // ร่างสุดท้ายฟุจิมารุ (หลังเปิด Everything For Humanity — คงอยู่จนตาย)
 const FUJIMARU_FINAL_IMG = "/characters/fujimaru/fujimaru_final.jpg";
@@ -747,11 +763,12 @@ function passiveSealed(p) {
 }
 // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
 const MIYAKO_HEAL_AMOUNT = 1;         // พี่จ๋าอยู่ไหน: ฟื้นพลังชีวิต +1 ทุกครั้งที่โจมตีปกติ
-const MIYAKO_COMBO_CHANCE = [1, 0.75, 0.5, 0.25]; // เพลงหมัด อาริมะ: โอกาสโจมตีครั้งที่ 1/2/3/4
+const MIYAKO_COMBO_CHANCE = [1, 1, 0.5, 0.25]; // เพลงหมัด อาริมะ (patch 2.2 alpha): ครั้งที่ 1 ตีแน่นอน / ครั้งที่ 2 100% / ครั้งที่ 3 50% / ครั้งที่ 4 25%
 const MIYAKO_FORCE_SCORE = 20;        // หนูจะทำให้พี่ตาสว่างเอง: บังคับแต้มการจั่วเป็น 20 ทันที (ไม่มีผลถ้ามีแต้ม 21 อยู่แล้ว)
-const MIYAKO_SEAL_TURNS = 3;          // หนูจะทำให้พี่ตาสว่างเอง: ปิดใช้งานความสามารถสังหารทันทีของเป้าหมาย 3 เทิร์น
-const MIYAKO_ATK_BONUS = 1;           // หนูจะทำให้พี่ตาสว่างเอง: เป้าหมายไม่มีความสามารถสังหาร -> พลังโจมตีถาวร +1 (ได้ครั้งเดียว ไม่สะสม)
-const MIYAKO_ARMOR_SEAL_TURNS = 5;    // หนูจะทำให้พี่ตาสว่างเอง: เป้าหมายไม่มีความสามารถสังหาร -> เกราะเป้าหมายไม่ฟื้น 5 เทิร์น
+const MIYAKO_SEAL_TURNS = 3;          // ไม่ยอมให้ฆ่าใครอีกแล้ว: ปิดใช้งานความสามารถสังหารทันทีของเป้าหมาย 3 เทิร์น
+const MIYAKO_ATK_BONUS = 1;           // ย๊ากก!: เป้าหมายไม่มีความสามารถสังหาร -> พลังโจมตีถาวร +1 (ได้ครั้งเดียว ไม่สะสม)
+const MIYAKO_ARMOR_SEAL_TURNS = 5;    // ย๊ากก!: เป้าหมายไม่มีความสามารถสังหาร -> เกราะเป้าหมายไม่ฟื้น 5 เทิร์น
+const MIYAKO_ULT_DECAY_TURNS = 3;     // ย๊ากก! (patch 2.2 alpha): เป้าหมายไม่มีความสามารถสังหาร -> ติดผุพัง 3 เทิร์นเพิ่มด้วย
 const MIYAKO_KILL_REDUCE = 0.40;      // นั่นพี่จ๋าหรอ?: ลดโอกาสถูกสังหารทันทีลง 40% ทุกครั้งที่รอด (สะสม)
 // ความสามารถสังหารทันทีถูก "หนูจะทำให้พี่ตาสว่างเอง" ปิดใช้งานอยู่ไหม (อาริมะ มิยาโกะ)
 function killSealed(p) {
@@ -1099,6 +1116,8 @@ const TRANSFORMS = {
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
+  eva13RsHopper:   { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_rshopper.mp4", title: "RS-HOPPER", label: "สกิลติดตัวทำงาน", seconds: 6, music: null, afterReveal: false },
+  eva13ExRsHopper: { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_ex_rshopper.mp4", title: "RS-HOPPER", label: "สกิลติดตัวทำงาน", seconds: 6, music: null, afterReveal: false },
   // ---------- โอเบรอน (patch 1.7) ----------
   // lai: ท่าไม้ตายกลางวัน — วีดีโอ 13 วิ | vortigern: patch 1.7.6 ข้ามวีดีโอประจำท่า — เล่น oberonChange แทนทันที
   // (ฉากหลัง "ราตรีกลืนกิน" ไม่ผูกกับท่าไม้ตาย — ทำงานเองทุกครั้งที่เข้ากลางคืนขณะมีโอเบรอนอยู่ในเกม)
@@ -1318,8 +1337,10 @@ const DEBUFF_KEYS = ["discord", "sleep", "kstun", "stun", "nodraw", "noskill", "
 // ระหว่างเป็นคู่สัญญาเจ้าแห่งเน็ตบ้าน (สนใจใช้บริการเราไหม) เพิ่ม +3
 function maxArmorOf(p) {
   // คิชินามิ ฮาคุโนะ (patch 2.2.1): เพดานเกราะคงที่ตามเพศ (แทน MAX_ARMOR ปกติ) — ชาย 2 / หญิง 3
+  // เอวานเกเลี่ยน หมายเลข 13 (patch 2.2 alpha): ไม่มีเกราะเลยตามปกติ (เพดาน 0) — ได้เพดาน +1 เฉพาะช่วงสกิลติดตัว 3 ทำงาน (ด้านล่าง)
   const armorBase = (p && p.characterId === "hakuno")
     ? (p.hakunoGender === "female" ? HAKUNO_FEMALE_ARMOR_CAP : HAKUNO_MALE_ARMOR_CAP)
+    : (p && p.characterId === "eva13") ? 0
     : MAX_ARMOR;
   return armorBase
     + ((((p.statuses && p.statuses.rachan) || 0) > 0) ? 3 : 0)
@@ -1362,7 +1383,9 @@ function maybeBeatSave(p) {
   p.hp = 1;
   p.beatSaved = true;
   p.armorLocked = true;
-  lastLog.push(`🛡️⚡ ${p.name} ประกายเขี้ยวปฏิปักษ์ — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียว)`);
+  p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_BEAT_FORTUNE);
+  p.fortuneIdle = 0;
+  lastLog.push(`🛡️⚡ ${p.name} ประกายเขี้ยวปฏิปักษ์ — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียว) ได้รับโชคลาภ +${KUWAGATA_BEAT_FORTUNE}`);
   return true;
 }
 // ---------- ริต้า เบอร์นัล / ฟีนิกซ์ (patch 2.1.6) ----------
@@ -1423,18 +1446,18 @@ function instantDeath(p) {
 }
 
 // ---------- เอวานเกเลี่ยน หมายเลข 13 ----------
-// สกิลติดตัว 3 อย่าให้ฉันทำแแบบนี้เลย: เลือด <= 3 = ทำงาน (ห้ามจั่วของสกิลรอง +1 เทิร์น, เพดานเกราะ +1)
+// สกิลติดตัว 3 อย่าให้ฉันทำแแบบนี้เลย: เลือด <= 4 = ทำงาน (โอกาสล็อกสกิลของหอกลองกินัส 100%, เพดานเกราะ +1) — patch 2.2 alpha เดิม <=3
 function eva3Active(p) {
-  return !!p && p.alive && p.characterId === "eva13" && p.hp > 0 && p.hp <= 3 && !passiveSealed(p);
+  return !!p && p.alive && p.characterId === "eva13" && p.hp > 0 && p.hp <= EVA13_HP_THRESHOLD && !passiveSealed(p);
 }
-// เข้าสกิลติดตัว 3 ครั้งแรก: เล่นวีดีโอ + ฟื้นเกราะให้ 1 หน่วย (เพดานเพิ่มแล้วผ่าน maxArmorOf)
+// เข้าสกิลติดตัว 3 ครั้งแรก: เล่นวีดีโอ + ฟื้นเกราะให้ทันที (เพดานเพิ่มแล้วผ่าน maxArmorOf)
 function maybeEva3(p) {
   if (!eva3Active(p)) return;
   if (p.seen && p.seen.eva3) return; // เข้าแล้วครั้งเดียวพอ (ผลเปิด/ปิดตามเลือดจริง)
   p.seen.eva3 = true;
-  healArmor(p, 1); // ฟื้นเกราะให้ด้วย
+  healArmor(p, EVA13_ARMOR_HEAL); // ฟื้นเกราะให้ด้วย
   triggerCutscene(p, "eva3");
-  lastLog.push(`🗡️ ${p.name} อย่าให้ฉันทำแแบบนี้เลย — เพดานเกราะ +1 และฟื้นเกราะ!`);
+  lastLog.push(`🗡️ ${p.name} อย่าให้ฉันทำแแบบนี้เลย — เพดานเกราะ +1 และฟื้นเกราะ +${EVA13_ARMOR_HEAL}!`);
 }
 // สกิลติดตัว 2 ทุกอย่างไร้ความหมาย: ไม่รับดาเมจแพ้จั่ว/แตก
 //  - fourth impact อยู่ = บังคับทำงานแบบไม่ติดเงื่อนไข
@@ -1648,6 +1671,15 @@ function activeSkillMusic() {
 // เชื่อมผล (patch 2.0.8): การลด HP จริงถูกแชร์ให้คู่เชื่อมเท่ากันด้วย (อมตะกันไว้ได้)
 function loseHp(p) {
   if ((p.tempHp || 0) > 0) { p.tempHp--; return; }
+  // RS-Hopper พิเศษ (เอวา 13 patch 2.2 alpha): เลือด >4 ก่อนโดนตีในจังหวะนี้ แต่จะลดจนต่ำกว่า 4 -> กันไว้ที่ 4 (ไม่ทำงานช่วง Fourth Impact)
+  if (p.characterId === "eva13" && p._rsHopperFloorArmed && p.hp <= EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0)) {
+    if (!p._rsHopperExFired) {
+      p._rsHopperExFired = true;
+      triggerCutscene(p, "eva13ExRsHopper");
+      lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — พลังชีวิตเกิน ${EVA13_HP_THRESHOLD} ถูกลดจนจะต่ำกว่า ${EVA13_HP_THRESHOLD} หน่วย กันไว้ให้เหลือ ${EVA13_HP_THRESHOLD} หน่วย!`);
+    }
+    return;
+  }
   // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้ patch 2.1.1): ริดดี้เองตายไม่ได้ — เลือดค้างที่ 1
   if (p.hp <= 1 && riddheGuardProtects(p)) {
     if (p.riddheSaveLoggedRound !== roundNumber) {
@@ -1710,8 +1742,37 @@ function damageSoft(p) {
   if (p.armor > 0) loseArmor(p);
   else loseHp(p);
 }
-function dealDirect(p, n) {
+// ระเบิด Fourth Impact (เอวา 13 patch 2.2 alpha): เคารพ "หลบหลีก" ของเป้าหมาย (เดิมทะลุหลบหลีกเสมอ) — คืน true ถ้าหลบพ้น
+function evaBlastEvade(o, e) {
+  if ((o.statuses.evade || 0) <= 0) return false;
+  const evadePct = statusAmtOf(o, "evade") || 100;
+  o.statuses.evade--;
+  o.evadeIdle = 0;
+  if (o.statuses.evade <= 0) { delete o.statuses.evade; if (o.statusAmt) delete o.statusAmt.evade; }
+  if (Math.random() * 100 < evadePct) {
+    lastLog.push(`💨 หลบหลีก! ${o.name} หลบแรงระเบิดของ ${e.name} ได้ (${evadePct}%)`);
+    return true;
+  }
+  lastLog.push(`💨 ${o.name} พยายามหลบแรงระเบิดของ ${e.name} แต่ไม่พ้น (${evadePct}%)`);
+  return false;
+}
+// RS-Hopper (เอวา 13 patch 2.2 alpha): เลือด >4 และไม่ใช่การโจมตีปกติ -> มีโอกาสกันความเสียหายทั้งหมดถ้ายังมีชาร์จ (ไม่ทำงานช่วง Fourth Impact)
+function eva13RsHopperBlock(p) {
+  if (!p || p.characterId !== "eva13" || !p.alive) return false;
+  if ((p.statuses.fourth || 0) > 0) return false;
+  if (p.hp <= EVA13_HP_THRESHOLD) return false;
+  if ((p.statuses.rsHopper || 0) <= 0) return false;
+  p.statuses.rsHopper--;
+  triggerCutscene(p, "eva13RsHopper");
+  lastLog.push(`🦘 ${p.name} RS-HOPPER — ป้องกันความเสียหายจากสกิลได้ทั้งหมด! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
+  return true;
+}
+// isNormalAttack: true เฉพาะที่ doAttack() เรียกสำหรับความเสียหายจากการโจมตีปกติ (ยกเว้นไม่ให้ RS-Hopper บล็อกเต็ม)
+function dealDirect(p, n, isNormalAttack) {
   if (sealActive(p)) return;
+  if (!isNormalAttack && eva13RsHopperBlock(p)) return;
+  p._rsHopperFloorArmed = p.characterId === "eva13" && p.hp > EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0);
+  p._rsHopperExFired = false;
   for (let i = 0; i < n; i++) {
     if (!p.alive) return;
     if (p.shield > 0) { p.shield--; continue; }
@@ -1725,8 +1786,11 @@ function dealArmorOnly(p, n) {
     if (p.armor > 0) loseArmor(p);
   }
 }
-function dealMixed(p, n) { // เกราะก่อนแล้วเลือด (สำหรับ NT-D)
+function dealMixed(p, n, isNormalAttack) { // เกราะก่อนแล้วเลือด (สำหรับ NT-D)
   if (sealActive(p)) return;
+  if (!isNormalAttack && eva13RsHopperBlock(p)) return;
+  p._rsHopperFloorArmed = p.characterId === "eva13" && p.hp > EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0);
+  p._rsHopperExFired = false;
   for (let i = 0; i < n; i++) {
     if (!p.alive) return;
     if (p.shield > 0) { p.shield--; continue; }
@@ -1841,7 +1905,9 @@ function resetCombat(p) {
   p.beatSaved = false;   // Beat Mode: กันตายได้ครั้งเดียวต่อเกม (คล้าย Focus Sash)
   p.skillUsedRound = false; // ใช้สกิลได้ 1 อันต่อเทิร์น
   p.beamAmmo = BEAM_AMMO; // กระสุน Beam Magnum รีเซ็ตต้นเกม
-  p.puddingUses = PUDDING_USES; // Rainbow Pudding รีเซ็ตต้นเกม
+  p.puddingCount = 0; // Rainbow Pudding: จำนวนครั้งที่กินสะสม (ไม่จำกัดจำนวนครั้ง — ครบทุกๆ 3 ครั้งจะอิ่ม)
+  p.rsHopperRegenTimer = 0; // RS-Hopper (เอวา 13): นับเทิร์นสำหรับฟื้นชาร์จ (ครบ 3 = ฟื้น 1 ชาร์จ)
+  if (p.characterId === "eva13") p.statuses.rsHopper = EVA13_RSHOPPER_MAX; // RS-Hopper: เริ่มเกมเต็ม 3 ชาร์จ
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
   p.noDrawNext = 0;       // จำนวนเทิร์นที่จั่วเพิ่มไม่ได้ เริ่มเทิร์นถัดไป (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -2204,12 +2270,13 @@ function buildStateFor(viewerId) {
         tempHp: p.tempHp || 0, // เลือดชั่วคราว (แกมเบลอร์)
         // เอฟเฟครอบการ์ด (เห็นทุกคน): เขี้ยวปฏิปักษ์สีเขียว (ถาวร) / เกราะราชันสีแดง (ตอนสวม)
         beat: !!(p.seen && p.seen.beat),
+        beatSaved: !!p.beatSaved,
         rachan: !!(p.seen && p.seen.rachan) && (p.statuses.rachan || 0) > 0,
         // ซาโตรุ (patch 2.0.8.2): แต้มสกิลถูกซ่อนจากผู้เล่นอื่นเสมอ (-1 = ซ่อน)
         skillPoints: (p.characterId === "satoru" && !mine && !passiveSealed(p)) ? -1 : p.skillPoints,
         maxSkill: maxSkillOf(p), // Bard: เพดานพลังงาน 9
         beamAmmo: p.beamAmmo,
-        puddingUses: p.puddingUses,
+        puddingCount: p.puddingCount || 0,
         gamblerUses: p.gamblerUses, // แกมเบลอร์: จำนวนวอสก้าหน่อยน้องคงเหลือ
         profit: p.profit || 0,      // แกมเบลอร์: บัฟกำไรเท่าตัวโว้ยสะสม
         sunriseDrop: p.sunriseDrop || 0, // โอเบรอน: จำนวนเทิร์นที่จะเสียเลือด 1/เทิร์นจากรุ่งอรุณแห่งวันใหม่
@@ -3321,8 +3388,9 @@ function useSkill(id, tier, targets, item) {
   // ข้าขอบัญชา (ชาย/หญิง คิชินามิ ฮาคุโนะ): กดซ้ำไม่ได้จนกว่าผลเดิมจะหมด
   if (st === "hakunoInvertReady" && (p.statuses.hakunoInvertReady || 0) > 0) return;
   if (st === "hakunoNoRegenReady" && (p.statuses.hakunoNoRegenReady || 0) > 0) return;
-  // Beat Mode (ประกายเขี้ยว): สกิลพื้นฐาน + ท่าไม้ตายใช้ไม่ได้ (ใช้ได้แค่สกิลรอง)
-  if ((tier === "basic" || tier === "ultimate") && beatActive(p)) return;
+  // Beat Mode (ประกายเขี้ยว): ท่าไม้ตายใช้ไม่ได้เสมอ / สกิลพื้นฐานใช้ไม่ได้เฉพาะหลังกันตายทำงานแล้ว (patch 2.2 alpha)
+  if (tier === "ultimate" && beatActive(p)) return;
+  if (tier === "basic" && p.characterId === "kuwagata" && beatActive(p) && p.beatSaved) return;
   // ท่าไม้ตาย: กดซ้ำไม่ได้จนกว่าผลจะหมดเวลา (สวมเกราะราชันคงอยู่ถาวร = กดซ้ำไม่ได้อีกเลยตลอดเกม)
   if (tier === "ultimate" && st && (p.statuses[st] || 0) > 0) return;
   // เวลาทอง (แกมเบลอร์): ระหว่างบัฟยังอยู่ กดท่าไม้ตายซ้ำไม่ได้
@@ -3334,15 +3402,16 @@ function useSkill(id, tier, targets, item) {
   if (isHikaruGinga && (p.statuses.ginga || 0) > 0) return;
   // Ginga Strium (ท่าไม้ตาย): ต้องอยู่ในร่าง Ginga (สกิลรอง 1 ยังไม่หมดเวลา) และต้องเป็นตอนกลางวันเท่านั้นถึงใช้ได้
   if (tier === "ultimate" && p.characterId === "hikaru" && (!((p.statuses.ginga || 0) > 0) || isNightRound(roundNumber))) return;
-  // Rainbow Pudding (คุวากาตะ): ใช้ได้แค่ 2 ครั้งต่อเกม
+  // Rainbow Pudding (คุวากาตะ): ไม่จำกัดจำนวนครั้งต่อเกม (patch 2.2 alpha)
   const isPudding = p.characterId === "kuwagata" && tier === "basic";
-  if (isPudding && (p.puddingUses || 0) <= 0) return;
   // วอสก้าหน่อยน้อง (แกมเบลอร์): ใช้ได้ 3 ครั้งต่อเกม (เวลาทองรีเซ็ตให้เต็ม)
   if (isGamble && (p.gamblerUses || 0) <= 0) return;
-  // หอกแห่งแคสเซียส (เอวา 13): ต้องมีเกราะเหลือให้หัก
+  // หอกแห่งแคสเซียส (เอวา 13 patch 2.2 alpha): กดซ้ำไม่ได้จนกว่าจะได้โจมตี
   const isCassius = p.characterId === "eva13" && tier === "basic";
-  if (isCassius && p.armor < 1) return;
-  // Fourth Impact (เอวา 13): ใช้ได้เมื่อสกิลติดตัว 3 (เลือด <= 3) ทำงานอยู่เท่านั้น
+  if (isCassius && (p.statuses.cassius || 0) > 0) return;
+  // หอกลองกินัส (เอวา 13 patch 2.2 alpha): กดซ้ำไม่ได้จนกว่าจะได้โจมตี
+  if (p.characterId === "eva13" && tier === "secondary" && (p.statuses.spear || 0) > 0) return;
+  // Fourth Impact (เอวา 13): ใช้ได้เมื่อสกิลติดตัว 3 (เลือด <= 4) ทำงานอยู่เท่านั้น
   if (st === "fourth" && !eva3Active(p)) return;
   // ม่านแห่งราตรี (โอเบรอน): กดซ้ำไม่ได้จนกว่าผลเพิ่มพลังโจมตีจะหมด
   const isVeil = p.characterId === "oberon" && tier === "basic";
@@ -3467,8 +3536,8 @@ function useSkill(id, tier, targets, item) {
     const rAlly = riddheAllied(p);
     if (!rAlly || (p.beamAmmo || 0) <= 0 || (rAlly.beamAmmo || 0) <= 0 || rAlly.skillPoints < BANAGHER_ULT2_ALLY_COST) return;
   }
-  // Ohger Finish: ต้องมีทั้งสวมเกราะราชัน และ ประกายเขี้ยวปฏิปักษ์ ถึงจะใช้ได้ (+1 ความเสียหาย)
-  if (st === "ohger" && !((p.statuses.rachan || 0) > 0 && (beatActive(p) || (p.seen && p.seen.beat)))) return;
+  // Ohger Finish (patch 2.2 alpha): ใช้ได้โดยไม่มีเงื่อนไขแล้ว — กดซ้ำไม่ได้จนกว่าจะได้โจมตี
+  if (st === "ohger" && (p.statuses.ohger || 0) > 0) return;
 
   // ANATA WAAAAAAAA (เทมาริ): ต้องเลือกเป้าหมาย 1 คนก่อนใช้
   let anataTargets = null;
@@ -3506,7 +3575,15 @@ function useSkill(id, tier, targets, item) {
     }
   }
 
-  if (isPudding) p.puddingUses--; // นับใช้ Rainbow Pudding
+  // Rainbow Pudding (คุวากาตะ patch 2.2 alpha): กินครบทุกๆ 3 ครั้ง = อิ่ม จั่วการ์ดเพิ่มไม่ได้ 2 เทิร์น
+  if (isPudding) {
+    p.puddingCount = (p.puddingCount || 0) + 1;
+    if (p.puddingCount % KUWAGATA_PUDDING_FULL_AT === 0) {
+      p.statuses.nodraw = Math.max(p.statuses.nodraw || 0, KUWAGATA_PUDDING_NODRAW_TURNS);
+      p.noDrawNext = Math.max(p.noDrawNext || 0, KUWAGATA_PUDDING_NODRAW_TURNS);
+      lastLog.push(`🍮 ${p.name} กิน Rainbow Pudding ครบ ${p.puddingCount} ชิ้น — อิ่ม! จั่วการ์ดเพิ่มไม่ได้ ${KUWAGATA_PUDDING_NODRAW_TURNS} เทิร์น`);
+    }
+  }
 
   // ---------- Gambler the gambling: สกิลเสี่ยงโชค (จัดการใน engine โดยตรง) ----------
   let flashSuffix = ""; // ต่อท้ายชื่อสกิลบนป้ายเด้ง เพื่อบอกผลเสี่ยงโชคให้ทุกคนเห็น
@@ -3574,9 +3651,7 @@ function useSkill(id, tier, targets, item) {
   }
   // ---------- เอวา 13: หอกแห่งแคสเซียส — หักเกราะตัวเอง 1 ฟื้นเลือด 1 ----------
   if (isCassius) {
-    p.armor--;
-    healHp(p, 1);
-    lastLog.push(`🗡️ ${p.name} หอกแห่งแคสเซียส — หักเกราะ 1 ฟื้นพลังชีวิต +1`);
+    lastLog.push(`🗡️ ${p.name} หอกแห่งแคสเซียส — การโจมตีปกติครั้งถัดไปจะฟื้นพลังชีวิตตามความเสียหายที่ทำได้`);
   }
   // ---------- โอเบรอน: ม่านแห่งราตรี — บัฟหมู่ก่อนเปิดการ์ด ----------
   if (isVeil) {
@@ -4376,6 +4451,13 @@ function useSkill(id, tier, targets, item) {
       lastLog.push(`🎯 ${p.name} หนูจะทำให้พี่ตาสว่างเอง — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว`);
     }
   }
+  // ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
+  // สวมเกราะราชัน: เปลี่ยนร่างเป็นคิงโอเจอร์ 5 เทิร์น + มอบโชคลาภ 2 หน่วยสำหรับการจั่วการ์ด
+  if (st === "rachan") {
+    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_RACHAN_FORTUNE);
+    p.fortuneIdle = 0;
+    lastLog.push(`👑 ${p.name} สวมเกราะราชัน — เปลี่ยนร่างเป็นคิงโอเจอร์ ${KUWAGATA_RACHAN_TURNS} เทิร์น พลังโจมตีปกติ +${KUWAGATA_RACHAN_ATK} และได้รับโชคลาภ +${KUWAGATA_RACHAN_FORTUNE}`);
+  }
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   // ข้าขอบัญชา (ชาย): การโจมตีปกติครั้งถัดไปติดผกผันให้เป้าหมาย 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี + แต้มคำสาปแห่งดวงจันทร์ +1
   if (st === "hakunoInvertReady") {
@@ -4987,7 +5069,7 @@ function resolveRound() {
     lastLog.push(`💥 ${e.name} ไม่สามารถแก้ไขอะไรได้อีกแล้ว — ทุกสิ่งทุกอย่างไร้ความหมาย! ระเบิดใส่ทุกคน -${EVA_BLAST_DMG}`);
     for (const o of alivePlayers()) {
       if (o.id === e.id) continue;
-      dealMixed(o, EVA_BLAST_DMG);
+      if (!evaBlastEvade(o, e)) dealMixed(o, EVA_BLAST_DMG);
       maybeBeatSave(o);
       maybeBeatMode(o);
       maybeEva3(o);
@@ -5676,6 +5758,10 @@ function doAttack(byId, targetId) {
   const phenexNtdAtk = attacker.characterId === "phenex" && ((attacker.statuses.phenexNtd || 0) > 0 || attacker.phenexNtdPermanent);
 
   const miyakoAtkBonusOn = attacker.characterId === "miyako" && attacker.miyakoAtkBonus;
+  // สวมเกราะราชัน / คิงโอเจอร์ (คุวากาตะ patch 2.2 alpha): พลังโจมตีปกติ +1 ระหว่างร่าง
+  const rachanAtk = (attacker.statuses.rachan || 0) > 0 ? KUWAGATA_RACHAN_ATK : 0;
+  // Fourth Impact (เอวา 13 patch 2.2 alpha): พลังโจมตีปกติ +2 ระหว่างร่าง
+  const fourthAtk = (attacker.statuses.fourth || 0) > 0 ? EVA13_FOURTH_ATK : 0;
   // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): กลางคืนพลังโจมตี +1 ถาวร
   const lenNightAtk = ((attacker.characterId === "len" || attacker.characterId === "lenwhite") && isNightRound(roundNumber)) ? 1 : 0;
   // Arc Drive finish (ไวท์เล็น patch 2.2 beta): โหมดสะสมพลังโจมตี — เผาครบทุกๆ 2 ชิ้น +1 (สะสมได้เรื่อยๆ จนกว่ากลางวันจะมาถึง)
@@ -5684,7 +5770,7 @@ function doAttack(byId, targetId) {
   const hakunoMoonOn = attacker.characterId === "hakuno" && (attacker.statuses.moonCell || 0) > 0;
   const hakunoMaleAtk = (attacker.characterId === "hakuno" && attacker.hakunoGender === "male" && !hakunoMoonOn) ? HAKUNO_MALE_ATK_BONUS : 0; // ร่างชาย: พลังโจมตีถาวร +1 (ระงับระหว่าง MOON*CELL)
   const hakunoMoonAtk = hakunoMoonOn ? HAKUNO_MOONCELL_ATK_BONUS : 0; // MOON*CELL: พลังโจมตีรวมสูงสุด 2 หน่วยเท่ากันทั้งสองร่าง (ไม่ซ้อนกับ +1 ถาวรร่างชาย)
-  let base = 1 + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = 1 + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -5808,8 +5894,8 @@ function doAttack(byId, targetId) {
   // เชื่อมผล (patch 2.0.8): HP ที่เป้าหมายเสียจริงจะแชร์ให้คู่เชื่อมเท่ากันผ่าน loseHp — เก็บค่าก่อนตีไว้โชว์ผล
   const linkedBuddy = linkedBuddyOf(target);
   const buddyHpBefore = linkedBuddy ? linkedBuddy.hp : 0;
-  if (attackerBeat || profitAtk > 0 || phenexPurgeAtk) dealDirect(target, dmg); // ประกายเขี้ยวปฏิปักษ์ / กำไรเท่าตัวโว้ย / อย่าอยู่เลย แกน่ะ!: ทะลุเกราะเข้าเลือดจริง
-  else dealMixed(target, dmg);               // กฎปกติ: ลดเกราะก่อน ถ้าไม่มีเกราะจึงเข้าเลือดจริง
+  if (attackerBeat || profitAtk > 0 || phenexPurgeAtk) dealDirect(target, dmg, true); // ประกายเขี้ยวปฏิปักษ์ / กำไรเท่าตัวโว้ย / อย่าอยู่เลย แกน่ะ!: ทะลุเกราะเข้าเลือดจริง
+  else dealMixed(target, dmg, true);               // กฎปกติ: ลดเกราะก่อน ถ้าไม่มีเกราะจึงเข้าเลือดจริง (isNormalAttack: RS-Hopper ของเอวา 13 ไม่บล็อกการโจมตีปกติ)
   // สกิลรอง (โคโตเนะ patch 2.2.2): บัฟพลังโจมตีพื้นฐาน +2 ใช้แล้วหมดไปทันทีเมื่อได้โจมตี
   if (kotoneAtk) {
     delete attacker.statuses.kotoneAtk;
@@ -5863,16 +5949,25 @@ function doAttack(byId, targetId) {
     if (target.alive) {
       if (hasKillCapability(target)) {
         target.statuses.miyakoSeal = Math.max(target.statuses.miyakoSeal || 0, MIYAKO_SEAL_TURNS);
-        lastLog.push(`🥊 ${attacker.name} หนูจะทำให้พี่ตาสว่างเอง — สั่งปิดใช้งานความสามารถในการสังหารทันทีของ ${target.name} เป็นเวลา ${MIYAKO_SEAL_TURNS} เทิร์น!`);
+        lastLog.push(`🥊 ${attacker.name} ไม่ยอมให้ฆ่าใครอีกแล้ว — สั่งปิดใช้งานความสามารถในการสังหารทันทีของ ${target.name} เป็นเวลา ${MIYAKO_SEAL_TURNS} เทิร์น!`);
       } else {
         target.statuses.armorSeal = Math.max(target.statuses.armorSeal || 0, MIYAKO_ARMOR_SEAL_TURNS);
+        target.statuses.decay = Math.max(target.statuses.decay || 0, MIYAKO_ULT_DECAY_TURNS);
         if (!attacker.miyakoAtkBonus) {
           attacker.miyakoAtkBonus = true;
-          lastLog.push(`🥊 ${attacker.name} หนูจะทำให้พี่ตาสว่างเอง — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตีถาวร +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น!`);
+          lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตีถาวร +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
         } else {
-          lastLog.push(`🥊 ${attacker.name} หนูจะทำให้พี่ตาสว่างเอง — ${target.name} ไม่มีความสามารถในการสังหารทันที (พลังโจมตีถาวรได้รับไปแล้ว ไม่สะสมเพิ่ม) เกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น!`);
+          lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที (พลังโจมตีถาวรได้รับไปแล้ว ไม่สะสมเพิ่ม) เกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
         }
       }
+    }
+  }
+  // โอเจอร์ชาร์จ (คุวากาตะ Ohger Finish patch 2.2 alpha): โจมตีปกติ +1 แล้วมอบผุพังให้เป้าหมาย — ใช้แล้วหมดไป
+  if (ohger) {
+    delete attacker.statuses.ohger;
+    if (target.alive) {
+      target.statuses.decay = Math.max(target.statuses.decay || 0, KUWAGATA_OHGER_DECAY_TURNS);
+      lastLog.push(`👑 ${attacker.name} โอเจอร์ชาร์จ — โจมตี +1 และมอบผุพังให้ ${target.name} ${KUWAGATA_OHGER_DECAY_TURNS} เทิร์น (เกราะไม่ฟื้น)!`);
     }
   }
   // ข้าขอบัญชา (ชาย คิชินามิ ฮาคุโนะ): โจมตีปกติติดผกผันให้เป้าหมาย 3 เทิร์น — เป้าเดิมที่ติดผกผันอยู่แล้ว ไม่ต่อเวลาให้ และสกิลเสียเปล่า
@@ -5941,19 +6036,20 @@ function doAttack(byId, targetId) {
       lastLog.push(`🏆 The Beat of Victory! ${target.name} ติดชะงัก 1 เทิร์น (ใช้สกิลไม่ได้ / จั่วไพ่ได้ไม่เกิน ${OGURI_STAGGER_CAP} แต้ม)`);
     }
   }
-  // หอกลองกินัส: โจมตีโดนเป้าหมาย -> มีโอกาส 20/80 ที่เทิร์นถัดมาเป้าหมายจะใช้สกิลไม่ได้
-  //  (สกิลติดตัว 3 เอวาทำงาน = โอกาสเพิ่มเป็น 50/50)
-  if (spearAtk && target.alive) {
-    const chance = eva3Active(attacker) ? 0.5 : 0.2;
-    if (Math.random() < chance) {
-      if (resistActive(target)) {
-        lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — หอกลองกินัสไม่มีผล`);
+  // หอกลองกินัส (patch 2.2 alpha): โจมตีโดนเป้าหมาย -> โอกาส 50/50 คงที่ ที่เป้าหมายจะใช้สกิลไม่ได้ 2 เทิร์น — ใช้แล้วหมดไป
+  if (spearAtk) {
+    delete attacker.statuses.spear;
+    if (target.alive) {
+      if (Math.random() < EVA13_SPEAR_CHANCE) {
+        if (resistActive(target)) {
+          lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — หอกลองกินัสไม่มีผล`);
+        } else {
+          target.noSkillNext = Math.max(target.noSkillNext || 0, EVA13_SPEAR_LOCK_TURNS);
+          lastLog.push(`🗡️ หอกลองกินัสปักเป้า! ${target.name} ใช้สกิลไม่ได้ ${EVA13_SPEAR_LOCK_TURNS} เทิร์น`);
+        }
       } else {
-        target.noSkillNext = Math.max(target.noSkillNext || 0, 1);
-        lastLog.push(`🗡️ หอกลองกินัสปักเป้า! ${target.name} ใช้สกิลไม่ได้ในเทิร์นถัดไป`);
+        lastLog.push(`🗡️ หอกลองกินัสพลาด — ${target.name} ยังใช้สกิลได้ตามปกติ`);
       }
-    } else {
-      lastLog.push(`🗡️ หอกลองกินัสพลาด — ${target.name} ยังใช้สกิลได้ตามปกติ`);
     }
   }
   // Beat Mode กันตาย (ครั้งเดียวต่อเกม): ทำงานทันทีเมื่อความเสียหายถึงตาย — ไม่ต้องอยู่ใน Beat Mode ก่อน
@@ -6007,6 +6103,13 @@ function doAttack(byId, targetId) {
   if (miyakoHealAtk) {
     const heal = healHp(attacker, MIYAKO_HEAL_AMOUNT);
     if (heal > 0) lastLog.push(`💗 ${attacker.name} พี่จ๋าอยู่ไหน — ฟื้นพลังชีวิต +${heal}`);
+  }
+  // หอกแห่งแคสเซียส (เอวา 13 patch 2.2 alpha): การโจมตีปกติฟื้นเลือดตามความเสียหายที่ทำได้ — ใช้แล้วหมดไป
+  const cassiusAtk = attacker.characterId === "eva13" && (attacker.statuses.cassius || 0) > 0;
+  if (cassiusAtk) {
+    delete attacker.statuses.cassius;
+    const heal = healHp(attacker, dmg);
+    if (heal > 0) lastLog.push(`🗡️ ${attacker.name} หอกแห่งแคสเซียส — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
   }
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
@@ -6162,6 +6265,8 @@ function doAttack(byId, targetId) {
   const addFx = (x, side) => { if (x) fxSkills.push({ ...x, side }); };
   if (beam) addFx(skillByStatus(attacker, "beam"), "atk");
   if (ohger) addFx(skillByStatus(attacker, "ohger"), "atk");
+  if (rachanAtk) addFx({ name: `คิงโอเจอร์ +${rachanAtk}`, img: OHGER_FORM, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
+  if (fourthAtk) addFx({ name: `Fourth Impact +${fourthAtk}`, img: TRANSFORMS.fourth.img, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (ginga) addFx(skillByStatus(attacker, "ginga"), "atk");
   if (gingastriumAtk) addFx({ name: `Ginga Strium${lastStanding ? " +1 (คู่ต่อสู้คนเดียว)" : ""}`, img: HIKARU_STRIUM_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (humanityAtk) addFx(skillByStatus(attacker, "humanity"), "atk");
@@ -6305,12 +6410,20 @@ function endTurn() {
         lastLog.push(`🍀 ${p.name} โชคลาภไม่ได้ใช้ 3 เทิร์น — หมดฤทธิ์`);
       }
     } else p.fortuneIdle = 0;
+    // RS-Hopper (เอวา 13 patch 2.2 alpha): ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น (สูงสุด 3)
+    if (p.characterId === "eva13" && (p.statuses.rsHopper || 0) < EVA13_RSHOPPER_MAX) {
+      p.rsHopperRegenTimer = (p.rsHopperRegenTimer || 0) + 1;
+      if (p.rsHopperRegenTimer >= EVA13_RSHOPPER_REGEN_TURNS) {
+        p.rsHopperRegenTimer = 0;
+        p.statuses.rsHopper = Math.min(EVA13_RSHOPPER_MAX, (p.statuses.rsHopper || 0) + 1);
+        lastLog.push(`🦘 ${p.name} RS-HOPPER — ฟื้นชาร์จ +1 (${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX})`);
+      }
+    }
   }
 
   let moonCellEndedBy = null; // MOON*CELL (คิชินามิ ฮาคุโนะ): หมดเวลาแล้ว — คืนบัฟ/ดีบัฟหลังลูปนี้จบ (กันคืนแล้วโดนลดเทิร์นซ้ำในลูปเดียวกัน)
   for (const p of Object.values(players)) {
     for (const k of Object.keys(p.statuses || {})) {
-      if (k === "rachan") continue; // สวมเกราะราชัน: ผลคงอยู่ถาวร ไม่ลดเทิร์น
       if (k === "dawn") continue;   // ยามฟ้าสาง (โอเบรอน): สแตคถาวร จนกว่า Vortigern จะล้าง
       if (k === "chill") continue;  // ชิวๆครับน้องๆ (Apple guy): คงอยู่จนกว่าจะถูกโจมตี ไม่ลดเทิร์น
       // โหมงานหนัก (โคโตเนะ patch พิเศษ): คงอยู่ 3 เทิร์นแล้วหมดเอง (หรือลบก่อนด้วย Sleeping time ตอนกลางคืน)
@@ -6319,6 +6432,10 @@ function endTurn() {
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
+      if (k === "rsHopper") continue; // RS-Hopper (เอวา 13): สแตคชาร์จ ไม่ใช่ตัวนับเทิร์น — ฟื้นเองทุก 3 เทิร์น (ดูด้านบน)
+      if (k === "cassius") continue; // หอกแห่งแคสเซียส (เอวา 13): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
+      if (k === "spear") continue;   // หอกลองกินัส (เอวา 13 patch 2.2 alpha): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
+      if (k === "ohger") continue;   // โอเจอร์ชาร์จ (คุวากาตะ patch 2.2 alpha): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "evade") continue;   // หลบหลีก (Bard): คงอยู่จนกว่าจะถูกเลือกโจมตี (ซ้อนทับสูงสุด 3, หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "empower") continue; // เสริมพลัง (Rejuvenation): คงอยู่จนกว่าจะได้โจมตี (ไม่ซ้อนทับ)
       if (k === "miyakoHeal" || k === "miyakoCombo") continue; // อาริมะ มิยาโกะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
@@ -6457,7 +6574,7 @@ function endTurn() {
       lastLog.push(`💥 ${e.name} ไม่สามารถแก้ไขอะไรได้อีกแล้ว — ทุกสิ่งทุกอย่างไร้ความหมาย! ระเบิดใส่ทุกคน -${EVA_BLAST_DMG}`);
       for (const o of alivePlayers()) {
         if (o.id === e.id) continue;
-        dealMixed(o, EVA_BLAST_DMG);
+        if (!evaBlastEvade(o, e)) dealMixed(o, EVA_BLAST_DMG);
         maybeBeatSave(o);
         maybeBeatMode(o);
         maybeEva3(o);
@@ -6677,11 +6794,11 @@ io.on("connection", (socket) => {
       name: (name || "ผู้เล่น").toString().slice(0, 12),
       position: pos, characterId: ch.id, avatar: ch.avatar, img: ch.img,
       cards: [], locked: false, busted: false, result: null,
-      hp: MAX_HP, armor: MAX_ARMOR, skillPoints: 0, alive: true, shield: 0,
-      statuses: {}, statusAmt: {}, drawBlessed: false,
+      hp: MAX_HP, armor: ch.id === "eva13" ? 0 : MAX_ARMOR, skillPoints: 0, alive: true, shield: 0,
+      statuses: ch.id === "eva13" ? { rsHopper: EVA13_RSHOPPER_MAX } : {}, statusAmt: {}, drawBlessed: false,
       seen: {}, ntdTarget: null, transformAt: 0, cutsceneShown: {},
       armorLocked: false, beatSaved: false, skillUsedRound: false,
-      beamAmmo: BEAM_AMMO, puddingUses: PUDDING_USES,
+      beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,

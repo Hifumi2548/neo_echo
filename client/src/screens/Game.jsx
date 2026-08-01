@@ -433,8 +433,8 @@ const STATUS_INFO = {
   beam:      { icon: "🔫", label: "Beam", cls: "bg-echo-magenta", desc: "Beam Magnum: การโจมตีเทิร์นนี้ +2 หน่วย" },
   paradise:  { icon: "🦄", label: "Paradise", cls: "bg-echo-gold text-gray-900", desc: "NewType Paradise: โจมตีด้วยพลัง NT-D (+1) ได้ทุกเป้าหมาย" },
   ntd:       { icon: "⚡", label: "NT-D", cls: "bg-echo-hp", desc: "NT-D System: การโจมตีสวนกลับคนที่ตีเราล่าสุด +1 หน่วย" },
-  ohger:     { icon: "👑", label: "Ohger", cls: "bg-echo-gold text-gray-900", desc: "Ohger Finish: การโจมตีเทิร์นนี้ +1 หน่วย" },
-  rachan:    { icon: "🛡️", label: "ราชัน", cls: "bg-echo-armor", desc: "สวมเกราะราชัน: เพดานเกราะ +3 ถาวร" },
+  ohger:     { icon: "👑", label: "โอเจอร์ชาร์จ", cls: "bg-echo-gold text-gray-900", desc: "โอเจอร์ชาร์จ: การโจมตีปกติครั้งถัดไป +1 หน่วย แล้วมอบผุพัง 3 เทิร์นให้เป้าหมาย — คงอยู่จนกว่าจะได้โจมตี" },
+  rachan:    { icon: "🛡️", label: "คิงโอเจอร์", cls: "bg-echo-armor", desc: "สวมเกราะราชัน: เพดานเกราะ +3 พลังโจมตีปกติ +1 คงอยู่ 5 เทิร์น (ได้รับโชคลาภ +2 ตอนใช้)" },
   song:      { icon: "🎵", label: "Song", cls: "bg-echo-magenta", desc: "Song for you: พลังขิงตามชามที่ใช้ (1 ชาม = +1) — มีผลเฉพาะสกิลติดตัวโดนขิง (ขิงแบบไม่สนเกราะ)" },
   anata:     { icon: "🎤", label: "ANATA", cls: "bg-echo-gold text-gray-900", desc: "ANATA WAAAAAAAA: เป้าหมายลับจะถูกบังคับจั่ว 2 ใบหลังเปิดไพ่" },
   mage:      { icon: "🪄", label: "จอมเวทย์", cls: "bg-echo-cyan text-gray-900", desc: "จอมเวทย์ฝึกหัด: ความเสียหายจากการแพ้/แตกเทิร์นนี้ +1 ต่อสแตค (ฟื้นเลือดคืนเทิร์นหน้า)" },
@@ -443,8 +443,10 @@ const STATUS_INFO = {
   nodraw:    { icon: "🚫", label: "ห้ามจั่ว", cls: "bg-echo-hp", desc: "จั่วการ์ดเพิ่มไม่ได้ในเทิร์นนี้" },
   noskill:   { icon: "🚫", label: "ห้ามสกิล", cls: "bg-echo-hp", desc: "โดนหอกลองกินัสปัก: ใช้สกิลไม่ได้ในเทิร์นนี้" },
   golden:    { icon: "🎰", label: "777", cls: "bg-echo-gold text-gray-900", desc: "เวลาทอง: โชคด้านบวก +10% คอสสกิลพื้นฐาน/รองลดครึ่ง กดสกิลพื้นฐานซ้ำได้" },
-  spear:     { icon: "🗡️", label: "หอกลองกินัส", cls: "bg-echo-magenta", desc: "หอกลองกินัส: โจมตี +1 และมีโอกาสทำให้เป้าหมายใช้สกิลไม่ได้เทิร์นถัดไป" },
-  fourth:    { icon: "☄️", label: "Impact", cls: "bg-echo-hp", desc: "Fourth Impact: กันดาเมจแพ้/แตก — ถูกกำจัดระหว่างนี้จะระเบิดทุกคน 5 หน่วย" },
+  spear:     { icon: "🗡️", label: "หอกลองกินัส", cls: "bg-echo-magenta", desc: "หอกลองกินัส: โจมตี +1 และมีโอกาส 50/50 ทำให้เป้าหมายใช้สกิลไม่ได้ 2 เทิร์น — คงอยู่จนกว่าจะได้โจมตี" },
+  cassius:   { icon: "🗡️", label: "หอกแห่งแคสเซียส", cls: "bg-echo-gold text-gray-900", desc: "หอกแห่งแคสเซียส: การโจมตีปกติครั้งถัดไปฟื้นเลือดตามความเสียหายที่ทำได้ — คงอยู่จนกว่าจะได้โจมตี" },
+  rsHopper:  { icon: "🦘", label: "RS-HOPPER", cls: "bg-echo-armor", desc: "RS-HOPPER: กันความเสียหายจากสกิลได้เต็ม (ไม่กันการโจมตีปกติ) ตราบใดที่พลังชีวิตเกิน 4 หน่วย — ฟื้น 1 ชาร์จทุก 3 เทิร์น สูงสุด 3" },
+  fourth:    { icon: "☄️", label: "Impact", cls: "bg-echo-hp", desc: "Fourth Impact: พลังโจมตีปกติ +2 กันดาเมจแพ้/แตก 5 เทิร์น — ถูกกำจัดระหว่างนี้จะระเบิดทุกคน 8 หน่วย" },
   lai:       { icon: "🌞", label: "Goodfellow", cls: "bg-echo-gold text-gray-900", desc: "Lai Rhyme Goodfellow กำลังทำงาน" },
   vortigern: { icon: "🌑", label: "Vortigern", cls: "bg-echo-hp", desc: "Lie Like Vortigern: ราตรีกลืนกินครอบงำสนามจนกว่าฟ้าจะสาง" },
   veil:      { icon: "🌙", label: "ม่านราตรี", cls: "bg-echo-magenta", desc: "ม่านแห่งราตรี: พลังโจมตี +1 หน่วย" },
@@ -531,9 +533,9 @@ const STATUS_INFO = {
   nanayaSeal: { icon: "👁️", label: "สกิลติดตัวถูกปิด", cls: "bg-echo-hp", desc: "อันนี้ของนายรึเปล่า: ใช้สกิล/จั่วไพ่ไม่ได้ และสกิลติดตัวไม่ทำงาน ตามจำนวนเทิร์นที่เหลือ" },
   // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
   miyakoHeal:  { icon: "💗", label: "พี่จ๋าอยู่ไหน", cls: "bg-echo-gold text-gray-900", desc: "พี่จ๋าอยู่ไหน: การโจมตีปกติครั้งถัดไปฟื้นเลือด +1 — คงอยู่จนกว่าจะได้โจมตี" },
-  miyakoCombo: { icon: "🥊", label: "เพลงหมัด อาริมะ", cls: "bg-echo-cyan text-gray-900", desc: "เพลงหมัด อาริมะ: การโจมตีปกติครั้งถัดไปต่อคอมโบได้สูงสุด 4 ครั้ง (100%/75%/50%/25%) — คงอยู่จนกว่าจะได้โจมตี" },
-  miyakoUlt:   { icon: "🎯", label: "แต้มบังคับ 20", cls: "bg-echo-gold text-gray-900", desc: "หนูจะทำให้พี่ตาสว่างเอง: แต้มการจั่วกลายเป็น 20 — เมื่อได้โจมตีจะปิดความสามารถสังหารทันทีของเป้าหมาย หรือเสริมดาเมจทะลุเกราะ +1" },
-  miyakoSeal:  { icon: "🥊", label: "ความสามารถสังหารถูกปิด", cls: "bg-echo-hp", desc: "หนูจะทำให้พี่ตาสว่างเอง: ความสามารถสังหารทันทีถูกปิดใช้งาน ตามจำนวนเทิร์นที่เหลือ" },
+  miyakoCombo: { icon: "🥊", label: "เพลงหมัด อาริมะ", cls: "bg-echo-cyan text-gray-900", desc: "เพลงหมัด อาริมะ: การโจมตีปกติครั้งถัดไปต่อคอมโบได้สูงสุด 4 ครั้ง (ครั้งที่ 1 ตีแน่นอน / 2:100% / 3:50% / 4:25%) — คงอยู่จนกว่าจะได้โจมตี" },
+  miyakoUlt:   { icon: "🎯", label: "หนูจะเอาจริงแล้วนะ", cls: "bg-echo-gold text-gray-900", desc: "หนูจะทำให้พี่ตาสว่างเอง: แต้มการจั่วกลายเป็น 20 — เมื่อได้โจมตีจะปิดความสามารถสังหารทันทีของเป้าหมาย หรือเสริมพลังโจมตีถาวร +1 พร้อมมอบผุพัง" },
+  miyakoSeal:  { icon: "🥊", label: "ไม่ยอมให้ฆ่าใครอีกแล้ว", cls: "bg-echo-hp", desc: "ไม่ยอมให้ฆ่าใครอีกแล้ว: ความสามารถสังหารทันทีถูกปิดใช้งาน ตามจำนวนเทิร์นที่เหลือ" },
   armorSeal: { icon: "🛡️", label: "เกราะไม่ฟื้น", cls: "bg-echo-hp", desc: "เกราะฟื้นไม่ได้ ตามจำนวนเทิร์นที่เหลือ" },
   // ---------- สถานะ Universal (patch 2.2.1) ----------
   invert:     { icon: "🔄", label: "ผกผัน", cls: "bg-echo-hp", desc: "ผกผัน: ฟื้นเลือด/เกราะ กลายเป็นเสียแทน — เพิ่มพลังโจมตี กลายเป็นลดแทน ตามจำนวนเทิร์นที่เหลือ" },
@@ -1543,8 +1545,10 @@ export default function Game({ state, lowQ }) {
   }, [phase, winner, state.roundNumber]);
   // ผู้เล่นที่กำลังเปิดดูสถานะ (ข้อมูลสดจาก state ทุกครั้งที่ re-render)
   const statusView = statusViewId ? state.players.find((x) => x.id === statusViewId) : null;
-  // Beat Mode (คุวากาตะ เลือด < 3): สกิลพื้นฐาน + ท่าไม้ตายใช้ไม่ได้
+  // Beat Mode (คุวากาตะ เลือด < 3): ท่าไม้ตายใช้ไม่ได้เสมอ
   const beatMe = !!(me && ch?.id === "kuwagata" && me.alive && me.hp < 3);
+  // สกิลพื้นฐาน (patch 2.2 alpha): ใช้ไม่ได้เฉพาะหลังกันตายทำงานแล้ว (ไม่ใช่แค่เข้า Beat Mode)
+  const beatBasicLocked = beatMe && !!me?.beatSaved;
   // กลางวัน/กลางคืน (patch 1.7): สลับทุก 3 เทิร์น — โอเบรอนสลับร่าง/ท่าไม้ตายตามช่วงเวลา
   const nightNow = state.cycle === "night";
   // ท่าไม้ตายกำลังมีผลอยู่: กดซ้ำไม่ได้จนกว่าจะหมดเวลา (สวมเกราะราชันถาวร = กดซ้ำไม่ได้อีกเลย)
@@ -1587,8 +1591,8 @@ export default function Game({ state, lowQ }) {
   const lwArcSelectMode = ch?.id === "lenwhite";
   // Ginga Strium (ฮิคารุ patch 2.1.3): ต้องอยู่ในร่าง Ginga (สกิลรอง 1) และเป็นตอนกลางวันเท่านั้นถึงใช้ได้
   const hikaruUltLocked = ch?.id === "hikaru" && !((me?.statuses?.ginga || 0) > 0 && !nightNow);
-  // Ohger Finish (คุวากาตะ): ต้องมีทั้งสวมเกราะราชัน และ ประกายเขี้ยวปฏิปักษ์ (+1 ความเสียหาย)
-  const ohgerLocked = !!(me && ch?.id === "kuwagata" && !(me.statuses?.rachan && (me.beat || beatMe)));
+  // Ohger Finish (คุวากาตะ patch 2.2 alpha): ใช้ได้โดยไม่มีเงื่อนไขแล้ว — กดซ้ำไม่ได้จนกว่าจะได้โจมตี
+  const ohgerLocked = !!(me && ch?.id === "kuwagata" && (me.statuses?.ohger || 0) > 0);
   // Full Assault (บานาจ ลิงก์ patch 2.1.2): กดซ้ำไม่ได้จนกว่าผลจะหมด — ไม่มีผลตอนสกิลรองกลายเป็น Beam Magnum (ร่าง Paradise)
   const banagherAssaultLocked = !!(me && ch?.id === "banagher" && !((me.statuses?.paradise || 0) > 0) && (me.statuses?.fullassault || 0) > 0);
   // ห้ามจั่วการ์ดเพิ่มเทิร์นนี้ (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -1610,10 +1614,10 @@ export default function Game({ state, lowQ }) {
   const halfCost = (s) => (s ? Math.ceil(s.cost / 2) : 0);
   // ---------- เอวา 13 ----------
   const isEva = ch?.id === "eva13";
-  // หอกแห่งแคสเซียส: ต้องมีเกราะเหลือให้หัก
-  const cassiusLocked = isEva && (me?.armor || 0) < 1;
-  // Fourth Impact: ใช้ได้เมื่อสกิลติดตัว 3 ทำงาน (เลือด <= 3) เท่านั้น
-  const fourthLocked = isEva && (me?.hp || 0) > 3;
+  // หอกแห่งแคสเซียส (patch 2.2 alpha): กดซ้ำไม่ได้จนกว่าจะได้โจมตี
+  const cassiusLocked = isEva && (me?.statuses?.cassius || 0) > 0;
+  // Fourth Impact: ใช้ได้เมื่อสกิลติดตัว 3 ทำงาน (เลือด <= 4) เท่านั้น
+  const fourthLocked = isEva && (me?.hp || 0) > 4;
   // ---------- ฟุจิมารุ ----------
   const isFuji = ch?.id === "fujimaru";
   const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
@@ -2223,7 +2227,7 @@ export default function Game({ state, lowQ }) {
 
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatMe || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : me.puddingUses} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                 <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || monsterMe)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
                 {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
               </div>
@@ -2658,7 +2662,7 @@ export default function Game({ state, lowQ }) {
 
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
-                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatMe || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : me.puddingUses} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                   <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
                   {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
                 </div>
