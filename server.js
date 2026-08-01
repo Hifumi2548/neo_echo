@@ -1670,19 +1670,6 @@ function activeSkillMusic() {
 // เชื่อมผล (patch 2.0.8): การลด HP จริงถูกแชร์ให้คู่เชื่อมเท่ากันด้วย (อมตะกันไว้ได้)
 function loseHp(p) {
   if ((p.tempHp || 0) > 0) { p.tempHp--; return; }
-  // RS-Hopper พิเศษ (เอวา 13 patch 2.2.1 alpha): เลือด >4 ก่อนโดนตีในจังหวะนี้ แต่จะลดจนต่ำกว่า 4 -> กันไว้ที่ 4 (ไม่ทำงานช่วง Fourth Impact)
-  //  ใช้ชาร์จร่วมกับ RS-Hopper ปกติ (p.statuses.rsHopper) — หักแค่ 1 ชาร์จต่อการโจมตี 1 ครั้ง แม้จะกันหลายจุดในลูปเดียวกัน
-  if (p.characterId === "eva13" && p._rsHopperFloorArmed && p.hp <= EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0)) {
-    if (p._rsHopperExFired) return; // กันไปแล้วในจังหวะนี้ (หักชาร์จไปแล้ว) — กันจุดที่เหลือในการโจมตีเดียวกันต่อโดยไม่หักซ้ำ
-    if ((p.statuses.rsHopper || 0) > 0) {
-      p._rsHopperExFired = true;
-      p.statuses.rsHopper--;
-      triggerCutscene(p, "eva13ExRsHopper");
-      lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — พลังชีวิตเกิน ${EVA13_HP_THRESHOLD} ถูกลดจนจะต่ำกว่า ${EVA13_HP_THRESHOLD} หน่วย กันไว้ให้เหลือ ${EVA13_HP_THRESHOLD} หน่วย! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
-      return;
-    }
-    p._rsHopperFloorArmed = false; // ไม่มีชาร์จเหลือ — หมดสิทธิ์กันสำหรับการโจมตีนี้ ปล่อยผ่านตามปกติ
-  }
   // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้ patch 2.1.1): ริดดี้เองตายไม่ได้ — เลือดค้างที่ 1
   if (p.hp <= 1 && riddheGuardProtects(p)) {
     if (p.riddheSaveLoggedRound !== roundNumber) {
@@ -1759,8 +1746,8 @@ function evaBlastEvade(o, e) {
   lastLog.push(`💨 ${o.name} พยายามหลบแรงระเบิดของ ${e.name} แต่ไม่พ้น (${evadePct}%)`);
   return false;
 }
-// RS-Hopper (เอวา 13 patch 2.2.1 alpha): ไม่ใช่การโจมตีปกติ -> กันความเสียหายได้เต็มทันทีถ้ายังมีชาร์จ
-//  ทำงานตลอดไม่ว่าเลือดจะเหลือเท่าไหร่ (ไม่ผูกกับเกณฑ์ 4 หน่วยเหมือน RS-Hopper พิเศษ) — ไม่ทำงานเฉพาะช่วง Fourth Impact เท่านั้น
+// RS-Hopper (เอวา 13 patch 2.2.1 alpha): ไม่ใช่การโจมตีปกติ (สกิลประเภทโจมตี/เลือกเป้าหมาย) -> กันความเสียหายได้เต็ม 100% ทันที
+//  ทำงานตลอดไม่ว่าเลือดจะเหลือเท่าไหร่ ไม่ต้องเช็คเงื่อนไข HP เลย — ไม่ทำงานเฉพาะช่วง Fourth Impact เท่านั้น
 function eva13RsHopperBlock(p) {
   if (!p || p.characterId !== "eva13" || !p.alive) return false;
   if ((p.statuses.fourth || 0) > 0) return false;
@@ -1770,12 +1757,24 @@ function eva13RsHopperBlock(p) {
   lastLog.push(`🦘 ${p.name} RS-HOPPER — ป้องกันความเสียหายจากสกิลได้ทั้งหมด! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
   return true;
 }
-// isNormalAttack: true เฉพาะที่ doAttack() เรียก (การโจมตีจากการเลือกเป้าหมายในเทิร์นปกติ ไม่ว่าจะมีบัฟเสริมพลังหรือไม่) — RS-Hopper บล็อกเต็มไม่ได้ กันได้แค่ไม่ให้ต่ำกว่า 4 หน่วย
+// RS-Hopper พิเศษ (เอวา 13 patch 2.2.1 alpha): การโจมตีปกติ (รวมที่มีบัฟเสริมพลัง) — คำนวณพลังชีวิตที่จะเหลือหลังโดนก่อนเสมอ
+//  ผลลัพธ์ <=4 และมีชาร์จ -> ตรึงพลังชีวิตไว้ที่ 4 พอดี (ไม่ว่าดาเมจจริงจะแรงแค่ไหน) เสียชาร์จ 1 | ผลลัพธ์ >4 -> ไม่ป้องกัน โดนเต็ม ไม่เสียชาร์จ
+function eva13NormalAttackFloor(p, n) {
+  if (!p || p.characterId !== "eva13" || !p.alive) return false;
+  if ((p.statuses.fourth || 0) > 0) return false;
+  if ((p.statuses.rsHopper || 0) <= 0) return false;
+  if (p.hp - n > EVA13_HP_THRESHOLD) return false;
+  p.statuses.rsHopper--;
+  p.hp = EVA13_HP_THRESHOLD;
+  triggerCutscene(p, "eva13ExRsHopper");
+  lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — ตรึงพลังชีวิตไว้ที่ ${EVA13_HP_THRESHOLD} หน่วย! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
+  return true;
+}
+// isNormalAttack: true เฉพาะที่ doAttack() เรียก (การโจมตีจากการเลือกเป้าหมายในเทิร์นปกติ ไม่ว่าจะมีบัฟเสริมพลังหรือไม่)
 function dealDirect(p, n, isNormalAttack) {
   if (sealActive(p)) return;
-  if (!isNormalAttack && eva13RsHopperBlock(p)) return;
-  p._rsHopperFloorArmed = p.characterId === "eva13" && p.hp > EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0);
-  p._rsHopperExFired = false;
+  if (isNormalAttack) { if (eva13NormalAttackFloor(p, n)) return; }
+  else if (eva13RsHopperBlock(p)) return;
   for (let i = 0; i < n; i++) {
     if (!p.alive) return;
     if (p.shield > 0) { p.shield--; continue; }
@@ -1791,9 +1790,8 @@ function dealArmorOnly(p, n) {
 }
 function dealMixed(p, n, isNormalAttack) { // เกราะก่อนแล้วเลือด (สำหรับ NT-D)
   if (sealActive(p)) return;
-  if (!isNormalAttack && eva13RsHopperBlock(p)) return;
-  p._rsHopperFloorArmed = p.characterId === "eva13" && p.hp > EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0);
-  p._rsHopperExFired = false;
+  if (isNormalAttack) { if (eva13NormalAttackFloor(p, n)) return; }
+  else if (eva13RsHopperBlock(p)) return;
   for (let i = 0; i < n; i++) {
     if (!p.alive) return;
     if (p.shield > 0) { p.shield--; continue; }
