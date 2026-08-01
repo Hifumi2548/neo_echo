@@ -6050,11 +6050,13 @@ function doAttack(byId, targetId) {
       lastLog.push(`🏆 The Beat of Victory! ${target.name} ติดชะงัก 1 เทิร์น (ใช้สกิลไม่ได้ / จั่วไพ่ได้ไม่เกิน ${OGURI_STAGGER_CAP} แต้ม)`);
     }
   }
-  // หอกลองกินัส (patch 2.2 alpha): โจมตีโดนเป้าหมาย -> โอกาส 50/50 คงที่ ที่เป้าหมายจะใช้สกิลไม่ได้ 2 เทิร์น — ใช้แล้วหมดไป
+  // หอกลองกินัส (patch 2.2.1 alpha): โจมตีโดนเป้าหมาย -> โอกาส 50/50 ที่เป้าหมายจะใช้สกิลไม่ได้ 2 เทิร์น — ใช้แล้วหมดไป
+  //  เพิ่มเป็น 100% ถ้าขณะนั้นเปิด Fourth Impact อยู่ หรือเลือดเหลือ <= 4 (สกิลติดตัว 3 ทำงาน)
   if (spearAtk) {
     delete attacker.statuses.spear;
     if (target.alive) {
-      if (Math.random() < EVA13_SPEAR_CHANCE) {
+      const spearChance = (eva3Active(attacker) || (attacker.statuses.fourth || 0) > 0) ? 1 : EVA13_SPEAR_CHANCE;
+      if (Math.random() < spearChance) {
         if (resistActive(target)) {
           lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — หอกลองกินัสไม่มีผล`);
         } else {
