@@ -1760,7 +1760,13 @@ export default function Game({ state, lowQ }) {
   // Fourth Impact: ใช้ได้เมื่อสกิลติดตัว 3 ทำงาน (เลือด <= 4) เท่านั้น
   const fourthLocked = isEva && (me?.hp || 0) > 4;
   // ---------- DoomGuy (patch 2.2 full) ----------
-  const doomUltLocked = ch?.id === "doomguy" && (me?.doomCharge || 0) < 5; // Crucible: ต้องมีชาร์จครบ 5
+  const isDoomguy = ch?.id === "doomguy";
+  const doomUltLocked = isDoomguy && (me?.doomCharge || 0) < 5; // Crucible: ต้องมีชาร์จครบ 5
+  // สกิลติดตัว: ไม่ติดคูลดาวน์การใช้สกิล — Quick Swap (สกิลพื้นฐาน) และ Weapon (สกิลรอง) ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน
+  const doomBasicLocked = isDoomguy && !!me?.doomQuickSwapUsed; // Quick Swap เอง ยังจำกัด 1 ครั้ง/เทิร์นตามปกติ
+  const doomNoEffectLocked = isDoomguy && me?.doomWeaponHasEffect === false; // ปืนกระบอกนี้ไม่มีความสามารถพิเศษให้กด (Plasma Rifle/BFG 9000)
+  // ---------- มุซาชิ ฮารุโนะ (patch 2.2 full) ----------
+  const musashiCosmosOn = ch?.id === "musashi" && (me?.statuses?.cosmos || 0) > 0;
   // ---------- ฟุจิมารุ ----------
   const isFuji = ch?.id === "fujimaru";
   const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
@@ -2231,7 +2237,7 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || musashiSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || (musashiSel && (!musashiCosmosOn || (p.statuses?.mercy || 0) >= 5)) || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
               onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
@@ -2313,13 +2319,13 @@ export default function Game({ state, lowQ }) {
         )}
         {musashiSel && (
           <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">💞 แตะเลือกเป้าหมายสกิลรอง</span>
+            <span className="text-lg font-black text-echo-gold animate-pulse">💞 แตะเลือกเป้าหมาย: {ch?.secondary?.name || "สกิลรอง"}{musashiCosmosOn ? " (เฉพาะคนที่มีความเมตตาสะสมครบ 5)" : ""}</span>
             <button onClick={() => { clickSound(); setMusashiSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {doomSel && (
           <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-cyan animate-pulse">🔫 แตะเลือกเป้าหมาย Weapon</span>
+            <span className="text-lg font-black text-echo-cyan animate-pulse">🔫 แตะเลือกเป้าหมาย: {ch?.secondary?.name || "Weapon"}</span>
             <button onClick={() => { clickSound(); setDoomSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
@@ -2405,8 +2411,8 @@ export default function Game({ state, lowQ }) {
 
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || monsterMe)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || monsterMe)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
                 {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || doomUltLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
@@ -2662,7 +2668,7 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || musashiSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || (musashiSel && (!musashiCosmosOn || (p.statuses?.mercy || 0) >= 5)) || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
           onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : musashiSel ? pickMusashi(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
@@ -2794,6 +2800,22 @@ export default function Game({ state, lowQ }) {
         </div>
       )}
 
+      {/* มุซาชิ ฮารุโนะ (patch 2.2 full): โหมดเลือกเป้าหมายสกิลรอง (ฉันเองก็เห็นใจนายนะ / ออร่าแห่งความเมตตา) */}
+      {musashiSel && (
+        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
+          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">💞 คลิกเลือกเป้าหมาย: {ch?.secondary?.name || "สกิลรอง"}{musashiCosmosOn ? " (เฉพาะคนที่มีความเมตตาสะสมครบ 5)" : ""}</span>
+          <button onClick={() => { clickSound(); setMusashiSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+        </div>
+      )}
+
+      {/* DoomGuy (patch 2.2 full): โหมดเลือกเป้าหมาย Weapon (เฉพาะอาวุธที่ต้องเลือกเป้าหมาย) */}
+      {doomSel && (
+        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
+          <span className="text-xl font-black text-echo-cyan animate-pulse bg-black/60 rounded-full px-5 py-1.5">🔫 คลิกเลือกเป้าหมาย: {ch?.secondary?.name || "Weapon"}</span>
+          <button onClick={() => { clickSound(); setDoomSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
+        </div>
+      )}
+
       {/* ---------- แผงตัวเรา (ล่างกลาง) ---------- */}
       {me && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[min(96%,860px)]">
@@ -2849,8 +2871,8 @@ export default function Game({ state, lowQ }) {
 
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
-                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched)} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
                   {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || doomUltLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (

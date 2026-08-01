@@ -1508,6 +1508,18 @@ function resolveMusashiMercy(id, choice) {
   if (!asker) return;
   if (choice === "yield") {
     t.statuses.decay = Math.max(t.statuses.decay || 0, MUSASHI_YIELD_DECAY_TURNS);
+    // เหลือแค่มุซาชิกับเป้าหมายออร่าแห่งความเมตตาบนสนาม -> ยอมแพ้ = จบเกมชนะทั้งคู่ทันที (เหมือนสกิลติดตัว 2 ริดดี้)
+    //  ป้องกันบัค: ถ้าไม่จบเกม เป้าหมายจะยังมีตาปกติเหลืออยู่ และเลือกโจมตีมุซาชิกลับได้ทั้งที่เพิ่งยอมแพ้ไป
+    const stillAlive = alivePlayers();
+    if (stillAlive.length === 2 && stillAlive.some((p) => p.id === asker.id) && stillAlive.some((p) => p.id === t.id)) {
+      allyWinFlag = true;
+      lastLog.push(`🕊️👑 เหลือเพียง ${asker.name} กับ ${t.name} บนสนาม — ${t.name} เลือกยอมแพ้ ถือว่าทั้งคู่ชนะไปด้วยกัน!`);
+      clearPhaseTimer();
+      gameState = "GAMEOVER";
+      timeLeft = 0;
+      broadcastState();
+      return;
+    }
     t.statuses.musashiRevenge = MUSASHI_YIELD_REVENGE_TURNS;
     lastLog.push(`🕊️ ${t.name} เลือกยอมแพ้ต่อ ${asker.name} — ติดผุพัง ${MUSASHI_YIELD_DECAY_TURNS} เทิร์น และมีสิทธิ์เลือกโจมตี ${asker.name} ได้ ${MUSASHI_YIELD_REVENGE_TURNS} เทิร์น`);
   } else {
@@ -2454,6 +2466,8 @@ function buildStateFor(viewerId) {
         inventory: mine ? (p.inventory || []) : null, // ของในคลัง — เห็นแค่ของตัวเอง
         doomWeapon: p.doomWeapon || null, // DoomGuy: อาวุธที่ถืออยู่
         doomCharge: p.characterId === "doomguy" ? (p.doomCharge || 0) : undefined, // DoomGuy: ชาร์จ Crucible (เต็ม 5)
+        doomWeaponHasEffect: p.characterId === "doomguy" ? !!(DOOM_WEAPONS[p.doomWeapon] || DOOM_WEAPONS.shotgun).effect : undefined, // DoomGuy: ปืนกระบอกนี้กดใช้ความสามารถพิเศษได้ไหม (Plasma Rifle/BFG 9000 ไม่มี)
+        doomQuickSwapUsed: p.characterId === "doomguy" ? !!p.doomQuickSwapUsed : undefined, // DoomGuy: Quick Swap ใช้ไปแล้วในเทิร์นนี้หรือยัง (1 ครั้ง/เทิร์น)
         gamblerUses: p.gamblerUses, // แกมเบลอร์: จำนวนวอสก้าหน่อยน้องคงเหลือ
         profit: p.profit || 0,      // แกมเบลอร์: บัฟกำไรเท่าตัวโว้ยสะสม
         sunriseDrop: p.sunriseDrop || 0, // โอเบรอน: จำนวนเทิร์นที่จะเสียเลือด 1/เทิร์นจากรุ่งอรุณแห่งวันใหม่
@@ -2625,13 +2639,13 @@ function startMatch() {
 }
 
 // ---------- ร้านค้ามายา (patch 2.2 full) ----------
-// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 20% / โชคลาภ 15% / ต้านสถานะ 20% / ฟื้นแต้มสกิล 20% (สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 25%
+// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 22.5% / โชคลาภ 5% (หายากลง) / ต้านสถานะ 22.5% / ฟื้นแต้มสกิล 22.5% (สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 27.5%
 function rollShopItem() {
   const roll = Math.random();
-  if (roll < 0.20) return { type: "cardPoint", value: 1 + Math.floor(Math.random() * 10), price: SHOP_CARD_POINT_PRICE };
-  if (roll < 0.35) return { type: "fortune", price: SHOP_FORTUNE_PRICE };
-  if (roll < 0.55) return { type: "resist", price: SHOP_RESIST_PRICE };
-  if (roll < 0.75) {
+  if (roll < 0.225) return { type: "cardPoint", value: 1 + Math.floor(Math.random() * 10), price: SHOP_CARD_POINT_PRICE };
+  if (roll < 0.275) return { type: "fortune", price: SHOP_FORTUNE_PRICE };
+  if (roll < 0.50) return { type: "resist", price: SHOP_RESIST_PRICE };
+  if (roll < 0.725) {
     const s = SHOP_SKILL_SIZES[Math.floor(Math.random() * SHOP_SKILL_SIZES.length)];
     return { type: "skillPoint", size: s.size, value: s.amount, price: s.price };
   }
@@ -3640,7 +3654,10 @@ function useSkill(id, tier, targets, item) {
   // เธอ/นาย คือฉันหรอ? (คิชินามิ ฮาคุโนะ สกิลพื้นฐาน): สลับเพศ — ไม่นับเป็นการใช้สกิลของเทิร์น แต่กดสลับได้แค่ 1 ครั้งต่อเทิร์น
   const isHakunoGender = p.characterId === "hakuno" && tier === "basic";
   if (isHakunoGender && p.hakunoGenderSwitched) return;
-  if (p.skillUsedRound && !mageRepeat && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
+  // DoomGuy (patch 2.2 full): สกิลติดตัว "ไม่ติดคูลดาวน์การใช้สกิล" — Quick Swap (พื้นฐาน) และ Weapon (รอง)
+  //  ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน (Quick Swap เองยังจำกัด 1 ครั้ง/เทิร์นแยกต่างหาก)
+  const isDoomguyPick = p.characterId === "doomguy" && (tier === "basic" || tier === "secondary");
+  if (p.skillUsedRound && !mageRepeat && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
   if (isMage && (p.mageUses || 0) >= MAGE_USES_PER_TURN) return;
   // จอมเวทย์ฝึกหัด: ระหว่างเปิด Everything For Humanity ใช้ไม่ได้
   if (isMage && (p.statuses.humanity || 0) > 0) return;
@@ -3860,7 +3877,7 @@ function useSkill(id, tier, targets, item) {
     if (p.statuses.freecast <= 0) delete p.statuses.freecast;
     lastLog.push(`🎁 ${p.name} พรแห่งการจั่ว — ใช้สกิลนี้โดยไม่เสียแต้มสกิล`);
   }
-  if (!isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / เปลี่ยนหัวหน้า / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ?
+  if (!isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / เปลี่ยนหัวหน้า / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ? / Quick Swap-Weapon (DoomGuy)
 
   // ---------- นายมีฝีมือแค่ไหนหรอ? (ชิกิ patch 2.0.6): ยกเลิกท่าไม้ตายทันทีที่มีผู้เล่นอื่นกด ----------
   //  มีชิกิถือชาร์จ godslay อยู่บนสนาม -> ท่าไม้ตายของผู้เล่นอื่นที่เพิ่งกดถูกยกเลิกทันที
