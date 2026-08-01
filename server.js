@@ -5351,6 +5351,7 @@ function postAttackFollowup(attacker) {
           startPhaseTimer(ATTACK_TIME, () => {
             delete attacker.statuses.miyakoCombo;
             delete attacker.statuses.miyakoHeal;
+            delete attacker.statuses.yaak;
             attacker.miyakoComboHits = 0;
             endTurn();
           });
@@ -5364,7 +5365,7 @@ function postAttackFollowup(attacker) {
     delete attacker.statuses.miyakoCombo;
     attacker.miyakoComboHits = 0;
   }
-  if (attacker) delete attacker.statuses.miyakoHeal;
+  if (attacker) { delete attacker.statuses.miyakoHeal; delete attacker.statuses.yaak; }
   endTurn();
 }
 // ยกเลิกการโจมตีซ้ำของหัวใจฆาตกร — จบเทิร์นตามปกติ
@@ -6127,8 +6128,8 @@ function doAttack(byId, targetId) {
     const heal = healHp(attacker, dmg);
     if (heal > 0) lastLog.push(`🗡️ ${attacker.name} หอกแห่งแคสเซียส — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
   }
-  // ย๊ากก! (อาริมะ มิยาโกะ patch 2.2.1 alpha): พลังโจมตี +1 ครั้งเดียว ใช้แล้วหมดไป
-  if (miyakoAtkBonusOn) delete attacker.statuses.yaak;
+  // ย๊ากก! (อาริมะ มิยาโกะ patch 2.2.1 alpha): พลังโจมตี +1 ต่อการโจมตี — ถ้าใช้ร่วมกับเพลงหมัดอาริมะ
+  //  นับทั้งคอมโบเป็นการโจมตีครั้งเดียว จึงยังไม่ลบตรงนี้ (ให้บวก +1 ทุกหมัดในคอมโบ) — ลบจริงตอนคอมโบจบใน postAttackFollowup()
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
   let deathlineReset = false;
