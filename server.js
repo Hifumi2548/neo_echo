@@ -2014,6 +2014,8 @@ function shikiCancelUltimate(slayer, victim, skillName, skillImg) {
 function voidUltimateOnBust(p) {
   for (const key of Object.keys(TRANSFORMS)) {
     if (!TRANSFORMS[key].afterReveal) continue; // เฉพาะท่าไม้ตาย (ginga / paradise)
+    // Crucible (DoomGuy): บังคับทุกคน "อื่น" แตกไม่ว่าไพ่ของตัวเองจะแตกด้วยหรือไม่ — ไม่โดนยกเลิกตรงนี้
+    if (key === "doomCrucible") continue;
     if ((p.statuses[key] || 0) > 0 && !p.seen[key]) {
       delete p.statuses[key];
       lastLog.push(`💥 ${p.name} ไพ่แตก! ท่าไม้ตาย ${TRANSFORMS[key].title} ใช้งานไม่ได้ — แต้มสกิลเสียฟรี`);
@@ -5553,9 +5555,10 @@ function afterResolve() {
 
   const activated = [];
   for (const p of alivePlayers()) {
-    if (bustedOf(p)) continue; // ไพ่แตก = ท่าไม้ตายไม่ทำงาน (กันหลุดกรณีเพิ่งกดแล้วแตก)
+    const pBusted = bustedOf(p); // ไพ่แตก = ท่าไม้ตายไม่ทำงาน (กันหลุดกรณีเพิ่งกดแล้วแตก) — ยกเว้น Crucible (ดูมกาย)
     for (const key of Object.keys(TRANSFORMS)) {
       if (!TRANSFORMS[key].afterReveal) continue;
+      if (pBusted && key !== "doomCrucible") continue; // Crucible บังคับทุกคนแตกไม่สนไพ่ตัวเอง — ทำงานได้แม้ตัวเองแตกด้วย
       if ((p.statuses[key] || 0) > 0 && !p.seen[key]) {
         p.seen[key] = true;
         p.transformAt = ++transformCounter;

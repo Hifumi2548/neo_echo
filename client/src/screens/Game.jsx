@@ -873,6 +873,20 @@ function CatUsesBadge({ me, ch }) {
     </span>
   );
 }
+// DoomGuy (patch 2.2 full): แจ้งเตือนชาร์จ Crucible สะสมได้เท่าไหร่แล้ว (ครบ 5 ปลดล็อกท่าไม้ตาย)
+function DoomChargeBadge({ me, ch }) {
+  if (!ch || ch.id !== "doomguy") return null;
+  const charge = Math.min(5, me.doomCharge || 0);
+  const full = charge >= 5;
+  return (
+    <span
+      className={`text-xs font-bold rounded-full px-2 py-0.5 whitespace-nowrap ${full ? "bg-echo-gold text-gray-900 animate-pulse" : "bg-black/55"}`}
+      title="Crucible (ท่าไม้ตาย) — โจมตีสำเร็จมีโอกาส 10% ได้ชาร์จ +1 สะสมครบ 5 ปลดล็อก"
+    >
+      🔥 Crucible {charge}/5{full ? " พร้อมใช้!" : ""}
+    </span>
+  );
+}
 // เล็น/ไวท์เล็น (patch 2.2 beta): ปุ่มเปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด ไม่ผูกกับสกิลรอง/ท่าไม้ตาย)
 function BankViewButton({ me, ch, onOpen }) {
   if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
@@ -2405,6 +2419,7 @@ export default function Game({ state, lowQ }) {
                 <LifeBar p={me} />
                 <StatusChips p={me} left />
                 <CatUsesBadge me={me} ch={ch} />
+                <DoomChargeBadge me={me} ch={ch} />
                 <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
                 <span className="ml-auto flex items-center gap-1.5">
                   <span className="flex gap-1 p-1 rounded-lg bg-black/25">
@@ -2837,6 +2852,7 @@ export default function Game({ state, lowQ }) {
               <button onClick={() => { clickSound(); setShowChar(true); }} className="text-xs underline opacity-80">รายละเอียดตัวละคร</button>
               <div className="mt-1 flex flex-col items-center gap-1">
                 <CatUsesBadge me={me} ch={ch} />
+                <DoomChargeBadge me={me} ch={ch} />
                 <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
               </div>
               {isFuji && <ReijuButton me={me} usable={reijuUsable} onOpen={() => setReijuOpen(true)} className="w-20 h-16 mt-1.5" />}
