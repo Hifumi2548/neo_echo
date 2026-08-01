@@ -1670,14 +1670,18 @@ function activeSkillMusic() {
 // เชื่อมผล (patch 2.0.8): การลด HP จริงถูกแชร์ให้คู่เชื่อมเท่ากันด้วย (อมตะกันไว้ได้)
 function loseHp(p) {
   if ((p.tempHp || 0) > 0) { p.tempHp--; return; }
-  // RS-Hopper พิเศษ (เอวา 13 patch 2.2 alpha): เลือด >4 ก่อนโดนตีในจังหวะนี้ แต่จะลดจนต่ำกว่า 4 -> กันไว้ที่ 4 (ไม่ทำงานช่วง Fourth Impact)
+  // RS-Hopper พิเศษ (เอวา 13 patch 2.2.1 alpha): เลือด >4 ก่อนโดนตีในจังหวะนี้ แต่จะลดจนต่ำกว่า 4 -> กันไว้ที่ 4 (ไม่ทำงานช่วง Fourth Impact)
+  //  ใช้ชาร์จร่วมกับ RS-Hopper ปกติ (p.statuses.rsHopper) — หักแค่ 1 ชาร์จต่อการโจมตี 1 ครั้ง แม้จะกันหลายจุดในลูปเดียวกัน
   if (p.characterId === "eva13" && p._rsHopperFloorArmed && p.hp <= EVA13_HP_THRESHOLD && !((p.statuses.fourth || 0) > 0)) {
-    if (!p._rsHopperExFired) {
+    if (p._rsHopperExFired) return; // กันไปแล้วในจังหวะนี้ (หักชาร์จไปแล้ว) — กันจุดที่เหลือในการโจมตีเดียวกันต่อโดยไม่หักซ้ำ
+    if ((p.statuses.rsHopper || 0) > 0) {
       p._rsHopperExFired = true;
+      p.statuses.rsHopper--;
       triggerCutscene(p, "eva13ExRsHopper");
-      lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — พลังชีวิตเกิน ${EVA13_HP_THRESHOLD} ถูกลดจนจะต่ำกว่า ${EVA13_HP_THRESHOLD} หน่วย กันไว้ให้เหลือ ${EVA13_HP_THRESHOLD} หน่วย!`);
+      lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — พลังชีวิตเกิน ${EVA13_HP_THRESHOLD} ถูกลดจนจะต่ำกว่า ${EVA13_HP_THRESHOLD} หน่วย กันไว้ให้เหลือ ${EVA13_HP_THRESHOLD} หน่วย! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
+      return;
     }
-    return;
+    p._rsHopperFloorArmed = false; // ไม่มีชาร์จเหลือ — หมดสิทธิ์กันสำหรับการโจมตีนี้ ปล่อยผ่านตามปกติ
   }
   // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้ patch 2.1.1): ริดดี้เองตายไม่ได้ — เลือดค้างที่ 1
   if (p.hp <= 1 && riddheGuardProtects(p)) {
@@ -1755,11 +1759,11 @@ function evaBlastEvade(o, e) {
   lastLog.push(`💨 ${o.name} พยายามหลบแรงระเบิดของ ${e.name} แต่ไม่พ้น (${evadePct}%)`);
   return false;
 }
-// RS-Hopper (เอวา 13 patch 2.2 alpha): เลือด >4 และไม่ใช่การโจมตีปกติ -> มีโอกาสกันความเสียหายทั้งหมดถ้ายังมีชาร์จ (ไม่ทำงานช่วง Fourth Impact)
+// RS-Hopper (เอวา 13 patch 2.2.1 alpha): ไม่ใช่การโจมตีปกติ -> กันความเสียหายได้เต็มทันทีถ้ายังมีชาร์จ
+//  ทำงานตลอดไม่ว่าเลือดจะเหลือเท่าไหร่ (ไม่ผูกกับเกณฑ์ 4 หน่วยเหมือน RS-Hopper พิเศษ) — ไม่ทำงานเฉพาะช่วง Fourth Impact เท่านั้น
 function eva13RsHopperBlock(p) {
   if (!p || p.characterId !== "eva13" || !p.alive) return false;
   if ((p.statuses.fourth || 0) > 0) return false;
-  if (p.hp <= EVA13_HP_THRESHOLD) return false;
   if ((p.statuses.rsHopper || 0) <= 0) return false;
   p.statuses.rsHopper--;
   triggerCutscene(p, "eva13RsHopper");
@@ -2013,7 +2017,6 @@ function resetCombat(p) {
   // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
   p.miyakoComboHits = 0;          // เพลงหมัด อาริมะ: จำนวนครั้งที่ตีไปแล้วในคอมโบปัจจุบัน
   p.miyakoKillResist = 0;         // นั่นพี่จ๋าหรอ?: จำนวนชั้นที่สะสม (ลดโอกาสถูกสังหารทันที 40%/ชั้น)
-  p.miyakoAtkBonus = false;       // หนูจะทำให้พี่ตาสว่างเอง: พลังโจมตีถาวร +1 ได้รับไปแล้วหรือยัง (ครั้งเดียวต่อเกม)
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   p.hakunoGender = "male";        // เธอ/นาย คือฉันหรอ?: เพศปัจจุบัน (male | female — เริ่มเกมเป็นชายเสมอ)
   p.hakunoGenderSwitched = false; // สลับเพศได้อีก 1 ครั้งในเทิร์นนี้หรือยัง
@@ -5771,7 +5774,7 @@ function doAttack(byId, targetId) {
   //  ซ้อนกับโบนัส +1 ของสกิลติดตัว 1 ได้ (เกิดใหม่แล้ว NTD จะถาวรเสมอ) รวมเป็น +2 (โจมตีปกติ 3)
   const phenexNtdAtk = attacker.characterId === "phenex" && ((attacker.statuses.phenexNtd || 0) > 0 || attacker.phenexNtdPermanent);
 
-  const miyakoAtkBonusOn = attacker.characterId === "miyako" && attacker.miyakoAtkBonus;
+  const miyakoAtkBonusOn = attacker.characterId === "miyako" && (attacker.statuses.yaak || 0) > 0;
   // สวมเกราะราชัน / คิงโอเจอร์ (คุวากาตะ patch 2.2 alpha): พลังโจมตีปกติ +1 ระหว่างร่าง
   const rachanAtk = (attacker.statuses.rachan || 0) > 0 ? KUWAGATA_RACHAN_ATK : 0;
   // Fourth Impact (เอวา 13 patch 2.2 alpha): พลังโจมตีปกติ +2 ระหว่างร่าง
@@ -5959,7 +5962,7 @@ function doAttack(byId, targetId) {
     }
   }
   // หนูจะทำให้พี่ตาสว่างเอง (อาริมะ มิยาโกะ): เล่นวีดีโอก่อนสรุปผล — เป้าหมายมีความสามารถสังหารทันทีติดตัวไหม
-  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> มิยาโกะได้พลังโจมตีถาวร +1 (ครั้งเดียว ไม่สะสม) + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
+  //  มี -> ปิดใช้งานความสามารถนั้น 3 เทิร์น | ไม่มี -> "ย๊ากก!" พลังโจมตี +1 การโจมตีปกติครั้งถัดไป (patch 2.2.1 alpha: ใช้ครั้งเดียวแล้วหมด ไม่ใช่ถาวร) + เป้าหมายเกราะไม่ฟื้น 5 เทิร์น
   if (miyakoUltAtk) {
     triggerCutscene(attacker, "miyakoUlt");
     delete attacker.statuses.miyakoUlt;
@@ -5970,12 +5973,8 @@ function doAttack(byId, targetId) {
       } else {
         target.statuses.armorSeal = Math.max(target.statuses.armorSeal || 0, MIYAKO_ARMOR_SEAL_TURNS);
         target.statuses.decay = Math.max(target.statuses.decay || 0, MIYAKO_ULT_DECAY_TURNS);
-        if (!attacker.miyakoAtkBonus) {
-          attacker.miyakoAtkBonus = true;
-          lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที พลังโจมตีถาวร +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
-        } else {
-          lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที (พลังโจมตีถาวรได้รับไปแล้ว ไม่สะสมเพิ่ม) เกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
-        }
+        attacker.statuses.yaak = 1;
+        lastLog.push(`🥊 ${attacker.name} ย๊ากก! — ${target.name} ไม่มีความสามารถในการสังหารทันที การโจมตีปกติครั้งถัดไป +${MIYAKO_ATK_BONUS} และเกราะของ ${target.name} จะไม่ฟื้น ${MIYAKO_ARMOR_SEAL_TURNS} เทิร์น พร้อมติดผุพัง ${MIYAKO_ULT_DECAY_TURNS} เทิร์น!`);
       }
     }
   }
@@ -6128,6 +6127,8 @@ function doAttack(byId, targetId) {
     const heal = healHp(attacker, dmg);
     if (heal > 0) lastLog.push(`🗡️ ${attacker.name} หอกแห่งแคสเซียส — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
   }
+  // ย๊ากก! (อาริมะ มิยาโกะ patch 2.2.1 alpha): พลังโจมตี +1 ครั้งเดียว ใช้แล้วหมดไป
+  if (miyakoAtkBonusOn) delete attacker.statuses.yaak;
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
   let deathlineReset = false;
@@ -6451,6 +6452,7 @@ function endTurn() {
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "rsHopper") continue; // RS-Hopper (เอวา 13): สแตคชาร์จ ไม่ใช่ตัวนับเทิร์น — ฟื้นเองทุก 3 เทิร์น (ดูด้านบน)
       if (k === "cassius") continue; // หอกแห่งแคสเซียส (เอวา 13): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
+      if (k === "yaak") continue;    // ย๊ากก! (อาริมะ มิยาโกะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "spear") continue;   // หอกลองกินัส (เอวา 13 patch 2.2 alpha): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "ohger") continue;   // โอเจอร์ชาร์จ (คุวากาตะ patch 2.2 alpha): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "evade") continue;   // หลบหลีก (Bard): คงอยู่จนกว่าจะถูกเลือกโจมตี (ซ้อนทับสูงสุด 3, หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
