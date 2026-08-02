@@ -4561,11 +4561,21 @@ function useSkill(id, tier, targets, item) {
     p.statuses.emeraude = 1;
     triggerCutscene(p, "takutoEmeraude");
     lastLog.push(`💚 ${p.name} Star Sword Emeraude — การโจมตีปกติครั้งถัดไปจะฟื้นพลังชีวิตตามความเสียหายที่ทำได้`);
+    // มี Saphir อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษเลย ไม่ต้องรอถึงตอนโจมตี
+    if ((p.statuses.saphir || 0) > 0) {
+      triggerCutscene(p, "takutoBothSwords");
+      lastLog.push(`⚔️ ${p.name} มี Star Sword Emeraude และ Saphir พร้อมกัน — ถ้าพร้อมแล้วก็เข้ามาเลย!`);
+    }
   }
   if (isTakutoSaphir) {
     p.statuses.saphir = 1;
     triggerCutscene(p, "takutoSaphir");
     lastLog.push(`💙 ${p.name} Star Sword Saphir — การโจมตีปกติครั้งถัดไปมีโอกาสโจมตีเพิ่มอีกครั้ง`);
+    // มี Emeraude อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษเลย ไม่ต้องรอถึงตอนโจมตี
+    if ((p.statuses.emeraude || 0) > 0) {
+      triggerCutscene(p, "takutoBothSwords");
+      lastLog.push(`⚔️ ${p.name} มี Star Sword Emeraude และ Saphir พร้อมกัน — ถ้าพร้อมแล้วก็เข้ามาเลย!`);
+    }
   }
   if (isTakutoMissile && takutoMissileTarget) {
     // เก็บไว้รอจนกว่าจะชนะรอบแล้วได้โจมตีจริง (ดูผลจริงใน doAttack) — ถ้าแพ้รอบนี้ สถานะจะหมดอายุไปเอง (turns:1) เสียแต้มสกิลฟรี
@@ -6190,9 +6200,6 @@ function doAttack(byId, targetId) {
   const takutoAtk = attacker.characterId === "takuto"
     ? (attacker.beatSaved ? TAKUTO_ATK_BONUS : 0) + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0)
     : 0;
-  // สึงาชิ ทาคุโตะ: มี Emeraude + Saphir พร้อมกัน -> ต้องเล่นวีดีโอ takuto_2sword.mp4 ก่อนขึ้นสรุปดาเมจ (เหมือน Beam Magnum/ย๊ากก! ฯลฯ)
-  //  เช็คไว้ก่อนตรงนี้เพราะด้านล่างจะลบสถานะทั้งสองทิ้งหลังใช้ผลแล้ว
-  const takutoBothSwordsAtk = attacker.characterId === "takuto" && (attacker.statuses.emeraude || 0) > 0 && (attacker.statuses.saphir || 0) > 0;
   let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
@@ -6589,7 +6596,7 @@ function doAttack(byId, targetId) {
   if (attacker.characterId === "takuto") {
     const emeraudeOn = (attacker.statuses.emeraude || 0) > 0;
     const saphirOn = (attacker.statuses.saphir || 0) > 0;
-    if (emeraudeOn && saphirOn) triggerCutscene(attacker, "takutoBothSwords");
+    // วีดีโอ takuto_2sword.mp4 เล่นไปแล้วตอนกดสกิลที่ 2 ครบทั้งคู่ (ดู useSkill) — ตรงนี้แค่ใช้ผลจริงตอนโจมตี
     if (emeraudeOn) {
       delete attacker.statuses.emeraude;
       const heal = healHp(attacker, dmg);
@@ -6851,7 +6858,7 @@ function doAttack(byId, targetId) {
   //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || takutoBothSwordsAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 
