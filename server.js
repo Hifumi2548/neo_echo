@@ -75,10 +75,9 @@ const DOOM_ROCKET_BONUS_DMG = 2;
 const DOOM_BALLISTA_DMG = 1;
 const DOOM_CRUCIBLE_ATK = 7;
 const DOOM_CRUCIBLE_CHARGE_NEED = 5;
-const DOOM_CRUCIBLE_TURNS = 3;
 const DOOM_HEAL_ON_ATK = 1;
-const DOOM_CHARGE_CHANCE = 0.25; // patch 2.2 new: เพิ่มจาก 10% -> 25%
-const DOOM_TIE_ATTACK_CHANCE = 0.50;
+const DOOM_CHARGE_CHANCE = 0.35; // patch 2.2 new: 10% -> 25% -> 35%
+const DOOM_TIE_ATTACK_CHANCE = 0.60; // patch 2.2 new: 50% -> 60% (ชนะมากขึ้น)
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
 // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
 const TAKUTO_HEAL_BASIC = 2;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +2
@@ -660,10 +659,8 @@ const BARD_DIM_EVADE = 1;           // มิติมายาบรรเล�
 const BARD_DIM_RESIST_TURNS = 3;    // มิติมายาบรรเลง (patch 2.0.8): คีตกวีได้ต้านสถานะผิดปกติ 3 เทิร์น
 const BARD_BLOOD_FRAGILE = 1;       // มิติโลหิต (patch 2.0.8): ทุกคน (ยกเว้นคีตกวี) ติดเปราะบาง +1 ดาเมจ 3 เทิร์น
 const BARD_FORTUNE_MAX = 3;         // โชคลาภ ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
-// โชคลาภ (patch 2.2 new — ปรับใหม่ทั้งระบบ): จั่วปุ๊ปมีโอกาสใช้บัฟ 1 หน่วยตามจำนวนที่สะสม แล้วหน่วยนั้นหายไป
-//  ใช้ได้เฉพาะตอนไพ่ 2 ใบแรก (ตอนแจก) รวมกันต่ำกว่า 18 เท่านั้น — ทำงานแล้วปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21
-const FORTUNE_TRIGGER_CHANCE = { 1: 0.40, 2: 0.70, 3: 1.00 };
-const FORTUNE_INITIAL_HAND_CAP = 18; // ไพ่ 2 ใบแรกต้องรวมกันต่ำกว่านี้ถึงจะใช้โชคลาภได้ทั้งรอบ
+// โชคลาภ (patch 2.2 new — ปรับใหม่): จั่วปุ๊ป ถ้ามีบัฟสะสมอยู่ ใช้ 1 หน่วยทันทีแล้วหายไป
+//  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (ดู fortuneTargetOf) — ไม่มีเงื่อนไขโอกาส/แต้มเริ่มต้นแล้ว
 const BARD_EVADE_MAX = 3;           // หลบหลีก ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
 const BARD_SOUL_TARGETS = 2;        // มิติวิญญาณ: ทุกการบรรเลง ตีสุ่มผู้เล่น 2 คน (patch 2.0.6 — เดิมตีทุกคน)
 const BARD_SECTION_MAX = 5;       // ท่อนทำนองสะสมครบ 5 ชั้น -> เปิดมิติมายาบรรเลง
@@ -1183,7 +1180,7 @@ const TRANSFORMS = {
   golden:   { img: "/characters/gambler/gamnler_final.jpg", video: "/characters/gambler/gambler_final.mp4", title: "เวลาทองของพี่มาแล้ว 777", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "gambler", afterReveal: false },
   // fourth: ท่าไม้ตายเอวา 13 (หลังเปิดไพ่) — วีดีโอ 10 วิ + เพลงค้างระหว่างมีผล
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
-  doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: true }, // patch 2.2 full: ทำงานหลังเปิดไพ่
+  doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: false }, // patch 2.2 new: ทำงานทันทีก่อนเปิดไพ่
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
   apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "Apprivoise!", label: "สกิลติดตัวทำงาน", seconds: 24, music: "takuto", afterReveal: false }, // แปลงร่างถาวรทันทีที่ดวงดาวครบ 5
   takutoEmeraude: { img: "/characters/takuto/skill1/takuto_skill1.2.webp", video: "/characters/takuto/skill1/takuto_skill1.2.mp4", title: "Star Sword Emeraude", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
@@ -1373,7 +1370,7 @@ function fortuneTargetOf(currentScore) {
   if (currentScore === 20) return 21; // ใกล้สุดแล้ว มีบัฟ = ไป 21 แน่นอน
   if (currentScore === 19) return Math.random() < 0.5 ? 21 : 20; // ถึง 19 อยู่แล้ว สุ่ม 50/50 ระหว่าง 20/21
   const roll = Math.random();
-  return roll < 0.5 ? 19 : roll < 0.8 ? 20 : 21; // ปกติ: 19 = 50% / 20 = 30% / 21 = 20%
+  return roll < 0.4 ? 19 : roll < 0.7 ? 20 : 21; // ปกติ: 19 = 40% / 20 = 30% / 21 = 30%
 }
 function upgCap(p) {
   // เพดานแต้มขณะ UPG! (patch 2.1.3): ใช้ได้เฉพาะระหว่างร่าง Ginga (สกิลพื้นฐาน 2) — เพดานคงที่ 20
@@ -1973,8 +1970,6 @@ function shikiCancelUltimate(slayer, victim, skillName, skillImg) {
 function voidUltimateOnBust(p) {
   for (const key of Object.keys(TRANSFORMS)) {
     if (!TRANSFORMS[key].afterReveal) continue; // เฉพาะท่าไม้ตาย (ginga / paradise)
-    // Crucible (DoomGuy): บังคับทุกคน "อื่น" แตกไม่ว่าไพ่ของตัวเองจะแตกด้วยหรือไม่ — ไม่โดนยกเลิกตรงนี้
-    if (key === "doomCrucible") continue;
     if ((p.statuses[key] || 0) > 0 && !p.seen[key]) {
       delete p.statuses[key];
       lastLog.push(`💥 ${p.name} ไพ่แตก! ท่าไม้ตาย ${TRANSFORMS[key].title} ใช้งานไม่ได้ — แต้มสกิลเสียฟรี`);
@@ -3192,13 +3187,10 @@ function hit(id) {
   if ((p.statuses.riddheguard || 0) > 0) return; // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): จั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.phenexTaunt || 0) > 0) return; // ไม่อยากให้ใครต้องเจ็บปวด (ริต้า เบอร์นัล): ระหว่างล่อเป้าจั่วการ์ดเพิ่มไม่ได้
   if (scoreOf(p) >= scoreCap(p)) return; // แต้มเต็มเพดาน (เช่น 21 พอดี) = จั่วไม่ได้ รอผู้ใช้ใช้สกิล/เปิดไพ่เอง
-  // โชคลาภ (patch 2.2 new): จั่วปุ๊ปมีโอกาสใช้บัฟ 1 หน่วยตามจำนวนที่สะสม (1=40% / 2=70% / 3=100%) แล้วหน่วยนั้นหายไป
-  //  ใช้ได้เฉพาะตอนไพ่ 2 ใบแรก (ตอนแจก) รวมกันต่ำกว่า 18 เท่านั้น — ทำงานแล้วปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21
+  // โชคลาภ (patch 2.2 new): จั่วปุ๊ป ถ้ามีบัฟสะสมอยู่ ใช้ 1 หน่วยทันทีแล้วหน่วยนั้นหายไป
+  //  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (สุ่มถ่วงน้ำหนัก มีเคสพิเศษถ้าแต้มปัจจุบันเป็น 19/20 อยู่แล้ว)
   //  ถ้าไม่มีไพ่ที่ทำให้ถึงเป้าได้พอดี ไม่คำนวณไพ่ดีๆให้ — จั่วแบบสุ่มตามปกติ (แตกได้ตามปกติ)
-  const fortuneStacks = p.statuses.fortune || 0;
-  const initialHandScore = calculateScore(p.cards.slice(0, 2));
-  const fortuneChance = FORTUNE_TRIGGER_CHANCE[Math.min(BARD_FORTUNE_MAX, fortuneStacks)] || 0;
-  if (fortuneStacks > 0 && initialHandScore < FORTUNE_INITIAL_HAND_CAP && Math.random() < fortuneChance) {
+  if ((p.statuses.fortune || 0) > 0) {
     p.statuses.fortune--;
     p.fortuneIdle = 0;
     if (p.statuses.fortune <= 0) delete p.statuses.fortune;
@@ -4817,6 +4809,24 @@ function useSkill(id, tier, targets, item) {
     triggerCutscene(p, "fourth");
     lastLog.push(`☄️ ${p.name} Fourth Impact — พลังโจมตีปกติ +${EVA13_FOURTH_ATK} คงอยู่ ${EVA13_FOURTH_TURNS} เทิร์น`);
   }
+  // ---------- DoomGuy (patch 2.2 new) ----------
+  // Crucible: แปลงร่างทันทีก่อนเปิดไพ่ทั้งหมด (วีดีโอ/ภาพ/เพลง) + บังคับทุกคนอื่นแตกทันที
+  //  พลังโจมตี 7 คงอยู่จนกว่าจะได้โจมตีจริง 1 ครั้งแล้วหายไป (ไม่ใช่นับเทิร์นแบบเดิม — ดู endTurn skip-list + doAttack)
+  if (st === "doomCrucible") {
+    p.seen.doomCrucible = true;
+    p.transformAt = ++transformCounter;
+    triggerCutscene(p, "doomCrucible");
+    p.doomCharge = 0;
+    for (const o of alivePlayers()) {
+      if (o.id === p.id) continue;
+      o.busted = true;
+      dealDirect(o, DOOM_CRUCIBLE_BUST_DMG);
+      maybeBeatSave(o); maybeBeatMode(o); maybeEva3(o); maybeWakeKotone(o);
+      o.wasAttacked = true;
+      if (o.alive && o.hp <= 0) { instantDeath(o); if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`); }
+    }
+    lastLog.push(`⚔️ Crucible! ${p.name} คว้าดาบแห่งการล่า — บังคับทุกคนแตกทันที รับความเสียหาย -${DOOM_CRUCIBLE_BUST_DMG} (พลังโจมตี 7 หน่วย คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง)`);
+  }
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   // ข้าขอบัญชา (ชาย): การโจมตีปกติครั้งถัดไปติดผกผันให้เป้าหมาย 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี + แต้มคำสาปแห่งดวงจันทร์ +1
   if (st === "hakunoInvertReady") {
@@ -5502,10 +5512,10 @@ function afterResolve() {
 
   const activated = [];
   for (const p of alivePlayers()) {
-    const pBusted = bustedOf(p); // ไพ่แตก = ท่าไม้ตายไม่ทำงาน (กันหลุดกรณีเพิ่งกดแล้วแตก) — ยกเว้น Crucible (ดูมกาย)
+    const pBusted = bustedOf(p); // ไพ่แตก = ท่าไม้ตายไม่ทำงาน (กันหลุดกรณีเพิ่งกดแล้วแตก)
     for (const key of Object.keys(TRANSFORMS)) {
       if (!TRANSFORMS[key].afterReveal) continue;
-      if (pBusted && key !== "doomCrucible") continue; // Crucible บังคับทุกคนแตกไม่สนไพ่ตัวเอง — ทำงานได้แม้ตัวเองแตกด้วย
+      if (pBusted) continue;
       if ((p.statuses[key] || 0) > 0 && !p.seen[key]) {
         p.seen[key] = true;
         p.transformAt = ++transformCounter;
@@ -5543,19 +5553,6 @@ function afterResolve() {
               if (!t.alive) lastLog.push(`💀 ${t.name} เลือดจริงหมด ตกรอบ!`);
             }
           }
-        }
-        // Crucible (DoomGuy patch 2.2 full): แปลงร่างถือดาบ (โจมตีปกติ 7 หน่วย) + บังคับทุกคนแตกทันที
-        if (key === "doomCrucible") {
-          p.doomCharge = 0;
-          for (const o of alivePlayers()) {
-            if (o.id === p.id) continue;
-            o.busted = true;
-            dealDirect(o, DOOM_CRUCIBLE_BUST_DMG);
-            maybeBeatSave(o); maybeBeatMode(o); maybeEva3(o); maybeWakeKotone(o);
-            o.wasAttacked = true;
-            if (o.alive && o.hp <= 0) { instantDeath(o); if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`); }
-          }
-          lastLog.push(`⚔️ Crucible! ${p.name} คว้าดาบแห่งการล่า — บังคับทุกคนแตก รับความเสียหาย -${DOOM_CRUCIBLE_BUST_DMG}`);
         }
         // Lai Rhyme Goodfellow (โอเบรอน กลางวัน): โจมตีทุกคนไม่สนเกราะ 1 หน่วย
         //  + มอบ "การตื่นขึ้น" (ฟื้น 1/เทิร์น 1 เทิร์น) + ติด "ยามฟ้าสาง" +1 (คนหลับไม่ติดเพิ่ม)
@@ -6587,6 +6584,11 @@ function doAttack(byId, targetId) {
         if (o.alive && o.hp <= 0) { instantDeath(o); if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`); }
       }
     }
+    // Crucible: ใช้พลังโจมตี 7 หน่วยไปแล้ว 1 ครั้ง — หายไปทันที (ไม่ใช่นับเทิร์นแบบเดิม)
+    if ((attacker.statuses.doomCrucible || 0) > 0) {
+      delete attacker.statuses.doomCrucible;
+      lastLog.push(`⚔️ ${attacker.name} Crucible — ใช้พลังโจมตี 7 หน่วยไปแล้ว ดาบเสื่อมพลังลง กลับไปใช้อาวุธปืนตามปกติ`);
+    }
   }
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
   if (attacker.characterId === "takuto") {
@@ -6951,6 +6953,7 @@ function endTurn() {
       if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อ Apprivoise!
       if (k === "apprivoise") continue; // Apprivoise! (สึงาชิ ทาคุโตะ): แปลงร่างถาวร ไม่ลดเทิร์น
       if (k === "emeraude" || k === "saphir") continue; // Star Sword (สึงาชิ ทาคุโตะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
+      if (k === "doomCrucible") continue; // Crucible (ดูมกาย patch 2.2 new): คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง (ไม่ลดเทิร์น)
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "rsHopper") continue; // RS-Hopper (เอวา 13): สแตคชาร์จ ไม่ใช่ตัวนับเทิร์น — ฟื้นเองทุก 3 เทิร์น (ดูด้านบน)
       if (k === "cassius") continue; // หอกแห่งแคสเซียส (เอวา 13): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
