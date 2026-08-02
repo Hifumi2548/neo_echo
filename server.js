@@ -660,7 +660,7 @@ const BARD_DIM_RESIST_TURNS = 3;    // มิติมายาบรรเล�
 const BARD_BLOOD_FRAGILE = 1;       // มิติโลหิต (patch 2.0.8): ทุกคน (ยกเว้นคีตกวี) ติดเปราะบาง +1 ดาเมจ 3 เทิร์น
 const BARD_FORTUNE_MAX = 3;         // โชคลาภ ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
 // โชคลาภ (patch 2.2 new — ปรับใหม่): จั่วปุ๊ป ถ้ามีบัฟสะสมอยู่ ใช้ 1 หน่วยทันทีแล้วหายไป
-//  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (ดู fortuneTargetOf) — ไม่มีเงื่อนไขโอกาส/แต้มเริ่มต้นแล้ว
+//  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (ดู fortuneTargetList) — ไม่มีเงื่อนไขโอกาส/แต้มเริ่มต้นแล้ว
 const BARD_EVADE_MAX = 3;           // หลบหลีก ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
 const BARD_SOUL_TARGETS = 2;        // มิติวิญญาณ: ทุกการบรรเลง ตีสุ่มผู้เล่น 2 คน (patch 2.0.6 — เดิมตีทุกคน)
 const BARD_SECTION_MAX = 5;       // ท่อนทำนองสะสมครบ 5 ชั้น -> เปิดมิติมายาบรรเลง
@@ -1365,12 +1365,14 @@ function drawCardFor(p) {
   return { value: v };
 }
 function calculateScore(cards) { return cards.reduce((s, c) => s + c.value, 0); }
-// โชคลาภ (patch 2.2 new): เลือกแต้มเป้าหมาย (19/20/21) ที่จะพยายามปรับไพ่ที่จั่วให้ไปถึง โดยอิงจากแต้มรวมปัจจุบัน
-function fortuneTargetOf(currentScore) {
-  if (currentScore === 20) return 21; // ใกล้สุดแล้ว มีบัฟ = ไป 21 แน่นอน
-  if (currentScore === 19) return Math.random() < 0.5 ? 21 : 20; // ถึง 19 อยู่แล้ว สุ่ม 50/50 ระหว่าง 20/21
+// โชคลาภ (patch 2.2 new): เลือกลำดับแต้มเป้าหมาย (19/20/21) ที่จะพยายามปรับไพ่ที่จั่วให้ไปถึง โดยอิงจากแต้มรวมปัจจุบัน
+//  คืนเป็นลิสต์เรียงลำดับ (ตัวที่สุ่มได้ก่อน แล้วค่อยลองตัวที่เหลือ) — ถ้าตัวแรกไม่มีไพ่ให้จั่วพอดี จะลองตัวถัดไปก่อนค่อยยอมแตก
+function fortuneTargetList(currentScore) {
+  if (currentScore === 20) return [21]; // ใกล้สุดแล้ว มีบัฟ = ไป 21 แน่นอน
+  if (currentScore === 19) return Math.random() < 0.5 ? [21, 20] : [20, 21]; // ถึง 19 อยู่แล้ว สุ่ม 50/50 ว่าจะลองอันไหนก่อน
   const roll = Math.random();
-  return roll < 0.4 ? 19 : roll < 0.7 ? 20 : 21; // ปกติ: 19 = 40% / 20 = 30% / 21 = 30%
+  const primary = roll < 0.4 ? 19 : roll < 0.7 ? 20 : 21; // ปกติ: 19 = 40% / 20 = 30% / 21 = 30%
+  return [primary, ...[19, 20, 21].filter((v) => v !== primary)];
 }
 function upgCap(p) {
   // เพดานแต้มขณะ UPG! (patch 2.1.3): ใช้ได้เฉพาะระหว่างร่าง Ginga (สกิลพื้นฐาน 2) — เพดานคงที่ 20
@@ -3189,21 +3191,24 @@ function hit(id) {
   if (scoreOf(p) >= scoreCap(p)) return; // แต้มเต็มเพดาน (เช่น 21 พอดี) = จั่วไม่ได้ รอผู้ใช้ใช้สกิล/เปิดไพ่เอง
   // โชคลาภ (patch 2.2 new): จั่วปุ๊ป ถ้ามีบัฟสะสมอยู่ ใช้ 1 หน่วยทันทีแล้วหน่วยนั้นหายไป
   //  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (สุ่มถ่วงน้ำหนัก มีเคสพิเศษถ้าแต้มปัจจุบันเป็น 19/20 อยู่แล้ว)
-  //  ถ้าไม่มีไพ่ที่ทำให้ถึงเป้าได้พอดี ไม่คำนวณไพ่ดีๆให้ — จั่วแบบสุ่มตามปกติ (แตกได้ตามปกติ)
+  //  ถ้าเป้าที่สุ่มได้ไม่มีไพ่ให้จั่วพอดี จะลองเป้าที่เหลือก่อน — ไม่มีไพ่ให้ตรงเป้าไหนเลยจริงๆ ค่อยจั่วแบบสุ่มตามปกติ (แตกได้ตามปกติ)
   if ((p.statuses.fortune || 0) > 0) {
     p.statuses.fortune--;
     p.fortuneIdle = 0;
     if (p.statuses.fortune <= 0) delete p.statuses.fortune;
     const cur = calculateScore(p.cards);
-    const target = fortuneTargetOf(cur);
-    const need = target - cur;
     const used = new Set(p.cards.map((c) => c.value));
-    if (need >= 1 && need <= 10 && !used.has(need)) {
-      p.cards.push({ value: need });
-      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน — ได้ไพ่ที่ทำให้แต้มรวมเป็น ${target}!`);
+    let picked = null;
+    for (const target of fortuneTargetList(cur)) {
+      const need = target - cur;
+      if (need >= 1 && need <= 10 && !used.has(need)) { picked = { target, need }; break; }
+    }
+    if (picked) {
+      p.cards.push({ value: picked.need });
+      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน — ได้ไพ่ที่ทำให้แต้มรวมเป็น ${picked.target}!`);
     } else {
       p.cards.push(drawCardFor(p));
-      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน แต่ไม่มีไพ่ที่ทำให้ถึงเป้าได้พอดี — จั่วแบบสุ่มตามปกติ`);
+      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน แต่ไม่มีไพ่ที่ทำให้ถึงเป้าไหนได้เลย — จั่วแบบสุ่มตามปกติ`);
     }
   } else {
     p.cards.push(drawCardFor(p));
