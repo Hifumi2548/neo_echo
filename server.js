@@ -1185,11 +1185,11 @@ const TRANSFORMS = {
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: true }, // patch 2.2 full: ทำงานหลังเปิดไพ่
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-  apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "Apprivoise!", label: "สกิลติดตัวทำงาน", seconds: 10, music: "takuto", afterReveal: false }, // แปลงร่างถาวรทันทีที่ดวงดาวครบ 5
+  apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "Apprivoise!", label: "สกิลติดตัวทำงาน", seconds: 24, music: "takuto", afterReveal: false }, // แปลงร่างถาวรทันทีที่ดวงดาวครบ 5
   takutoEmeraude: { img: "/characters/takuto/skill1/takuto_skill1.2.webp", video: "/characters/takuto/skill1/takuto_skill1.2.mp4", title: "Star Sword Emeraude", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
   takutoSaphir: { img: "/characters/takuto/skill2/takuto_skill2.webp", video: "/characters/takuto/skill2/takuto_skill2.mp4", title: "Star Sword Saphir", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
   takutoBothSwords: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/takuto_2sword.mp4", title: "ถ้าพร้อมแล้วก็เข้ามาเลย", label: "เอฟเฟกต์พิเศษ", seconds: 6, music: null, afterReveal: false },
-  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: null, afterReveal: false },
+  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 24, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -6187,8 +6187,8 @@ function doAttack(byId, targetId) {
     : 1;
   // หอกลองกินัส (เอวา 13) ล็อคเป้า (DoomGuy Heavy Cannon): ดาเมจแรงขึ้น +1 ครั้งเดียวเมื่อโจมตีเป้าหมายที่ติดล็อคเป้า
   const doomLockonAtk = (attacker.characterId === "doomguy" && (target.statuses.doomLockon || 0) > 0) ? DOOM_LOCKON_BONUS : 0;
-  // สึงาชิ ทาคุโตะ (patch 2.2 new): สกิลติดตัว 1 พลังโจมตีถาวร +1 / Apprivoise! อีก +1 (รวมสูงสุด +2)
-  const takutoAtk = attacker.characterId === "takuto" ? TAKUTO_ATK_BONUS + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0) : 0;
+  // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
+  const takutoAtk = (attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0) ? TAKUTO_ATK_BONUS * 2 : 0;
   let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
