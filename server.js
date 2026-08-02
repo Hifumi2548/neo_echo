@@ -77,10 +77,18 @@ const DOOM_CRUCIBLE_ATK = 7;
 const DOOM_CRUCIBLE_CHARGE_NEED = 5;
 const DOOM_CRUCIBLE_TURNS = 3;
 const DOOM_HEAL_ON_ATK = 1;
-const DOOM_CHARGE_CHANCE = 0.10;
+const DOOM_CHARGE_CHANCE = 0.25; // patch 2.2 new: เพิ่มจาก 10% -> 25%
 const DOOM_TIE_ATTACK_CHANCE = 0.50;
-const DOOM_TURN_FORTUNE_CHANCE = 0.20;
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
+// ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+const TAKUTO_HEAL_BASIC = 2;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +2
+const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> Apprivoise! ทันที
+const TAKUTO_ATK_BONUS = 1;           // สกิลติดตัว 1 / Apprivoise! ให้พลังโจมตีถาวร +1 หน่วยต่อครั้ง (รวมสูงสุด +2)
+const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: มอบโชคลาภ 2 หน่วยให้ตัวเองตอนเริ่มเกม
+const TAKUTO_SAPHIR_EXTRA_CHANCE = 0.5; // Saphir: ไม่มี Emeraude ร่วม -> โอกาสโจมตีเพิ่ม 50%
+const TAKUTO_MISSILE_DMG = 4;         // Tau Missile: ดาเมจตรงหลังลบเกราะเป้าหมาย (ไม่สนเกราะ)
+const TAKUTO_MISSILE_NORECOVER_TURNS = 3;
+const TAKUTO_MISSILE_CARD_SCORE = 19; // Tau Missile: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
 // สุ่มอาวุธถัดไปแบบถ่วงน้ำหนัก (ไม่สุ่มซ้ำกระบอกเดิม)
 function rollDoomWeapon(excludeId) {
   const total = DOOM_WEAPON_IDS.reduce((n, id) => n + (id === excludeId ? 0 : DOOM_WEAPONS[id].weight), 0);
@@ -652,6 +660,10 @@ const BARD_DIM_EVADE = 1;           // มิติมายาบรรเล�
 const BARD_DIM_RESIST_TURNS = 3;    // มิติมายาบรรเลง (patch 2.0.8): คีตกวีได้ต้านสถานะผิดปกติ 3 เทิร์น
 const BARD_BLOOD_FRAGILE = 1;       // มิติโลหิต (patch 2.0.8): ทุกคน (ยกเว้นคีตกวี) ติดเปราะบาง +1 ดาเมจ 3 เทิร์น
 const BARD_FORTUNE_MAX = 3;         // โชคลาภ ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
+// โชคลาภ (patch 2.2 new — ปรับใหม่ทั้งระบบ): จั่วปุ๊ปมีโอกาสใช้บัฟ 1 หน่วยตามจำนวนที่สะสม แล้วหน่วยนั้นหายไป
+//  ใช้ได้เฉพาะตอนไพ่ 2 ใบแรก (ตอนแจก) รวมกันต่ำกว่า 18 เท่านั้น — ทำงานแล้วปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21
+const FORTUNE_TRIGGER_CHANCE = { 1: 0.40, 2: 0.70, 3: 1.00 };
+const FORTUNE_INITIAL_HAND_CAP = 18; // ไพ่ 2 ใบแรกต้องรวมกันต่ำกว่านี้ถึงจะใช้โชคลาภได้ทั้งรอบ
 const BARD_EVADE_MAX = 3;           // หลบหลีก ซ้อนทับได้สูงสุด 3 ครั้ง (patch 2.0.6.1)
 const BARD_SOUL_TARGETS = 2;        // มิติวิญญาณ: ทุกการบรรเลง ตีสุ่มผู้เล่น 2 คน (patch 2.0.6 — เดิมตีทุกคน)
 const BARD_SECTION_MAX = 5;       // ท่อนทำนองสะสมครบ 5 ชั้น -> เปิดมิติมายาบรรเลง
@@ -1172,6 +1184,12 @@ const TRANSFORMS = {
   // fourth: ท่าไม้ตายเอวา 13 (หลังเปิดไพ่) — วีดีโอ 10 วิ + เพลงค้างระหว่างมีผล
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: true }, // patch 2.2 full: ทำงานหลังเปิดไพ่
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "Apprivoise!", label: "สกิลติดตัวทำงาน", seconds: 10, music: "takuto", afterReveal: false }, // แปลงร่างถาวรทันทีที่ดวงดาวครบ 5
+  takutoEmeraude: { img: "/characters/takuto/skill1/takuto_skill1.2.webp", video: "/characters/takuto/skill1/takuto_skill1.2.mp4", title: "Star Sword Emeraude", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
+  takutoSaphir: { img: "/characters/takuto/skill2/takuto_skill2.webp", video: "/characters/takuto/skill2/takuto_skill2.mp4", title: "Star Sword Saphir", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
+  takutoBothSwords: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/takuto_2sword.mp4", title: "ถ้าพร้อมแล้วก็เข้ามาเลย", label: "เอฟเฟกต์พิเศษ", seconds: 6, music: null, afterReveal: false },
+  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -1350,6 +1368,13 @@ function drawCardFor(p) {
   return { value: v };
 }
 function calculateScore(cards) { return cards.reduce((s, c) => s + c.value, 0); }
+// โชคลาภ (patch 2.2 new): เลือกแต้มเป้าหมาย (19/20/21) ที่จะพยายามปรับไพ่ที่จั่วให้ไปถึง โดยอิงจากแต้มรวมปัจจุบัน
+function fortuneTargetOf(currentScore) {
+  if (currentScore === 20) return 21; // ใกล้สุดแล้ว มีบัฟ = ไป 21 แน่นอน
+  if (currentScore === 19) return Math.random() < 0.5 ? 21 : 20; // ถึง 19 อยู่แล้ว สุ่ม 50/50 ระหว่าง 20/21
+  const roll = Math.random();
+  return roll < 0.5 ? 19 : roll < 0.8 ? 20 : 21; // ปกติ: 19 = 50% / 20 = 30% / 21 = 20%
+}
 function upgCap(p) {
   // เพดานแต้มขณะ UPG! (patch 2.1.3): ใช้ได้เฉพาะระหว่างร่าง Ginga (สกิลพื้นฐาน 2) — เพดานคงที่ 20
   return HIKARU_UPG2_CAP;
@@ -1435,18 +1460,27 @@ function maybeBeatMode(p) {
   if (firstTime) queueTransformAnnounce(p, "beat"); // วีดีโอ -> ประกาศเปลี่ยนร่าง (ระเบิดเขียว + เสียงพากย์)
   lastLog.push(`⚡ ${p.name} เข้าสู่ประกายเขี้ยวปฏิปักษ์ (Beat Mode)!`);
 }
-// Beat Mode กันตาย: ทำงานทันทีเมื่อความเสียหายถึงตาย ไม่ต้องรอเข้า Beat Mode ก่อน
-// (ครั้งเดียวต่อเกม — ค้างที่ 1 หน่วย, เกราะไม่ฟื้นคืน, ภูมิดาเมจจากการแพ้ตอนจั่วการ์ด)
+// Beat Mode กันตาย (คุวากาตะ) / ฉันยัง...มองเห็นอยู่!!! (ทาคุโตะ): ทำงานทันทีเมื่อความเสียหายถึงตาย
+// (ครั้งเดียวต่อเกม — ค้างที่ 1 หน่วย)
 function maybeBeatSave(p) {
-  if (!p || !p.alive || p.characterId !== "kuwagata" || passiveSealed(p)) return false;
+  if (!p || !p.alive || passiveSealed(p)) return false;
   if (p.beatSaved || p.hp >= 1) return false;
-  p.hp = 1;
-  p.beatSaved = true;
-  p.armorLocked = true;
-  p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_BEAT_FORTUNE);
-  p.fortuneIdle = 0;
-  lastLog.push(`🛡️⚡ ${p.name} ประกายเขี้ยวปฏิปักษ์ — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียว) ได้รับโชคลาภ +${KUWAGATA_BEAT_FORTUNE}`);
-  return true;
+  if (p.characterId === "kuwagata") {
+    p.hp = 1;
+    p.beatSaved = true;
+    p.armorLocked = true;
+    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_BEAT_FORTUNE);
+    p.fortuneIdle = 0;
+    lastLog.push(`🛡️⚡ ${p.name} ประกายเขี้ยวปฏิปักษ์ — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียว) ได้รับโชคลาภ +${KUWAGATA_BEAT_FORTUNE}`);
+    return true;
+  }
+  if (p.characterId === "takuto") {
+    p.hp = 1;
+    p.beatSaved = true;
+    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม)`);
+    return true;
+  }
+  return false;
 }
 // ---------- ริต้า เบอร์นัล / ฟีนิกซ์ (patch 2.1.6) ----------
 // สกิลติดตัว 1 ถ้าเลือกได้ อยากเกิดเป็นอะไรหรอ?: ตายครั้งแรกในเกม -> เกิดใหม่ด้วยพลังชีวิต/เกราะเต็ม (ครั้งเดียวต่อเกม)
@@ -1629,7 +1663,7 @@ function displayImg(p) {
   // ไรโด ฮิคารุ (patch 2.1.6): แก้บั๊ก — MonsterLive (ไคจู Black King) เคยเปลี่ยนภาพได้ก่อน patch 2.1.3 แล้วหายไป คืนให้กลับมาเปลี่ยนภาพอีกครั้ง
   //  ลำดับความสำคัญ: Ginga Strium > ไคจู Black King > Ginga (ตามที่ระบุไว้ในคอมเมนต์ด้านบนฟังก์ชันนี้)
   if (p.characterId === "hikaru" && (p.statuses.monster || 0) > 0) return TRANSFORMS.monster.img;
-  for (const key of ["ginga", "rachan", "golden"]) {
+  for (const key of ["ginga", "rachan", "golden", "apprivoise"]) {
     if (p.seen && p.seen[key] && (p.statuses[key] || 0) > 0) return TRANSFORMS[key].img;
   }
   // บานาจ ลิงก์ (patch 2.1.2): หน้าเลือกตัวละคร/ล็อบบี้ใช้ p.img เดิม — ลงสนามแล้วเปลี่ยนเป็น unicorn_new.png
@@ -1715,7 +1749,7 @@ function activeSkillMusic() {
   }
   if (bestWou) return bestWou;
   let best = null;
-  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "humanity", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible"]) {
+  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "humanity", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible", "apprivoise"]) {
     const t = TRANSFORMS[key];
     if (!t.music) continue;
     for (const p of alivePlayers()) {
@@ -1979,6 +2013,12 @@ function resetCombat(p) {
   if (p.characterId === "doomguy") p.doomWeapon = DOOM_STARTING_WEAPON; // เริ่มเกมได้ Combat Shotgun เสมอ
   p.doomQuickSwapUsed = false; // Quick Swap: 1 ครั้งต่อเทิร์น
   p.doomCharge = 0;            // ชาร์จสำหรับปลดล็อก Crucible (ครบ 5)
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  if (p.characterId === "takuto") {
+    p.statuses.fortune = TAKUTO_FORTUNE_GRANT; // สกิลติดตัว 1: มอบโชคลาภ 2 หน่วยเริ่มเกม
+    p.fortuneIdle = 0;
+  }
+  p.takutoSaphirExtraChance = null; // Saphir: เก็บโอกาสโจมตีเพิ่มไว้ให้ postAttackFollowup อ่าน
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
   p.noDrawNext = 0;       // จำนวนเทิร์นที่จั่วเพิ่มไม่ได้ เริ่มเทิร์นถัดไป (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -2291,6 +2331,10 @@ function buildStateFor(viewerId) {
         basicPub = pub((p.stamina || 0) <= 0 ? ch.basic2 : ch.basic);
         ultimatePub = pub(oguriGoldStacks(p) >= OGURI_GOLD_MAX ? ch.ultimate2 : ch.ultimate);
         if (secondaryPub && (p.statuses.overweight || 0) > 0) secondaryPub.cost = 0;
+      }
+      // สึงาชิ ทาคุโตะ (patch 2.2 new): Apprivoise! ทำงานแล้ว — สกิลพื้นฐานเปลี่ยนเป็น Star Sword Emeraude ถาวร
+      if (ch.id === "takuto" && (p.statuses.apprivoise || 0) > 0) {
+        basicPub = pub(ch.basic2);
       }
       // ริดดี้ มาร์เซนาส (patch 2.0.9): ระหว่างเป็นพันธมิตร — ท่าไม้ตายเปลี่ยนเป็นท่า 2 ฉันจะไม่ยอมสูญเสียใครไปอีก
       if (ch.id === "riddhe") {
@@ -2642,15 +2686,8 @@ function dealRound() {
     if ((p.statuses.bshield || 0) > 0) p.shield += BANAGHER_SHIELD_AMT;
     p.skillUsedRound = false; // เทิร์นใหม่ ใช้สกิลได้อีก 1 อัน
     p.drawBlessed = false;    // พรแห่งการจั่ว (patch 2.0.8): เกิดได้ใหม่ทุกเทิร์น
-    // DoomGuy (patch 2.2 full): Quick Swap ใช้ได้อีก 1 ครั้งต่อเทิร์น + ทุกครั้งที่เริ่มเทิร์น มีโอกาส 20% ได้โชคลาภ
-    if (p.characterId === "doomguy") {
-      p.doomQuickSwapUsed = false;
-      if (p.alive && Math.random() < DOOM_TURN_FORTUNE_CHANCE) {
-        p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + 1);
-        p.fortuneIdle = 0;
-        lastLog.push(`🍀 ${p.name} สกิลติดตัว — ได้รับโชคลาภ +1`);
-      }
-    }
+    // DoomGuy (patch 2.2 full): Quick Swap ใช้ได้อีก 1 ครั้งต่อเทิร์น
+    if (p.characterId === "doomguy") p.doomQuickSwapUsed = false;
     if ((p.wouGuardCd || 0) > 0) p.wouGuardCd--; // ซาโตรุ (patch 2.0.8.3): คูลดาวน์ลบล้างลดลงทุกต้นเทิร์น (2 เทิร์นต่อการใช้)
     p.bardNotesUsed = 0;      // Bard: นับโน้ตใหม่ทุกเทิร์น (จำกัด 2 — มิติวิญญาณไม่จำกัด)
     p.mageUses = 0;           // จอมเวทย์ฝึกหัด: นับใหม่ทุกเทิร์น (กดได้ 3 ครั้งต่อเทิร์น)
@@ -3156,20 +3193,27 @@ function hit(id) {
   if ((p.statuses.riddheguard || 0) > 0) return; // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): จั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.phenexTaunt || 0) > 0) return; // ไม่อยากให้ใครต้องเจ็บปวด (ริต้า เบอร์นัล): ระหว่างล่อเป้าจั่วการ์ดเพิ่มไม่ได้
   if (scoreOf(p) >= scoreCap(p)) return; // แต้มเต็มเพดาน (เช่น 21 พอดี) = จั่วไม่ได้ รอผู้ใช้ใช้สกิล/เปิดไพ่เอง
-  // โชคลาภ (Fate's Prelude / มิติโลหิต — Bard): การจั่วครั้งถัดไปได้ใบที่ดีที่สุดที่ไม่ทำให้แตก
-  //  (ซ้อนทับได้ — หมดไปทีละ 1 ต่อการจั่ว 1 ครั้ง)
-  if ((p.statuses.fortune || 0) > 0) {
+  // โชคลาภ (patch 2.2 new): จั่วปุ๊ปมีโอกาสใช้บัฟ 1 หน่วยตามจำนวนที่สะสม (1=40% / 2=70% / 3=100%) แล้วหน่วยนั้นหายไป
+  //  ใช้ได้เฉพาะตอนไพ่ 2 ใบแรก (ตอนแจก) รวมกันต่ำกว่า 18 เท่านั้น — ทำงานแล้วปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21
+  //  ถ้าไม่มีไพ่ที่ทำให้ถึงเป้าได้พอดี ไม่คำนวณไพ่ดีๆให้ — จั่วแบบสุ่มตามปกติ (แตกได้ตามปกติ)
+  const fortuneStacks = p.statuses.fortune || 0;
+  const initialHandScore = calculateScore(p.cards.slice(0, 2));
+  const fortuneChance = FORTUNE_TRIGGER_CHANCE[Math.min(BARD_FORTUNE_MAX, fortuneStacks)] || 0;
+  if (fortuneStacks > 0 && initialHandScore < FORTUNE_INITIAL_HAND_CAP && Math.random() < fortuneChance) {
     p.statuses.fortune--;
     p.fortuneIdle = 0;
     if (p.statuses.fortune <= 0) delete p.statuses.fortune;
+    const cur = calculateScore(p.cards);
+    const target = fortuneTargetOf(cur);
+    const need = target - cur;
     const used = new Set(p.cards.map((c) => c.value));
-    const avail = [];
-    for (let v = 1; v <= 10; v++) if (!used.has(v)) avail.push(v);
-    const room = 21 - calculateScore(p.cards);
-    const good = avail.filter((v) => v <= room);
-    const v = good.length ? Math.max(...good) : Math.min(...avail);
-    p.cards.push({ value: v });
-    lastLog.push(`🍀 ${p.name} โชคลาภนำทางการจั่ว — ได้ไพ่ใบที่ดีที่สุด`);
+    if (need >= 1 && need <= 10 && !used.has(need)) {
+      p.cards.push({ value: need });
+      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน — ได้ไพ่ที่ทำให้แต้มรวมเป็น ${target}!`);
+    } else {
+      p.cards.push(drawCardFor(p));
+      lastLog.push(`🍀 ${p.name} โชคลาภทำงาน แต่ไม่มีไพ่ที่ทำให้ถึงเป้าได้พอดี — จั่วแบบสุ่มตามปกติ`);
+    }
   } else {
     p.cards.push(drawCardFor(p));
   }
@@ -3389,6 +3433,8 @@ function useSkill(id, tier, targets, item) {
     if (tier === "basic") skill = (p.stamina || 0) <= 0 ? ch.basic2 : ch.basic;
     if (tier === "ultimate") skill = oguriGoldStacks(p) >= OGURI_GOLD_MAX ? ch.ultimate2 : ch.ultimate;
   }
+  // สึงาชิ ทาคุโตะ (patch 2.2 new): Apprivoise! ทำงานแล้ว — สกิลพื้นฐานเปลี่ยนเป็น Star Sword Emeraude ถาวร
+  if (ch && ch.id === "takuto" && tier === "basic" && (p.statuses.apprivoise || 0) > 0) skill = ch.basic2;
   // อควาเรียน: สกิลรองสลับ รวมร่าง/คืนร่าง — ท่าไม้ตายสลับตามร่างที่รวมอยู่ (โซล่า/มาร์/ลูน่า/ปีกแห่งสุริยัน)
   if (ch && ch.id === "aquarion") {
     if (tier === "secondary") skill = p.fused ? ch.secondaryRevert : ch.secondary;
@@ -3696,6 +3742,22 @@ function useSkill(id, tier, targets, item) {
     const t = tgs.length === 1 ? players[tgs[0]] : null;
     if (!t || !t.alive || t.id === p.id) return;
     doomTarget = t;
+  }
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  const takutoApprivoiseOn = p.characterId === "takuto" && (p.statuses.apprivoise || 0) > 0;
+  const isTakutoEmeraude = p.characterId === "takuto" && tier === "basic" && takutoApprivoiseOn;
+  if (isTakutoEmeraude && (p.statuses.emeraude || 0) > 0) return; // ยังไม่ถูกใช้ กดซ้ำไม่ได้
+  const isTakutoSaphir = p.characterId === "takuto" && tier === "secondary";
+  if (isTakutoSaphir && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น
+  if (isTakutoSaphir && (p.statuses.saphir || 0) > 0) return; // ยังไม่ถูกใช้ กดซ้ำไม่ได้
+  const isTakutoMissile = p.characterId === "takuto" && tier === "ultimate";
+  if (isTakutoMissile && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น
+  let takutoMissileTarget = null;
+  if (isTakutoMissile) {
+    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
+    const t = tgs.length === 1 ? players[tgs[0]] : null;
+    if (!t || !t.alive || t.id === p.id) return;
+    takutoMissileTarget = t;
   }
   // ---------- เจ้าแห่งเน็ตบ้าน (patch 1.9) ----------
   const isTiger = p.characterId === "broadband_man" && tier === "basic";     // เสือนอนกิน
@@ -4480,6 +4542,42 @@ function useSkill(id, tier, targets, item) {
         if (o.alive && o.hp <= 0) { instantDeath(o); if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`); }
       }
       lastLog.push(`💥 ${p.name} ${wname} — ทำดาเมจทุกคน -${DOOM_BALLISTA_DMG}`);
+    }
+  }
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  if (p.characterId === "takuto" && tier === "basic" && !takutoApprivoiseOn) {
+    const heal = healHp(p, TAKUTO_HEAL_BASIC);
+    p.statuses.star = (p.statuses.star || 0) + 1;
+    lastLog.push(`⭐ ${p.name} ฉันได้ยินเสียงของโลก — ฟื้นพลังชีวิต +${heal} และดวงดาว +1 (${Math.min(p.statuses.star, TAKUTO_STAR_NEED)}/${TAKUTO_STAR_NEED})`);
+    if (p.statuses.star >= TAKUTO_STAR_NEED) {
+      delete p.statuses.star;
+      p.statuses.apprivoise = 1; // สแตคถาวร (ไม่ลดเทิร์น — ดู endTurn skip-list)
+      p.seen.apprivoise = true;
+      p.transformAt = ++transformCounter;
+      triggerCutscene(p, "apprivoise");
+      lastLog.push(`✨ ${p.name} Apprivoise! — แปลงร่างเป็นทาวเบิร์นถาวร ปลดล็อกสกิลพื้นฐาน 2/สกิลรอง/ท่าไม้ตาย`);
+    }
+  }
+  if (isTakutoEmeraude) {
+    p.statuses.emeraude = 1;
+    triggerCutscene(p, "takutoEmeraude");
+    lastLog.push(`💚 ${p.name} Star Sword Emeraude — การโจมตีปกติครั้งถัดไปจะฟื้นพลังชีวิตตามความเสียหายที่ทำได้`);
+  }
+  if (isTakutoSaphir) {
+    p.statuses.saphir = 1;
+    triggerCutscene(p, "takutoSaphir");
+    lastLog.push(`💙 ${p.name} Star Sword Saphir — การโจมตีปกติครั้งถัดไปมีโอกาสโจมตีเพิ่มอีกครั้ง`);
+  }
+  if (isTakutoMissile && takutoMissileTarget) {
+    // เก็บไว้รอจนกว่าจะชนะรอบแล้วได้โจมตีจริง (ดูผลจริงใน doAttack) — ถ้าแพ้รอบนี้ สถานะจะหมดอายุไปเอง (turns:1) เสียแต้มสกิลฟรี
+    p.statuses.tauMissile = 1;
+    if (scoreOf(p) !== 21) {
+      p.cardBonus = TAKUTO_MISSILE_CARD_SCORE - calculateScore(p.cards);
+      p.busted = bustedOf(p);
+      p.hakunoLowDraw = true; // จั่วเพิ่มได้อีก แต่ได้แค่แต้ม 2 หรือ 3 เท่านั้น (50/50)
+      lastLog.push(`🚀 ${p.name} เล็ง Tau Missile ใส่ ${takutoMissileTarget.name} ไว้ — แต้มการ์ดของตัวเองพุ่งเป็น ${TAKUTO_MISSILE_CARD_SCORE} แต้มทันที (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
+    } else {
+      lastLog.push(`🚀 ${p.name} เล็ง Tau Missile ใส่ ${takutoMissileTarget.name} ไว้ — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
     }
   }
   // Full Assault: ตีหมู่ทุกคนทันที 1 หน่วย (เทิร์นถัดไปอีก 2 ครั้งผ่าน dealRound) แล้วเล่นวีดีโอ
@@ -5630,6 +5728,28 @@ function postAttackFollowup(attacker) {
     delete attacker.statuses.miyakoCombo;
     attacker.miyakoComboHits = 0;
   }
+  // สึงาชิ ทาคุโตะ (patch 2.2 new): Star Sword Saphir — โจมตีเพิ่มอีก 1 ครั้งทันที (การันตีถ้ามี Emeraude ด้วย ไม่งั้น 50/50)
+  if (attacker && attacker.alive && attacker.characterId === "takuto" && attacker.takutoSaphirExtraChance != null) {
+    const chance = attacker.takutoSaphirExtraChance;
+    attacker.takutoSaphirExtraChance = null;
+    if (Math.random() < chance) {
+      const targets = attackableTargets(attacker.id);
+      if (targets.length > 0) {
+        lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — โจมตีเพิ่มอีกครั้งทันที!`);
+        attackerId = attacker.id;
+        gameState = "ATTACK";
+        startPhaseTimer(ATTACK_TIME, () => {
+          const t = attackableTargets(attackerId);
+          if (t.length) doAttack(attackerId, t[Math.floor(Math.random() * t.length)].id);
+          else endTurn();
+        });
+        broadcastState();
+        return;
+      }
+    } else {
+      lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — โอกาสโจมตีเพิ่มไม่สำเร็จ (${Math.round(chance * 100)}%)`);
+    }
+  }
   if (attacker) { delete attacker.statuses.miyakoHeal; delete attacker.statuses.yaak; }
   endTurn();
 }
@@ -6067,7 +6187,9 @@ function doAttack(byId, targetId) {
     : 1;
   // หอกลองกินัส (เอวา 13) ล็อคเป้า (DoomGuy Heavy Cannon): ดาเมจแรงขึ้น +1 ครั้งเดียวเมื่อโจมตีเป้าหมายที่ติดล็อคเป้า
   const doomLockonAtk = (attacker.characterId === "doomguy" && (target.statuses.doomLockon || 0) > 0) ? DOOM_LOCKON_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  // สึงาชิ ทาคุโตะ (patch 2.2 new): สกิลติดตัว 1 พลังโจมตีถาวร +1 / Apprivoise! อีก +1 (รวมสูงสุด +2)
+  const takutoAtk = attacker.characterId === "takuto" ? TAKUTO_ATK_BONUS + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0) : 0;
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -6459,6 +6581,35 @@ function doAttack(byId, targetId) {
       }
     }
   }
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  if (attacker.characterId === "takuto") {
+    const emeraudeOn = (attacker.statuses.emeraude || 0) > 0;
+    const saphirOn = (attacker.statuses.saphir || 0) > 0;
+    if (emeraudeOn && saphirOn) triggerCutscene(attacker, "takutoBothSwords");
+    if (emeraudeOn) {
+      delete attacker.statuses.emeraude;
+      const heal = healHp(attacker, dmg);
+      lastLog.push(`💚 ${attacker.name} Star Sword Emeraude — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
+    }
+    if (saphirOn) {
+      delete attacker.statuses.saphir;
+      attacker.takutoSaphirExtraChance = emeraudeOn ? 1 : TAKUTO_SAPHIR_EXTRA_CHANCE;
+    }
+    // Tau Missile: ชนะรอบแล้วได้โจมตีจริงถึงจะยิง — ลบเกราะเป้าหมายก่อนยิงตรงเพิ่มเติม แล้วฟื้นเกราะคืนหลังจบ
+    if ((attacker.statuses.tauMissile || 0) > 0) {
+      delete attacker.statuses.tauMissile;
+      triggerCutscene(attacker, "takutoMissile");
+      const savedArmor = target.armor;
+      target.armor = 0;
+      dealDirect(target, TAKUTO_MISSILE_DMG, true);
+      maybeBeatSave(target); maybeBeatMode(target); maybeEva3(target); maybeWakeKotone(target);
+      target.wasAttacked = true;
+      if (target.alive) target.armor = Math.min(maxArmorOf(target), savedArmor); // ฟื้นเกราะกลับคืนหลังจบการโจมตี (ลบแค่ชั่วคราว)
+      target.statuses.norecover = Math.max(target.statuses.norecover || 0, TAKUTO_MISSILE_NORECOVER_TURNS);
+      lastLog.push(`🚀 ${attacker.name} Tau Missile — ลบเกราะ ${target.name} ก่อนยิงตรงเพิ่มเติม -${TAKUTO_MISSILE_DMG} (เกราะฟื้นคืนหลังจบ) ติดไร้ทางเยียวยา ${TAKUTO_MISSILE_NORECOVER_TURNS} เทิร์น`);
+      if (target.alive && target.hp <= 0) { instantDeath(target); if (!target.alive) lastLog.push(`💀 ${target.name} เลือดจริงหมด ตกรอบ!`); }
+    }
+  }
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
   let deathlineReset = false;
@@ -6786,6 +6937,9 @@ function endTurn() {
       if (k === "godtree") continue; // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด/ยกเลิกเอง ไม่ลดเทิร์น
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
+      if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อ Apprivoise!
+      if (k === "apprivoise") continue; // Apprivoise! (สึงาชิ ทาคุโตะ): แปลงร่างถาวร ไม่ลดเทิร์น
+      if (k === "emeraude" || k === "saphir") continue; // Star Sword (สึงาชิ ทาคุโตะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
       if (k === "rsHopper") continue; // RS-Hopper (เอวา 13): สแตคชาร์จ ไม่ใช่ตัวนับเทิร์น — ฟื้นเองทุก 3 เทิร์น (ดูด้านบน)
       if (k === "cassius") continue; // หอกแห่งแคสเซียส (เอวา 13): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
@@ -7161,6 +7315,7 @@ io.on("connection", (socket) => {
       beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       gold: 0, inventory: [],
       doomWeapon: ch.id === "doomguy" ? DOOM_STARTING_WEAPON : null, doomQuickSwapUsed: false, doomCharge: 0,
+      takutoSaphirExtraChance: null,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,

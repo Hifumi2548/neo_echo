@@ -15,7 +15,7 @@ export default function Splash({ onEnter }) {
         aria-label="แตะเพื่อเริ่ม"
       >
         <img
-          src="/image/splash2.2full.png"
+          src="/image/splash2.2new.png"
           alt="ECHO"
           className="absolute inset-0 w-full h-full object-contain sm:object-cover transition group-hover:brightness-110"
         />
