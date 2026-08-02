@@ -84,7 +84,7 @@ const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคน
 const TAKUTO_HEAL_BASIC = 2;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +2
 const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> Apprivoise! ทันที
 const TAKUTO_ATK_BONUS = 1;           // สกิลติดตัว 1 / Apprivoise! ให้พลังโจมตีถาวร +1 หน่วยต่อครั้ง (รวมสูงสุด +2)
-const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: มอบโชคลาภ 2 หน่วยให้ตัวเองตอนเริ่มเกม
+const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: กันตายทำงานเมื่อไหร่ มอบโชคลาภ 2 หน่วยให้ตัวเองตอนนั้นเลย (ไม่ใช่ตั้งแต่เริ่มเกม)
 const TAKUTO_SAPHIR_EXTRA_CHANCE = 0.5; // Saphir: ไม่มี Emeraude ร่วม -> โอกาสโจมตีเพิ่ม 50%
 const TAKUTO_MISSILE_DMG = 4;         // Tau Missile: ดาเมจตรงหลังลบเกราะเป้าหมาย (ไม่สนเกราะ)
 const TAKUTO_MISSILE_NORECOVER_TURNS = 3;
@@ -1477,7 +1477,10 @@ function maybeBeatSave(p) {
   if (p.characterId === "takuto") {
     p.hp = 1;
     p.beatSaved = true;
-    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม)`);
+    // ฉันยัง...มองเห็นอยู่!!!: กันตายทำงาน -> พลังโจมตีถาวร +1 (ดูสูตรใน doAttack) และได้รับโชคลาภ 2 หน่วยตอนนี้เลย (ไม่ใช่ตั้งแต่เริ่มเกม)
+    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + TAKUTO_FORTUNE_GRANT);
+    p.fortuneIdle = 0;
+    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) พลังโจมตีถาวร +1 และได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT}`);
     return true;
   }
   return false;
@@ -2014,10 +2017,6 @@ function resetCombat(p) {
   p.doomQuickSwapUsed = false; // Quick Swap: 1 ครั้งต่อเทิร์น
   p.doomCharge = 0;            // ชาร์จสำหรับปลดล็อก Crucible (ครบ 5)
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-  if (p.characterId === "takuto") {
-    p.statuses.fortune = TAKUTO_FORTUNE_GRANT; // สกิลติดตัว 1: มอบโชคลาภ 2 หน่วยเริ่มเกม
-    p.fortuneIdle = 0;
-  }
   p.takutoSaphirExtraChance = null; // Saphir: เก็บโอกาสโจมตีเพิ่มไว้ให้ postAttackFollowup อ่าน
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
@@ -6188,7 +6187,12 @@ function doAttack(byId, targetId) {
   // หอกลองกินัส (เอวา 13) ล็อคเป้า (DoomGuy Heavy Cannon): ดาเมจแรงขึ้น +1 ครั้งเดียวเมื่อโจมตีเป้าหมายที่ติดล็อคเป้า
   const doomLockonAtk = (attacker.characterId === "doomguy" && (target.statuses.doomLockon || 0) > 0) ? DOOM_LOCKON_BONUS : 0;
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
-  const takutoAtk = (attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0) ? TAKUTO_ATK_BONUS * 2 : 0;
+  const takutoAtk = attacker.characterId === "takuto"
+    ? (attacker.beatSaved ? TAKUTO_ATK_BONUS : 0) + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0)
+    : 0;
+  // สึงาชิ ทาคุโตะ: มี Emeraude + Saphir พร้อมกัน -> ต้องเล่นวีดีโอ takuto_2sword.mp4 ก่อนขึ้นสรุปดาเมจ (เหมือน Beam Magnum/ย๊ากก! ฯลฯ)
+  //  เช็คไว้ก่อนตรงนี้เพราะด้านล่างจะลบสถานะทั้งสองทิ้งหลังใช้ผลแล้ว
+  const takutoBothSwordsAtk = attacker.characterId === "takuto" && (attacker.statuses.emeraude || 0) > 0 && (attacker.statuses.saphir || 0) > 0;
   let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
@@ -6847,7 +6851,7 @@ function doAttack(byId, targetId) {
   //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || takutoBothSwordsAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 
