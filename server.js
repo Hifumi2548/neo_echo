@@ -3750,14 +3750,7 @@ function useSkill(id, tier, targets, item) {
   if (isTakutoSaphir && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น
   if (isTakutoSaphir && (p.statuses.saphir || 0) > 0) return; // ยังไม่ถูกใช้ กดซ้ำไม่ได้
   const isTakutoMissile = p.characterId === "takuto" && tier === "ultimate";
-  if (isTakutoMissile && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น
-  let takutoMissileTarget = null;
-  if (isTakutoMissile) {
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    takutoMissileTarget = t;
-  }
+  if (isTakutoMissile && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น — ไม่ต้องเลือกเป้าหมายตอนกด (ชนะรอบแล้วได้โจมตีจริงคือการเลือกเป้าหมาย)
   // ---------- เจ้าแห่งเน็ตบ้าน (patch 1.9) ----------
   const isTiger = p.characterId === "broadband_man" && tier === "basic";     // เสือนอนกิน
   const isLan = p.characterId === "broadband_man" && tier === "secondary";   // กระชากสายแลน
@@ -4577,16 +4570,17 @@ function useSkill(id, tier, targets, item) {
       lastLog.push(`⚔️ ${p.name} มี Star Sword Emeraude และ Saphir พร้อมกัน — ถ้าพร้อมแล้วก็เข้ามาเลย!`);
     }
   }
-  if (isTakutoMissile && takutoMissileTarget) {
-    // เก็บไว้รอจนกว่าจะชนะรอบแล้วได้โจมตีจริง (ดูผลจริงใน doAttack) — ถ้าแพ้รอบนี้ สถานะจะหมดอายุไปเอง (turns:1) เสียแต้มสกิลฟรี
+  if (isTakutoMissile) {
+    // ไม่ต้องเลือกเป้าหมายตอนกด — ชนะรอบนี้แล้วได้โจมตีจริงคือการเลือกเป้าหมาย (ดูผลจริงใน doAttack)
+    // ถ้าแพ้รอบนี้ สถานะจะหมดอายุไปเอง (turns:1) เสียแต้มสกิลฟรี
     p.statuses.tauMissile = 1;
     if (scoreOf(p) !== 21) {
       p.cardBonus = TAKUTO_MISSILE_CARD_SCORE - calculateScore(p.cards);
       p.busted = bustedOf(p);
       p.hakunoLowDraw = true; // จั่วเพิ่มได้อีก แต่ได้แค่แต้ม 2 หรือ 3 เท่านั้น (50/50)
-      lastLog.push(`🚀 ${p.name} เล็ง Tau Missile ใส่ ${takutoMissileTarget.name} ไว้ — แต้มการ์ดของตัวเองพุ่งเป็น ${TAKUTO_MISSILE_CARD_SCORE} แต้มทันที (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
+      lastLog.push(`🚀 ${p.name} เตรียม Tau Missile ไว้ — แต้มการ์ดของตัวเองพุ่งเป็น ${TAKUTO_MISSILE_CARD_SCORE} แต้มทันที (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
     } else {
-      lastLog.push(`🚀 ${p.name} เล็ง Tau Missile ใส่ ${takutoMissileTarget.name} ไว้ — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
+      lastLog.push(`🚀 ${p.name} เตรียม Tau Missile ไว้ — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
     }
   }
   // Full Assault: ตีหมู่ทุกคนทันที 1 หน่วย (เทิร์นถัดไปอีก 2 ครั้งผ่าน dealRound) แล้วเล่นวีดีโอ
@@ -6200,6 +6194,8 @@ function doAttack(byId, targetId) {
   const takutoAtk = attacker.characterId === "takuto"
     ? (attacker.beatSaved ? TAKUTO_ATK_BONUS : 0) + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0)
     : 0;
+  // Tau Missile: เก็บไว้ก่อนล่างจะลบสถานะทิ้งหลังใช้ผล — ต้องเล่นวีดีโอก่อนขึ้นเลขความเสียหาย (เหมือน Beam Magnum/ย๊ากก! ฯลฯ)
+  const takutoMissileAtk = attacker.characterId === "takuto" && (attacker.statuses.tauMissile || 0) > 0;
   let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
@@ -6801,7 +6797,11 @@ function doAttack(byId, targetId) {
   if ((target.statuses.monster || 0) > 0) addFx(skillByStatus(target, "monster"), "def");
   if (shieldBefore > target.shield) addFx({ name: "โล่ป้องกัน (กันความเสียหาย)", img: null, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
   if ((target.statuses.absorb || 0) > 0 && armorLost > 0) addFx(skillByStatus(target, "absorb"), "def");
-  if (beatSaveFired) addFx({ name: "ประกายเขี้ยวปฏิปักษ์ (กันตาย)", img: OHGER_FORM, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
+  if (beatSaveFired) {
+    // maybeBeatSave ใช้ร่วมกันทั้งคุวากาตะ (ประกายเขี้ยวปฏิปักษ์) และทาคุโตะ (ฉันยัง...มองเห็นอยู่!!!) — เลือกชื่อ/ภาพให้ตรงตัวละคร
+    const takutoSaveFired = target.characterId === "takuto";
+    addFx({ name: takutoSaveFired ? "ฉันยัง...มองเห็นอยู่!!! (กันตาย)" : "ประกายเขี้ยวปฏิปักษ์ (กันตาย)", img: takutoSaveFired ? displayImg(target) : OHGER_FORM, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
+  }
   if ((target.statuses.absorbplus || 0) > 0 && armorLost > 0) addFx(skillByStatus(target, "absorbplus"), "def");
   // อควาเรียน
   if (aquaAtk > 0) addFx({ name: `พลังโจมตี +${aquaAtk} (สกิลติดตัว)`, img: displayImg(attacker), by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
@@ -6858,7 +6858,7 @@ function doAttack(byId, targetId) {
   //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || takutoMissileAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 

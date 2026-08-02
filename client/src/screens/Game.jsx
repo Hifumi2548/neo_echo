@@ -1623,7 +1623,6 @@ export default function Game({ state, lowQ }) {
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
   const [skSel, setSkSel] = useState(false);         // ชิกิ: โหมดเลือกเป้าหมาย นายมีฝีมือแค่ไหนหรอ? (เลือกตัวเองไม่ได้)
   const [doomSel, setDoomSel] = useState(false); // DoomGuy: โหมดเลือกเป้าหมาย Weapon (เฉพาะอาวุธที่ต้องเลือกเป้าหมาย)
-  const [takutoMissileSel, setTakutoMissileSel] = useState(false); // สึงาชิ ทาคุโตะ: โหมดเลือกเป้าหมาย Tau Missile
   const DOOM_TARGET_WEAPONS = ["shotgun", "heavy", "supershotgun", "rocket"];
   const [saObSel, setSaObSel] = useState(false);     // ซาโตรุ: โหมดเลือกเป้าหมาย Obla Di, Obla Da (เลือกตัวเองไม่ได้)
   const [saLocaSel, setSaLocaSel] = useState(false); // ซาโตรุ: โหมดเลือกเป้าหมาย Locacaca fruit (เลือกตัวเองได้)
@@ -1907,8 +1906,6 @@ export default function Game({ state, lowQ }) {
     if (tier === "ultimate" && ch?.id === "satoru") { setSkillOpen(false); return; }
     // ฟุจิตะ โคโตเนะ (patch 2.1.3): ท่าไม้ตาย Sekai ichi kawaii watashi เข้าโหมดเลือกเป้าหมาย (คนอื่นเท่านั้น)
     if (tier === "ultimate" && ch?.id === "kotone") { setKawaiiSel(true); setSkillOpen(false); return; }
-    // สึงาชิ ทาคุโตะ (patch 2.2 new): ท่าไม้ตาย Tau Missile เข้าโหมดเลือกเป้าหมาย (คนอื่นเท่านั้น)
-    if (tier === "ultimate" && ch?.id === "takuto") { setTakutoMissileSel(true); setSkillOpen(false); return; }
     socket.emit("useSkill", { tier });
     setSkillOpen(false);
   };
@@ -1935,11 +1932,6 @@ export default function Game({ state, lowQ }) {
   const pickDoom = (id) => {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
     setDoomSel(false);
-  };
-  // เลือกเป้าหมาย Tau Missile ของสึงาชิ ทาคุโตะ -> ส่งไป server ทันที
-  const pickTakutoMissile = (id) => {
-    socket.emit("useSkill", { tier: "ultimate", targets: [id] });
-    setTakutoMissileSel(false);
   };
   // เลือกเป้าหมายบทเพลง (Bard) — ครบจำนวนที่บทเพลงต้องการแล้วส่งไป server ทันที
   const pickBard = (id) => {
@@ -2145,9 +2137,6 @@ export default function Game({ state, lowQ }) {
     if (doomSel && (phase !== "PLAYING" || me?.skillUsed || done)) setDoomSel(false);
   }, [doomSel, phase, me?.skillUsed, done]);
   useEffect(() => {
-    if (takutoMissileSel && (phase !== "PLAYING" || me?.skillUsed || done)) setTakutoMissileSel(false);
-  }, [takutoMissileSel, phase, me?.skillUsed, done]);
-  useEffect(() => {
     if (saObSel && (phase !== "PLAYING" || me?.skillUsed || done)) setSaObSel(false);
   }, [saObSel, phase, me?.skillUsed, done]);
   useEffect(() => {
@@ -2228,9 +2217,9 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || takutoMissileSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
-              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : takutoMissileSel ? pickTakutoMissile(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
             />
           ))}
@@ -2312,12 +2301,6 @@ export default function Game({ state, lowQ }) {
           <div className="shrink-0 text-center mt-1.5 text-hard">
             <span className="text-lg font-black text-echo-cyan animate-pulse">🔫 แตะเลือกเป้าหมาย: {ch?.secondary?.name || "Weapon"}</span>
             <button onClick={() => { clickSound(); setDoomSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-          </div>
-        )}
-        {takutoMissileSel && (
-          <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">🚀 แตะเลือกเป้าหมาย Tau Missile</span>
-            <button onClick={() => { clickSound(); setTakutoMissileSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {saObSel && (
@@ -2659,9 +2642,9 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || takutoMissileSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
-          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : takutoMissileSel ? pickTakutoMissile(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
+          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
         />
       ))}
@@ -2796,14 +2779,6 @@ export default function Game({ state, lowQ }) {
         <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
           <span className="text-xl font-black text-echo-cyan animate-pulse bg-black/60 rounded-full px-5 py-1.5">🔫 คลิกเลือกเป้าหมาย: {ch?.secondary?.name || "Weapon"}</span>
           <button onClick={() => { clickSound(); setDoomSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-        </div>
-      )}
-
-      {/* สึงาชิ ทาคุโตะ (patch 2.2 new): โหมดเลือกเป้าหมาย Tau Missile */}
-      {takutoMissileSel && (
-        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
-          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🚀 คลิกเลือกเป้าหมาย Tau Missile</span>
-          <button onClick={() => { clickSound(); setTakutoMissileSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
         </div>
       )}
 
