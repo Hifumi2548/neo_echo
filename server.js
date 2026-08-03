@@ -6867,12 +6867,14 @@ function doAttack(byId, targetId) {
     }
   }
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
+  let takutoUlt2VideoQueued = false; // อย่างนายน่ะ จะไปเข้าใจอะไร: ใช้สลับลำดับวีดีโอ-สรุปความเสียหายด้านล่าง (ให้วีดีโอขึ้นก่อนเสมอ)
   if (attacker.characterId === "takuto") {
     const emeraudeOn = (attacker.statuses.emeraude || 0) > 0;
     const saphirOn = (attacker.statuses.saphir || 0) > 0;
-    // อย่างนายน่ะ จะไปเข้าใจอะไร (patch 2.2.4): วีดีโอเล่นตอนโจมตีจริงครั้งถัดไป (ไม่ใช่ตอนกดสกิล)
+    // อย่างนายน่ะ จะไปเข้าใจอะไร (patch 2.2.4): วีดีโอเล่นตอนโจมตีจริงครั้งถัดไป (ไม่ใช่ตอนกดสกิล) — ต้องขึ้นก่อนสรุปความเสียหายเสมอ
     if (attacker.takutoUlt2VideoPending) {
       attacker.takutoUlt2VideoPending = false;
+      takutoUlt2VideoQueued = true;
       triggerCutscene(attacker, "takutoUlt2");
     }
     // วีดีโอ takuto_2sword.mp4 เล่นไปแล้วตอนกดสกิลที่ 2 ครบทั้งคู่ (ดู useSkill) — ตรงนี้แค่ใช้ผลจริงตอนโจมตี
@@ -7126,10 +7128,10 @@ function doAttack(byId, targetId) {
     broadcastState();
   };
   // Beam Magnum Plus (ริดดี้ patch 2.1.1) / Beam Magnum + แสงที่ไม่อยู่เพียงลำพัง (บานาจ patch 2.1.2) / ลำแสงสโตเรียม (ฮิคารุ patch 2.1.3)
-  //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6) / ฉันยัง...มองเห็นอยู่!!! กันตาย (สึงาชิ ทาคุโตะ patch 2.2.4):
+  //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6) / ฉันยัง...มองเห็นอยู่!!! กันตาย + อย่างนายน่ะ จะไปเข้าใจอะไร (สึงาชิ ทาคุโตะ patch 2.2.4):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || (beatSaveFired && target.characterId === "takuto")) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || (beatSaveFired && target.characterId === "takuto") || takutoUlt2VideoQueued) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 
