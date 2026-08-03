@@ -88,6 +88,16 @@ const TAKUTO_SAPHIR_EXTRA_CHANCE = 0.5; // Saphir: ไม่มี Emeraude ร�
 const TAKUTO_MISSILE_DMG = 4;         // Tau Missile: ดาเมจตรงหลังลบเกราะเป้าหมาย (ไม่สนเกราะ)
 const TAKUTO_MISSILE_NORECOVER_TURNS = 3;
 const TAKUTO_MISSILE_CARD_SCORE = 19; // Tau Missile: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
+// ---------- เทเปา (ชิกิ) (patch 2.2 new) ----------
+const TEPEU_COOK_TURNS = 2;           // วันนี้อากาศดีจัง: ทำอาหารครบ 2 เทิร์น -> ได้ "มื้อที่สุข" เข้าคลัง
+const TEPEU_MEAL_HEAL = 3;            // มื้อที่สุข: ฟื้นพลังชีวิต +3 เมื่อใช้จากคลัง
+const TEPEU_PONDER_TURNS = 3;         // เป็นแบบนี้นี่เอง: ครุ่นคิด 3 เทิร์น จั่วไพ่ไม่ได้ (ยังโจมตีได้ถ้าชนะ)
+const TEPEU_PONDER_SKILL_GAIN = 1;    // ครุ่นคิด: จบเทิร์นได้แต้มสกิลเพิ่ม +1 (เทิร์นสุดท้ายได้ +2 แทน)
+const TEPEU_PONDER_SKILL_GAIN_LAST = 2;
+const TEPEU_DEATHLINE_CAP = 5;        // เส้นชีวิตที่เทเปาเกี่ยวข้อง สะสมได้สูงสุด 5 หน่วยต่อคน
+const TEPEU_LOSE_STREAK_DECAY = 3;    // แพ้ติดกันเกิน 3 เทิร์น -> เส้นชีวิตลด 1 (แพ้ชนะสลับกันไปมาจะไม่ลด)
+const TEPEU_KILL_CHANCE_PER_LINE = 0.10; // นายเป็นคนทำตัวเองนะ: เส้นชีวิต 1 หน่วย = โอกาสสังหาร 10%
+const TEPEU_EYE_TURNS = 3;            // นายเป็นคนทำตัวเองนะ: ฉากหลัง/เพลงจบ (แบบโทโนะ ชิกิ) คงอยู่กี่เทิร์นหลังใช้ท่า
 // สุ่มอาวุธถัดไปแบบถ่วงน้ำหนัก (ไม่สุ่มซ้ำกระบอกเดิม)
 function rollDoomWeapon(excludeId) {
   const total = DOOM_WEAPON_IDS.reduce((n, id) => n + (id === excludeId ? 0 : DOOM_WEAPONS[id].weight), 0);
@@ -141,10 +151,12 @@ const APPLE_ITEMS = {
   iphone: { name: "ไอโฟนเครื่องใหม่", img: "/characters/appleguy/appleguy_skill1.2.png" },
   promo:  { name: "ใบโปรโมทสินค้า", img: "/characters/appleguy/appleguy_skill1.3.jpg" },
 };
-const APPLE_ATK_MAX = 1;    // บัฟพลังโจมตีจากการมอบของ ไม่สามารถซ้อนทับได้ (patch 1.9)
-const APPLE_GIVE_USES = 1;  // เอาไปสิ ใช้ได้จำกัด 1 ครั้ง (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมไม่ได้) (patch 1.9.1)
-// อัตราหลบขณะชิวๆครับน้องๆ: เริ่ม 100% -> หลบได้เหลือ 50% -> หลบได้อีกเหลือ 25% และคงที่จนกว่าผลจะหมด
-const CHILL_DODGE_MIN = 25; // อัตราหลบต่ำสุด (%)
+const APPLE_ATK_MAX = 2;    // บัฟพลังโจมตีจากการมอบของ ซ้อนทับได้สูงสุด 2 หน่วย (patch 2.2 new — เดิม 1 ไม่ซ้อนทับ)
+const APPLE_ATK_DURATION = 5; // patch 2.2 new: แต่ละหน่วยคงอยู่ 5 เทิร์นแยกกัน (คนละก้อนกัน)
+const APPLE_GIVE_USES = 3;  // เอาไปสิ ใช้ได้จำกัด 3 ครั้ง (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมได้ไม่มีเพดาน) (patch 2.2 new — เดิม 1)
+// อัตราหลบขณะชิวๆครับน้องๆ: เริ่ม 100% -> หลบได้เหลือ 75% -> หลบได้อีกเหลือ 50% และคงที่จนกว่าผลจะหมด (patch 2.2 new — เดิม 100/50/25)
+const CHILL_DODGE_MID = 75; // อัตราหลบขั้นกลาง (%)
+const CHILL_DODGE_MIN = 50; // อัตราหลบต่ำสุด (%)
 
 // ---------- ไรโด ฮิคารุ / อุลตร้าแมนกิงกะ (rework patch 2.1.3) ----------
 //  สกิลพื้นฐาน 1 MonsterLive: เพดานเกราะ+2 ฟื้นเกราะทันที+2 คงอยู่ 3 เทิร์น — เกราะลด = ฟื้นเลือดตามเกราะที่เสีย
@@ -850,6 +862,36 @@ function hasKillCapability(p) {
   if (p.characterId === "shiki" && (((p.statuses.deatheye || 0) > 0) || ((p.statuses.wither || 0) > 0))) return true;
   return false;
 }
+// Apple guy (patch 2.2 new): หลบหลีกสำเร็จระหว่างชิวๆครับน้องๆ สามารถรอดพ้นจากสกิลประเภท "สังหารทันที" ได้ด้วย (คล้าย "หลบหลีก" สถานะ universal)
+//  ถ้าหลบพ้น จะจบลำดับการโจมตีตรงนี้ให้เรียบร้อยเหมือนหลบการโจมตีปกติ — ผู้เรียกใช้ต้อง return ทันทีถ้าคืน true
+function appleGuyDodgesKill(attacker, target) {
+  if (!target || target.characterId !== "appleguy" || (target.statuses.chill || 0) <= 0 || passiveSealed(target)) return false;
+  const rate = Math.max(CHILL_DODGE_MIN, Math.min(100, target.chillDodge != null ? target.chillDodge : 100));
+  if (Math.random() * 100 >= rate) return false;
+  const firstDodge = rate === 100; // patch 2.2 new: วีดีโอเล่นตอนหลบครั้งแรกที่ 100% แทน (เดิมเล่นตอนอัตราหลบลดถึงต่ำสุด)
+  target.chillDodge = rate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
+  healHp(target, 1);
+  target.appleGiveUses = (target.appleGiveUses || 0) + 1; // สะสมได้ ไม่มีเพดานแล้ว (patch 2.2 new)
+  target.wasAttacked = true;
+  lastLog.push(`🏖️ ${target.name} ชิวๆครับน้องๆ — หลบความสามารถสังหารทันทีของ ${attacker.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${target.chillDodge}%)`);
+  if (firstDodge && !target.cutsceneShown.appleguyDodge) {
+    target.cutsceneShown.appleguyDodge = true;
+    queueCutscene(target, "appleguyDodge");
+  }
+  lastAttack = {
+    byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+    byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined,
+    targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
+    dmg: 0, dodge: true,
+    skills: [{ name: "ชิวๆครับน้องๆ (หลบสังหารทันที)", img: "/characters/appleguy/appleguy_skill3.jpg", by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
+  };
+  runCutsceneQueue(() => {
+    gameState = "ATTACKING";
+    startPhaseTimer(ATTACKFX_TIME, endTurn);
+    broadcastState();
+  });
+  return true;
+}
 // นั่นพี่จ๋าหรอ? (สกิลติดตัว): ลดโอกาสถูกสังหารทันทีของอาริมะ มิยาโกะ ตามจำนวนครั้งที่เคยรอด (สะสม 40%/ครั้ง)
 function miyakoKillChance(target, baseChance) {
   if (!target || target.characterId !== "miyako") return baseChance;
@@ -932,6 +974,30 @@ function shikiGiveLifeline(shiki, target, amount) {
   }
   target.statuses.deathline = cur + amount;
   return amount;
+}
+// เทเปา: นายเป็นคนทำตัวเองนะ — คิดโอกาสสังหารจากเส้นชีวิตที่เป้าหมายมี (1 หน่วย = 10%)
+//  พลาด/ไม่มีเส้นชีวิต -> ล้างเส้นชีวิตของเป้าหมายทั้งหมด — สำเร็จ/พลาดก็ตาม เล่นวีดีโอ + ฉากหลัง/เพลงจบแบบเดียวกัน
+function tepeuResolveKill(p, t) {
+  const lines = t.statuses.deathline || 0;
+  const chance = lines * TEPEU_KILL_CHANCE_PER_LINE;
+  p.transformAt = ++transformCounter; // เพลง/ฉากหลังใช้ลำดับล่าสุด (กรณีมีเทเปาหลายคน)
+  p.tepeuEyeTurns = TEPEU_EYE_TURNS;
+  triggerCutscene(p, "tepeuUlt");
+  let suffix;
+  if (lines > 0 && Math.random() < chance) {
+    suffix = ` — สังหาร ${t.name} สำเร็จ!`;
+    lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — สังหาร ${t.name} สำเร็จ! (เส้นชีวิต ${lines} หน่วย = โอกาส ${Math.round(chance * 100)}%)`);
+    instantDeath(t);
+    t.wasAttacked = true;
+    if (!t.alive) lastLog.push(`💀 ${t.name} เลือดจริงหมด ตกรอบ!`);
+  } else {
+    delete t.statuses.deathline;
+    if (t.statusAmt) delete t.statusAmt.deathline;
+    suffix = ` — พลาด! ล้างเส้นชีวิตของ ${t.name}`;
+    lastLog.push(`💫 ${p.name} นายเป็นคนทำตัวเองนะ — พลาด! เส้นชีวิตของ ${t.name} ถูกล้างทั้งหมด (มีอยู่ ${lines} หน่วย = โอกาสแค่ ${Math.round(chance * 100)}%)`);
+  }
+  if (cutsceneQueue.length) pausePlayingForCutscene();
+  return suffix;
 }
 
 // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
@@ -1165,6 +1231,8 @@ const TRANSFORMS = {
   banagherPassive2: { img: "/characters/banagher/banagher_update/unicorn_new_ndt.png", video: "/characters/banagher/banagher_update/unicorn_passvie2.mp4", title: "ฉันไม่อยากให้เราต้องมาสู้กัน", label: "สกิลติดตัวทำงาน", seconds: 15, music: null, afterReveal: false },
   // unibeam2: ท่าไม้ตาย 2 แสงที่ไม่อยู่เพียงลำพัง — เล่นก่อนสรุปผลตอนได้โจมตี วีดีโอ 5 วิ
   unibeam2: { img: "/characters/banagher/banagher_update/unicorn_skill3.2.jpg", video: "/characters/banagher/banagher_update/unicorn_and_banshee_beam.mp4", title: "แสงที่ไม่อยู่เพียงลำพัง", label: "ปล่อยท่าไม้ตาย", seconds: 6, music: null, afterReveal: false },
+  // tepeuUlt: นายเป็นคนทำตัวเองนะ (เทเปา ชิกิ) — เล่นก่อนสรุปผลสังหาร/พลาด วีดีโอ 13 วิ — จบแล้วเพลง tepeu + ฉากหลังซ้อนแบบโทโนะ ชิกิ (shiki_fill.png)
+  tepeuUlt: { img: "/characters/tepeu/skill3/tepeu_skill3.jpg", video: "/characters/tepeu/skill3/tepeu_skill3.mp4", title: "นายเป็นคนทำตัวเองนะ", label: "ปล่อยท่าไม้ตาย", seconds: 13, music: "tepeu", afterReveal: false },
   // seconds ≈ ความยาววิดีโอ (วีดีโอจบ = ตัดกลับจอปกติทันที ไม่ค้างเฟรม)
   //  เสียงพากย์ + เอฟเฟกต์ระเบิด + แจ้งเปลี่ยนร่าง จะเล่นบนจอปกติหลังวีดีโอจบ (ฝั่ง client)
   //  rachan: วีดีโอ 11.62 | beat: วีดีโอ 4.70
@@ -1734,6 +1802,14 @@ function activeSkillMusic() {
     }
   }
   if (bestNanaya) return bestNanaya;
+  // นายเป็นคนทำตัวเองนะ (เทเปา ชิกิ): เพลง tepeu_theme เล่นค้างช่วงฉากหลังซ้อนแบบโทโนะ ชิกิ หลังท่าไม้ตายจบ
+  let bestTepeu = null;
+  for (const p of alivePlayers()) {
+    if (p.characterId === "tepeu" && (p.tepeuEyeTurns || 0) > 0) {
+      if (!bestTepeu || (p.transformAt || 0) > bestTepeu.at) bestTepeu = { music: "tepeu", at: p.transformAt || 0 };
+    }
+  }
+  if (bestTepeu) return bestTepeu;
   // MOON*CELL (คิชินามิ ฮาคุโนะ patch 2.2.1): เพลง hakuno_theme เล่นค้างระหว่างท่าไม้ตายทำงาน
   let bestHakuno = null;
   for (const p of alivePlayers()) {
@@ -2032,10 +2108,9 @@ function resetCombat(p) {
   p.sunriseDrop = 0; // โอเบรอน: จำนวนเทิร์นที่พลังชีวิตจะลดลงเทิร์นละ 1 อัตโนมัติ (หลังโดนฮีล 5)
   p.sleepFresh = false; // หลับไหล: เทิร์นที่เพิ่งโดนกล่อมยังไม่เริ่มนับ/ยังโจมตีได้
   p.appleItem = "drink"; // Apple guy: ของส่งมอบที่เลือกอยู่ (ค่าเริ่มต้น เครื่องดื่มชูกำลัง)
-  p.appleGifts = {};     // Apple guy: ประวัติการมอบของ "targetId:item" (มอบซ้ำ = บัฟหาย + ล้างประวัติชิ้นนั้น)
-  p.appleAtk = 0;        // Apple guy: บัฟพลังโจมตีจากการมอบของ (ไม่ซ้อนทับ — สูงสุด 1)
+  p.appleAtkBuffs = [];  // Apple guy: บัฟพลังโจมตีจากการมอบของ — 1 หน่วย/ครั้ง (สูงสุด 2 หน่วย) นับถอยหลังแยกกัน 5 เทิร์น/หน่วย
   p.chillDodge = 100;    // Apple guy: อัตราหลบขณะชิวๆครับน้องๆ (%) — รีเซ็ตเมื่อเปิดท่าไม้ตายใหม่
-  p.appleGiveUses = APPLE_GIVE_USES; // Apple guy: จำนวนใช้ เอาไปสิ (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมไม่ได้)
+  p.appleGiveUses = APPLE_GIVE_USES; // Apple guy: จำนวนใช้ เอาไปสิ (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมได้ไม่มีเพดาน)
   // ---------- ฟุจิตะ โคโตเนะ (patch 1.9.1) ----------
   p.coins = 0;            // กระปุกออมสินน้องหมูน้อย: coin สะสม (สูงสุด 6)
   p.nightWork = 0;        // จำนวนครั้งที่ทำงาน Part-time ในเฟสกลางคืนนี้ (>1 = โหมงานหนัก)
@@ -2118,6 +2193,11 @@ function resetCombat(p) {
   p.nanayaMissedThisAttack = false; // ใช้ภายในการโจมตีปัจจุบัน: เนตรมารพลาด -> เปิดโอกาสหัวใจฆาตกร
   p.nanayaReattackReady = false;  // หัวใจฆาตกร: กำลังรอเลือกโจมตีซ้ำ/ยกเลิกอยู่
   p.nanayaRestTurn = 0;           // พักผ่อนสักครู่: นับเทิร์น (ครบ 2 = ฟื้นเลือด)
+  // ---------- เทเปา (ชิกิ) (patch 2.2 new) ----------
+  p.tepeuCookTurns = 0;   // วันนี้อากาศดีจัง: นับถอยหลังทำอาหาร (0 = ไม่ได้ทำอยู่ กดใช้ได้)
+  p.tepeuPonderTurns = 0; // เป็นแบบนี้นี่เอง: นับถอยหลังครุ่นคิด (0 = ไม่ได้ครุ่นคิดอยู่ กดใช้ได้/จั่วไพ่ได้)
+  p.tepeuEyeTurns = 0;    // นายเป็นคนทำตัวเองนะ: ฉากหลัง/เพลงจบ (แบบโทโนะ ชิกิ) คงอยู่กี่เทิร์น
+  p.tepeuLoseStreak = 0;  // แพ้ติดกันกี่เทิร์นแล้ว (ครบเกิน 3 = เส้นชีวิตลด 1 — รีเซ็ตทุกครั้งที่ชนะ)
   // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
   p.miyakoComboHits = 0;          // เพลงหมัด อาริมะ: จำนวนครั้งที่ตีไปแล้วในคอมโบปัจจุบัน
   p.miyakoKillResist = 0;         // นั่นพี่จ๋าหรอ?: จำนวนชั้นที่สะสม (ลดโอกาสถูกสังหารทันที 40%/ชั้น)
@@ -2174,7 +2254,8 @@ function buildStateFor(viewerId) {
     : Object.values(players).some((p) => p.alive && (
         (p.characterId === "shiki" && (p.statuses.deatheye || 0) > 0) ||
         (p.characterId === "tohno" && (p.tohnoLevel || 1) >= 2) ||
-        (p.characterId === "nanaya" && p.nanayaEyeOn)
+        (p.characterId === "nanaya" && p.nanayaEyeOn) ||
+        (p.characterId === "tepeu" && (p.tepeuEyeTurns || 0) > 0)
       ))
       ? "eye" : null;
   // มิติมายาบรรเลง (Bard): ฉากหลังเปลี่ยนตามสายมิติ "blood" | "soul" | null
@@ -2411,8 +2492,10 @@ function buildStateFor(viewerId) {
         profit: p.profit || 0,      // แกมเบลอร์: บัฟกำไรเท่าตัวโว้ยสะสม
         sunriseDrop: p.sunriseDrop || 0, // โอเบรอน: จำนวนเทิร์นที่จะเสียเลือด 1/เทิร์นจากรุ่งอรุณแห่งวันใหม่
         appleItem: p.appleItem || "drink", // Apple guy: ของส่งมอบที่เลือกอยู่
-        appleAtk: p.appleAtk || 0,         // Apple guy: บัฟพลังโจมตีจากการมอบของ (ไม่ซ้อนทับ)
+        appleAtk: p.appleAtkBuffs ? p.appleAtkBuffs.length : 0, // Apple guy: บัฟพลังโจมตีจากการมอบของ (ซ้อนทับได้สูงสุด 2 หน่วย)
         appleGiveUses: p.appleGiveUses != null ? p.appleGiveUses : APPLE_GIVE_USES, // Apple guy: จำนวนใช้ เอาไปสิ คงเหลือ
+        tepeuCookTurns: p.tepeuCookTurns || 0,     // เทเปา: วันนี้อากาศดีจัง — เทิร์นที่เหลือก่อนได้ "มื้อที่สุข" (0 = กดใช้ได้)
+        tepeuPonderTurns: p.tepeuPonderTurns || 0, // เทเปา: เป็นแบบนี้นี่เอง — ครุ่นคิดเหลือกี่เทิร์น (0 = กดใช้ได้/จั่วไพ่ได้)
         coins: p.coins || 0,               // โคโตเนะ: coin ในกระปุกออมสิน (สูงสุด 6)
         // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
         lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
@@ -2647,6 +2730,9 @@ function useInventoryItem(id, uid) {
   } else if (item.type === "armor") {
     const healed = healArmor(p, item.value);
     lastLog.push(`🔧 ${p.name} ใช้ยาฟื้นเกราะ +${healed} จากคลัง`);
+  } else if (item.type === "tepeuMeal") {
+    const healed = healHp(p, item.value);
+    lastLog.push(`🍲 ${p.name} ใช้ "มื้อที่สุข" — ฟื้นพลังชีวิต +${healed} จากคลัง`);
   } else {
     return;
   }
@@ -2685,6 +2771,9 @@ function dealRound() {
     // DoomGuy (patch 2.2 full): Quick Swap ใช้ได้อีก 1 ครั้งต่อเทิร์น
     if (p.characterId === "doomguy") p.doomQuickSwapUsed = false;
     if ((p.wouGuardCd || 0) > 0) p.wouGuardCd--; // ซาโตรุ (patch 2.0.8.3): คูลดาวน์ลบล้างลดลงทุกต้นเทิร์น (2 เทิร์นต่อการใช้)
+    // Apple guy (patch 2.2 new): บัฟพลังโจมตีแต่ละหน่วยนับถอยหลังแยกกัน (5 เทิร์น/หน่วย) — หมดอายุเองเมื่อครบ
+    if (p.appleAtkBuffs && p.appleAtkBuffs.length) p.appleAtkBuffs = p.appleAtkBuffs.map((n) => n - 1).filter((n) => n > 0);
+    // เทเปา (patch 2.2 new): ทำอาหาร/ครุ่นคิด/ฉากหลังไม้ตาย นับถอยหลังที่ endTurn() แทน (ต้องอ่านค่าก่อนลดเพื่อรู้ "เทิร์นสุดท้าย" ให้ตรง)
     p.bardNotesUsed = 0;      // Bard: นับโน้ตใหม่ทุกเทิร์น (จำกัด 2 — มิติวิญญาณไม่จำกัด)
     p.mageUses = 0;           // จอมเวทย์ฝึกหัด: นับใหม่ทุกเทิร์น (กดได้ 3 ครั้งต่อเทิร์น)
     p.anataTargets = null;
@@ -3188,6 +3277,7 @@ function hit(id) {
   if (shradeCharging(p)) return; // แด่เพื่อนรักของฉัน: ระหว่างชาร์จจั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.riddheguard || 0) > 0) return; // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): จั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.phenexTaunt || 0) > 0) return; // ไม่อยากให้ใครต้องเจ็บปวด (ริต้า เบอร์นัล): ระหว่างล่อเป้าจั่วการ์ดเพิ่มไม่ได้
+  if ((p.tepeuPonderTurns || 0) > 0) return; // ครุ่นคิด (เทเปา): จั่วไพ่ไม่ได้ระหว่างนี้ (ยังโจมตีได้ถ้าชนะ)
   if (scoreOf(p) >= scoreCap(p)) return; // แต้มเต็มเพดาน (เช่น 21 พอดี) = จั่วไม่ได้ รอผู้ใช้ใช้สกิล/เปิดไพ่เอง
   // โชคลาภ (patch 2.2 new): จั่วปุ๊ป ถ้ามีบัฟสะสมอยู่ ใช้ 1 หน่วยทันทีแล้วหน่วยนั้นหายไป
   //  ปรับไพ่ที่จั่วให้แต้มรวมตกอยู่ 19-21 (สุ่มถ่วงน้ำหนัก มีเคสพิเศษถ้าแต้มปัจจุบันเป็น 19/20 อยู่แล้ว)
@@ -3773,6 +3863,19 @@ function useSkill(id, tier, targets, item) {
     if ((t.statuses.nanayaSeal || 0) > 0) return; // เป้าหมายเดิมยังติดผลอยู่ — เลือกซ้ำไม่ได้จนกว่าจะหมดฤทธิ์
     nanayaSilenceTarget = t;
   }
+  // ---------- เทเปา (ชิกิ): วันนี้อากาศดีจัง / เป็นแบบนี้นี่เอง / นายเป็นคนทำตัวเองนะ ----------
+  const isTepeuCook = p.characterId === "tepeu" && tier === "basic";
+  if (isTepeuCook && (p.tepeuCookTurns || 0) > 0) return; // ระหว่างทำอาหารอยู่ กดซ้ำไม่ได้
+  const isTepeuPonder = p.characterId === "tepeu" && tier === "secondary";
+  if (isTepeuPonder && (p.tepeuPonderTurns || 0) > 0) return; // ครุ่นคิดยังไม่หมด กดซ้ำไม่ได้
+  const isTepeuKill = p.characterId === "tepeu" && tier === "ultimate";
+  let tepeuKillTarget = null;
+  if (isTepeuKill) {
+    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
+    const t = tgs.length === 1 ? players[tgs[0]] : null;
+    if (!t || !t.alive || t.id === p.id) return;
+    tepeuKillTarget = t;
+  }
 
   if (st === "beam" && (p.beamAmmo || 0) <= 0) return; // Beam Magnum กระสุนหมด ใช้ไม่ได้
   if (st === "beamplus" && (p.beamAmmo || 0) <= 0) return; // Beam Magnum Plus (ริดดี้) กระสุนหมด ใช้ไม่ได้
@@ -4016,18 +4119,14 @@ function useSkill(id, tier, targets, item) {
       t.statuses.promo = 1;
       lastLog.push(`📢 ${p.name} เอาไปสิ — แปะใบโปรโมทสินค้าให้ ${t.name} (ทุกคนเห็นแต้มการ์ดตลอดเทิร์นนี้)`);
     }
-    // บัฟพลังโจมตี (patch 1.9): มอบของไม่ซ้ำ (คน+ชิ้น) = +1 (ไม่ซ้อนทับ — สูงสุด 1)
-    //  มอบชิ้นเดิมให้คนเดิมซ้ำ = บัฟหายไป และล้างประวัติชิ้นนั้น (มอบอีกครั้งจะได้บัฟกลับคืน)
-    p.appleGifts = p.appleGifts || {};
-    const giftKey = `${t.id}:${itemKey}`;
-    if (p.appleGifts[giftKey]) {
-      delete p.appleGifts[giftKey];
-      p.appleAtk = Math.max(0, (p.appleAtk || 0) - 1);
-      lastLog.push(`🍎 ${p.name} มอบของชิ้นเดิมให้คนเดิมซ้ำ — บัฟพลังโจมตีจากการมอบของหายไป (ล้างประวัติชิ้นนั้น)`);
+    // บัฟพลังโจมตี (patch 2.2 new): มอบของแต่ละครั้ง +1 หน่วย ซ้อนทับได้สูงสุด 2 หน่วย
+    //  แต่ละหน่วยคิดระยะเวลาคงอยู่แยกกัน (5 เทิร์น/หน่วย — ดูตัดเทิร์นใน dealRound)
+    p.appleAtkBuffs = p.appleAtkBuffs || [];
+    if (p.appleAtkBuffs.length < APPLE_ATK_MAX) {
+      p.appleAtkBuffs.push(APPLE_ATK_DURATION);
+      lastLog.push(`🍎 ${p.name} พลังโจมตีจากการมอบของ +1 (${p.appleAtkBuffs.length}/${APPLE_ATK_MAX} หน่วย คงอยู่ ${APPLE_ATK_DURATION} เทิร์น)`);
     } else {
-      p.appleGifts[giftKey] = true;
-      p.appleAtk = Math.min(APPLE_ATK_MAX, (p.appleAtk || 0) + 1);
-      lastLog.push(`🍎 ${p.name} พลังโจมตีจากการมอบของ +1 (ไม่ซ้อนทับ)`);
+      lastLog.push(`🍎 ${p.name} พลังโจมตีจากการมอบของเต็มแล้ว (${APPLE_ATK_MAX}/${APPLE_ATK_MAX} หน่วย)`);
     }
     flashSuffix = ` — มอบ${it.name}ให้ ${t.name}`;
   }
@@ -4205,6 +4304,40 @@ function useSkill(id, tier, targets, item) {
       const gained = shikiGiveLifeline(p, t, 1);
       flashSuffix = ` — วัดฝีมือ ${t.name}`;
       lastLog.push(`🔪 ${p.name} นายมีฝีมือแค่ไหนหรอ? — ${t.name} ติดเส้นชีวิต +${gained} (สะสม ${t.statuses.deathline || 0}) และ ${p.name} พร้อมยกเลิกท่าไม้ตายของผู้เล่นอื่น 1 ครั้ง (${SHIKI_GODSLAY_TURNS} เทิร์น)`);
+    }
+  }
+  // ---------- เทเปา (ชิกิ): วันนี้อากาศดีจัง — เริ่มทำอาหาร 2 เทิร์น ----------
+  if (isTepeuCook) {
+    p.tepeuCookTurns = TEPEU_COOK_TURNS;
+    lastLog.push(`🍳 ${p.name} วันนี้อากาศดีจัง — เริ่มทำอาหาร! อีก ${TEPEU_COOK_TURNS} เทิร์นจะได้ "มื้อที่สุข" เข้าคลัง (ระหว่างนี้กดสกิลนี้ซ้ำไม่ได้)`);
+  }
+  // ---------- เทเปา (ชิกิ): เป็นแบบนี้นี่เอง — ครุ่นคิด 3 เทิร์น จั่วไพ่ไม่ได้ (ยังโจมตีได้ถ้าชนะ) ----------
+  if (isTepeuPonder) {
+    p.tepeuPonderTurns = TEPEU_PONDER_TURNS;
+    lastLog.push(`🤔 ${p.name} เป็นแบบนี้นี่เอง — เริ่มครุ่นคิด ${TEPEU_PONDER_TURNS} เทิร์น (จั่วไพ่ไม่ได้ แต่ยังโจมตีได้ถ้าชนะ — จบเทิร์นได้แต้มสกิลเพิ่ม เทิร์นสุดท้ายได้ +${TEPEU_PONDER_SKILL_GAIN_LAST})`);
+  }
+  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — เลือกเป้าหมาย 1 คน สังหารตามเส้นชีวิตที่เป้าหมายมี ----------
+  //  (พลาด = ล้างเส้นชีวิตของเป้าหมายทั้งหมด) — จบแล้วเล่นเพลง tepeu_theme + ฉากหลังซ้อนแบบโทโนะ ชิกิ (shiki_fill.png)
+  //  หลบหลีกของ Apple guy (ระหว่างชิวๆครับน้องๆ) รอดพ้นความสามารถสังหารทันทีนี้ได้เหมือนกัน
+  if (isTepeuKill && tepeuKillTarget) {
+    const t = tepeuKillTarget;
+    if (satoruOnTargeted(t, p, `สกิล ${skill.name} `).negated) {
+      flashSuffix = " — ถูกลบล้าง";
+    } else if (t.characterId === "appleguy" && !passiveSealed(t) && (t.statuses.chill || 0) > 0) {
+      const dodgeRate = Math.max(CHILL_DODGE_MIN, Math.min(100, t.chillDodge != null ? t.chillDodge : 100));
+      if (Math.random() * 100 < dodgeRate) {
+        const firstDodge = dodgeRate === 100;
+        t.chillDodge = dodgeRate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
+        healHp(t, 1);
+        t.appleGiveUses = (t.appleGiveUses || 0) + 1;
+        flashSuffix = ` — ${t.name} หลบพ้น!`;
+        lastLog.push(`🏖️ ${t.name} ชิวๆครับน้องๆ — หลบนายเป็นคนทำตัวเองนะของ ${p.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${t.chillDodge}%)`);
+        if (firstDodge && !t.cutsceneShown.appleguyDodge) { t.cutsceneShown.appleguyDodge = true; queueCutscene(t, "appleguyDodge"); }
+      } else {
+        flashSuffix = tepeuResolveKill(p, t);
+      }
+    } else {
+      flashSuffix = tepeuResolveKill(p, t);
     }
   }
   // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
@@ -4886,7 +5019,9 @@ function useSkill(id, tier, targets, item) {
       : isAquaLeader ? AQUA_LEADERS[item].skillImg
       : isAquaFuse ? AQUA_LEADERS[p.leader || "apollo"].fuseCover
       : (skill.img || null);
-    io.emit("skillFlash", { name: skill.name + flashSuffix, img: flashImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
+    // เทเปา (ชิกิ): กดสกิลพื้นฐาน/สกิลรอง ให้เล่นเสียง tepeu_skill1_2 ก่อนเสมอ
+    const flashSound = (isTepeuCook || isTepeuPonder) ? "tepeu_skill1_2" : null;
+    io.emit("skillFlash", { name: skill.name + flashSuffix, img: flashImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96", sound: flashSound });
   }
   // จำสกิลที่ใช้ในรอบ (ท่าไม้ตายมี cutscene ของตัวเอง / สกิลหลังเปิดไพ่ไปโชว์ตอนโจมตี)
   roundSkills.push({ playerId: id, name: skill.name, img: skill.img || null, status: st });
@@ -5306,6 +5441,16 @@ function resolveRound() {
     roundTiedWin = tied.length > 1; // เสมอแต้มกัน -> ยังได้แต้มสกิล/ท่าไม้ตายทำงานปกติ แต่ไม่มีเทิร์นโจมตี
     w.isWinner = true;
     w.result = "win";
+    w.tepeuLoseStreak = 0; // ชนะ -> เคาน์เตอร์แพ้ติดกัน (เทเปา) รีเซ็ต
+    // สมองอันชาญฉลาด (เทเปา): ระหว่างมีสถานะครุ่นคิดอยู่ ผู้ชนะการจั่วไพ่ (ยกเว้นเทเปาเอง) ติดเส้นชีวิต +1
+    const tepeuPondering = combatants.find((q) => q.characterId === "tepeu" && (q.tepeuPonderTurns || 0) > 0 && q.id !== w.id);
+    if (tepeuPondering) {
+      const dlCur = w.statuses.deathline || 0;
+      if (dlCur < TEPEU_DEATHLINE_CAP) {
+        w.statuses.deathline = dlCur + 1;
+        lastLog.push(`🧠 ${tepeuPondering.name} สมองอันชาญฉลาด — ${w.name} ชนะการจั่วไพ่ ติดเส้นชีวิต +1 (สะสม ${w.statuses.deathline}/${TEPEU_DEATHLINE_CAP})`);
+      }
+    }
     // ระบบเหรียญ (patch 2.2 full): ชนะการจั่วได้เหรียญเพิ่ม +1 (เพดาน 30)
     if ((w.gold || 0) < GOLD_MAX) w.gold = Math.min(GOLD_MAX, (w.gold || 0) + GOLD_WIN_BONUS);
     // patch 2.1.3.5: ชนะจั่วการ์ดไม่ได้แต้มสกิลอีกต่อไป
@@ -5398,6 +5543,18 @@ function resolveRound() {
     }
   }
   for (const p of combatants) if (!p.result) p.result = "safe";
+
+  // เทเปา (ชิกิ): มีเทเปายังอยู่ในสนาม -> ใครแพ้ติดกันเกิน 3 เทิร์น เส้นชีวิตลดลง 1 หน่วย (แพ้ชนะสลับกันไปมาไม่ลด)
+  if (combatants.some((q) => q.characterId === "tepeu")) {
+    for (const l of combatants.filter((p) => p.isLoser)) {
+      l.tepeuLoseStreak = (l.tepeuLoseStreak || 0) + 1;
+      if (l.tepeuLoseStreak > TEPEU_LOSE_STREAK_DECAY && (l.statuses.deathline || 0) > 0) {
+        l.statuses.deathline--;
+        if (l.statuses.deathline <= 0) { delete l.statuses.deathline; if (l.statusAmt) delete l.statusAmt.deathline; }
+        lastLog.push(`📉 ${l.name} แพ้ติดกัน ${l.tepeuLoseStreak} เทิร์น — เส้นชีวิตลดลง 1 หน่วย (เหลือ ${l.statuses.deathline || 0})`);
+      }
+    }
+  }
 
   // สกิลติดตัว เนตรมารแห่งความมรณะ (ชิกิ): เปิดไพ่แล้วแต้มเท่ากับผู้เล่นอื่น
   //  (เกิดขึ้นแบบหมู่ได้) -> ผู้เล่นคนนั้นติดสถานะ "เส้นชีวิต" +2 แบบถาวร
@@ -5861,6 +6018,7 @@ function doAttack(byId, targetId) {
   //  เล่นวีดีโอ shiki_skill3_hit.mp4 ก่อนสังหาร — จัดการได้ 1 คน ท่าไม้ตายปิดลงทันที
   const shikiEye = attacker.characterId === "shiki" && (attacker.statuses.deatheye || 0) > 0;
   if (shikiEye && !killSealed(attacker) && (target.statuses.deathline || 0) >= SHIKI_DEATHLINE_MAX) {
+    if (appleGuyDodgesKill(attacker, target)) return; // Apple guy: หลบสังหารทันทีได้ (patch 2.2 new)
     queueCutscene(attacker, "shikiKill"); // เล่นวีดีโอก่อนสังหารทุกครั้ง
     delete target.statuses.deathline;
     delete attacker.statuses.deatheye; // จัดการได้แล้ว 1 คน — ท่าไม้ตายปิดลงทันที
@@ -5900,6 +6058,7 @@ function doAttack(byId, targetId) {
     const lines = witherLines;
     const chance = miyakoKillChance(target, SHIKI_WITHER_KILL_CHANCE);
     if (lines > 0 && Math.random() < chance) {
+      if (appleGuyDodgesKill(attacker, target)) return; // Apple guy: หลบสังหารทันทีได้ (patch 2.2 new)
       queueCutscene(attacker, "shikiWitherKill"); // เล่นวีดีโอก่อนสังหารทุกครั้ง
       delete attacker.statuses.wither; // สังหารได้แล้ว 1 คน — ท่าไม้ตายจบลง
       delete target.statuses.deathline;
@@ -5945,6 +6104,7 @@ function doAttack(byId, targetId) {
   if (attacker.characterId === "tohno" && tohnoLevel >= 2 && !passiveSealed(attacker) && !killSealed(attacker)) {
     const chance = miyakoKillChance(target, TOHNO_KILL_CHANCE[tohnoLevel]);
     if (Math.random() < chance) {
+      if (appleGuyDodgesKill(attacker, target)) return; // Apple guy: หลบสังหารทันทีได้ (patch 2.2 new)
       queueCutscene(attacker, "tohnoKill"); // เล่นวีดีโอก่อนสังหารทุกครั้ง
       instantDeath(target);
       target.wasAttacked = true;
@@ -5980,6 +6140,7 @@ function doAttack(byId, targetId) {
   attacker.nanayaMissedThisAttack = false;
   if (attacker.characterId === "nanaya" && attacker.nanayaEyeOn && !passiveSealed(attacker) && !killSealed(attacker)) {
     if (Math.random() < miyakoKillChance(target, NANAYA_KILL_CHANCE)) {
+      if (appleGuyDodgesKill(attacker, target)) return; // Apple guy: หลบสังหารทันทีได้ (patch 2.2 new)
       queueCutscene(attacker, "nanayaKill"); // เล่นวีดีโอก่อนสังหารทุกครั้ง
       instantDeath(target);
       target.wasAttacked = true;
@@ -6018,21 +6179,22 @@ function doAttack(byId, targetId) {
   }
 
   // สกิลติดตัว Apple guy (ชิวๆ ไม่โดนหรอกครับ): ขณะชิวๆครับน้องๆ ทำงาน มีโอกาสหลบการถูกเลือกโจมตี
-  //  เริ่มต้น 100% -> หลบได้เหลือ 50% -> หลบได้อีกเหลือ 25% และคงที่จนกว่าผลจะหมด
-  //  หลบได้ฟื้นเลือด 1 + ขึ้นวีดีโอ — หลบไม่พ้น = โดนโจมตีตามปกติ และผลชิวๆครับน้องๆ จบลง
+  //  เริ่มต้น 100% -> หลบได้เหลือ 75% -> หลบได้อีกเหลือ 50% และคงที่จนกว่าผลจะหมด (patch 2.2 new — เดิม 100/50/25)
+  //  หลบได้ฟื้นเลือด 1 + ขึ้นวีดีโอตอนหลบครั้งแรก — หลบไม่พ้น = โดนโจมตีตามปกติ และผลชิวๆครับน้องๆ จบลง
   if (target.characterId === "appleguy" && (target.statuses.chill || 0) > 0 && !passiveSealed(target)) {
     const rate = Math.max(CHILL_DODGE_MIN, Math.min(100, target.chillDodge != null ? target.chillDodge : 100));
     if (Math.random() * 100 < rate) {
-      target.chillDodge = rate > 50 ? 50 : CHILL_DODGE_MIN;
+      const firstDodge = rate === 100; // patch 2.2 new: วีดีโอเล่นตอนหลบครั้งแรกที่ 100% แทน (เดิมเล่นตอนอัตราหลบลดถึงต่ำสุด)
+      target.chillDodge = rate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
       healHp(target, 1); // หลบได้ ฟื้นพลังชีวิต 1 หน่วย
-      // หลบได้ ฟื้นฟูจำนวนการใช้งานสกิลรอง เอาไปสิ +1 ครั้ง (สะสมไม่ได้) (patch 1.9.1)
-      target.appleGiveUses = Math.min(APPLE_GIVE_USES, (target.appleGiveUses || 0) + 1);
+      // หลบได้ ฟื้นฟูจำนวนการใช้งานสกิลรอง เอาไปสิ +1 ครั้ง (สะสมได้ ไม่มีเพดานแล้ว) (patch 2.2 new)
+      target.appleGiveUses = (target.appleGiveUses || 0) + 1;
       // patch 2.1.3.5: ถูกโจมตีไม่ได้แต้มสกิลอีกต่อไป (แม้หลบพ้น)
       target.wasAttacked = true;
       lastLog.push(`🏖️ ${target.name} ชิวๆครับน้องๆ — หลบการโจมตีของ ${attacker.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${target.chillDodge}%)`);
       // ฉากวิ่งหลบ: ขึ้นหลังจากฝั่งตรงข้ามกดตีแล้ว จบวีดีโอค่อยแสดงสรุปผลการตีตามปกติ
-      //  ขึ้นเฉพาะตอนอัตราหลบขณะนั้นเป็น 25% และครั้งเดียวต่อเกมเท่านั้น (patch 1.9.1)
-      if (rate <= CHILL_DODGE_MIN && !target.cutsceneShown.appleguyDodge) {
+      //  ขึ้นเฉพาะตอนหลบสำเร็จครั้งแรกของเกม (patch 2.2 new — เดิมขึ้นตอนอัตราหลบต่ำสุด)
+      if (firstDodge && !target.cutsceneShown.appleguyDodge) {
         target.cutsceneShown.appleguyDodge = true;
         queueCutscene(target, "appleguyDodge");
       }
@@ -6111,7 +6273,7 @@ function doAttack(byId, targetId) {
   const oberonZero = attacker.characterId === "oberon" ? -1 : 0;
   const oberonDayAtk = attacker.characterId === "oberon" && !isNightRound(roundNumber);
   // เอาไปสิ (Apple guy): บัฟพลังโจมตีจากการมอบของ (ไม่ซ้อนทับ — คงอยู่จนหายจากการมอบซ้ำ)
-  const appleAtk = attacker.characterId === "appleguy" ? (attacker.appleAtk || 0) : 0;
+  const appleAtk = attacker.characterId === "appleguy" ? (attacker.appleAtkBuffs ? attacker.appleAtkBuffs.length : 0) : 0;
   // เสือนอนกิน (เจ้าแห่งเน็ตบ้าน): พลังโจมตี +1 (2 เทิร์น — กรณีไม่มีคู่สัญญา)
   const tigerAtk = (attacker.statuses.tiger || 0) > 0;
   // คู่สัญญา (สนใจใช้บริการเราไหม): พลังโจมตี +1 ตลอดสัญญา (โดนกระชากสายแลนถอดชั่วคราวได้)
@@ -6539,6 +6701,14 @@ function doAttack(byId, targetId) {
   if (miyakoHealAtk) {
     const heal = healHp(attacker, MIYAKO_HEAL_AMOUNT);
     if (heal > 0) lastLog.push(`💗 ${attacker.name} พี่จ๋าอยู่ไหน — ฟื้นพลังชีวิต +${heal}`);
+  }
+  // เทเปา (ชิกิ): การโจมตีปกติมอบสถานะ "เส้นชีวิต" ให้เป้าหมาย +1 เสมอ (ไม่ต้องติดครุ่นคิดก็ได้ — เพดานตามค่า TEPEU_DEATHLINE_CAP)
+  if (attacker.characterId === "tepeu") {
+    const cur = target.statuses.deathline || 0;
+    if (cur < TEPEU_DEATHLINE_CAP) {
+      target.statuses.deathline = cur + 1;
+      lastLog.push(`🍽️ ${attacker.name} การโจมตีปกติ — ${target.name} ติดเส้นชีวิต +1 (สะสม ${target.statuses.deathline}/${TEPEU_DEATHLINE_CAP})`);
+    }
   }
   // หอกแห่งแคสเซียส (เอวา 13 patch 2.2 alpha): การโจมตีปกติฟื้นเลือดตามความเสียหายที่ทำได้ — ใช้แล้วหมดไป
   const cassiusAtk = attacker.characterId === "eva13" && (attacker.statuses.cassius || 0) > 0;
@@ -7085,6 +7255,32 @@ function endTurn() {
     }
   }
 
+  // เป็นแบบนี้นี่เอง (เทเปา): จบเทิร์นระหว่างครุ่นคิด ได้แต้มสกิลเพิ่ม (เทิร์นสุดท้ายได้ +2 แทน) แล้วนับถอยหลังลง 1
+  //  -> ต้องอ่านค่าก่อนลด เพื่อรู้ว่านี่คือเทิร์นสุดท้าย (ค่า 1 = เทิร์นนี้เป็นเทิร์นสุดท้าย)
+  for (const p of alivePlayers()) {
+    if ((p.tepeuPonderTurns || 0) > 0) {
+      const gain = p.tepeuPonderTurns === 1 ? TEPEU_PONDER_SKILL_GAIN_LAST : TEPEU_PONDER_SKILL_GAIN;
+      addSkill(p, gain);
+      lastLog.push(`🤔 ${p.name} ครุ่นคิด — จบเทิร์นได้แต้มสกิลเพิ่ม +${gain}`);
+      p.tepeuPonderTurns--;
+    }
+  }
+  // วันนี้อากาศดีจัง (เทเปา): ทำอาหารนับถอยหลังลง ครบ 0 = ส่ง "มื้อที่สุข" เข้าคลัง
+  for (const p of alivePlayers()) {
+    if ((p.tepeuCookTurns || 0) > 0) {
+      p.tepeuCookTurns--;
+      if (p.tepeuCookTurns === 0) {
+        p.inventory = p.inventory || [];
+        p.inventory.push({ uid: `tepeu_meal_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, type: "tepeuMeal", value: TEPEU_MEAL_HEAL });
+        lastLog.push(`🍲 ${p.name} วันนี้อากาศดีจัง — ทำอาหารเสร็จแล้ว! ได้ "มื้อที่สุข" เข้าคลัง (ฟื้นพลังชีวิต +${TEPEU_MEAL_HEAL} เมื่อใช้)`);
+      }
+    }
+  }
+  // นายเป็นคนทำตัวเองนะ (เทเปา): ฉากหลัง/เพลงจบตอนไม้ตายทำงาน นับถอยหลังลง
+  for (const p of Object.values(players)) {
+    if ((p.tepeuEyeTurns || 0) > 0) p.tepeuEyeTurns--;
+  }
+
   // Everything For Humanity (ฟุจิมารุ): ผลจบลงแล้วเกมยังไม่จบ -> จ่ายราคา ตัวละครตายลง
   for (const p of Object.values(players)) {
     if (p.alive && p.humanityActivated && !(p.statuses.humanity > 0)) {
@@ -7339,7 +7535,8 @@ io.on("connection", (socket) => {
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
       sunriseDrop: 0, sleepFresh: false,
-      appleItem: "drink", appleGifts: {}, appleAtk: 0, chillDodge: 100, appleGiveUses: APPLE_GIVE_USES,
+      appleItem: "drink", appleAtkBuffs: [], chillDodge: 100, appleGiveUses: APPLE_GIVE_USES,
+      tepeuCookTurns: 0, tepeuPonderTurns: 0, tepeuEyeTurns: 0, tepeuLoseStreak: 0,
       coins: 0, nightWork: 0, overworkNext: false, senaNext: false,
       contractPartner: null, contractWith: null, contractOffer: null,
       contractTurns: 0, renewPending: false, skillDrain: 0, skillDrainPending: 0,

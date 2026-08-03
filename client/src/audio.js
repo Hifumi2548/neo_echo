@@ -52,6 +52,8 @@ const FILES = {
   lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
   doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)
   takuto: "/characters/takuto/takuto_theme.mp3", // เพลงประจำตัวหลัง Apprivoise! (สึงาชิ ทาคุโตะ)
+  tepeu: "/characters/tepeu/tepeu_theme.mp3", // เพลงระหว่างฉากหลัง "นายเป็นคนทำตัวเองนะ" ทำงาน (เทเปา ชิกิ)
+  tepeu_skill1_2: "/characters/tepeu/tepeu_skill1_2.m4a", // เสียงกดสกิลพื้นฐาน/สกิลรอง (เทเปา ชิกิ)
   // เสียงอาวุธ DoomGuy (patch 2.2 full): เสียงโจมตี/เสียงใช้สกิลรอง Weapon แยกตามอาวุธที่ถืออยู่
   doomguy_cs_shoot: "/characters/doomguy/sound/CS Shoot.mp3",
   doomguy_cs_skill: "/characters/doomguy/sound/CS Skill.mp3",
