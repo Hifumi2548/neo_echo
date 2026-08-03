@@ -79,6 +79,8 @@ const DOOM_HEAL_ON_ATK = 1;
 const DOOM_CHARGE_CHANCE = 0.35; // patch 2.2 new: 10% -> 25% -> 35%
 const DOOM_TIE_ATTACK_CHANCE = 0.60; // patch 2.2 new: 50% -> 60% (ชนะมากขึ้น)
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
+const DOOM_CRUCIBLE_BUST_DRAWS = 2; // Crucible (patch 2.2.4): บังคับจั่วเพิ่ม 2 ใบ (แบบเดียวกับ Ashen Trail โอกูริ)
+const DOOM_CRUCIBLE_BUST_BONUS = 8; // Crucible (patch 2.2.4): บวกแต้มการ์ดตรงๆ +8 การันตีแตกจริง แม้เปิดไพ่/ล็อกไปแล้ว
 // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
 const TAKUTO_HEAL_BASIC = 1;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +1 (patch 2.2.4 — เดิม 2)
 const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> ฉันคว้ามันได้แล้ว (Apprivoise!) ทันที
@@ -1550,13 +1552,14 @@ function maybeBeatSave(p) {
     if (!((p.statuses.apprivoise || 0) > 0)) return false;
     p.hp = 1;
     p.beatSaved = true;
+    p.statuses.apprivoise = TAKUTO_APPRIVOISE_TURNS; // patch 2.2.4: กันตายทำงาน -> นับเวลาฉันคว้ามันได้แล้วใหม่เต็ม 10 เทิร์น (ลดเทิร์นตามปกติต่อไป ไม่ถาวร)
     p.takutoAwakenAt = ++transformCounter; // เพลง/ภาพซ้อนทับใช้ลำดับล่าสุด (กรณีมีทาคุโตะหลายคน)
     triggerCutscene(p, "takutoAwaken"); // takuto_passive2.mp4 -> เปลี่ยนภาพเป็น tauburn_un.jpg + เพลง takuto2 ถาวร
     const healedHp = healHp(p, TAKUTO_BEATSAVE_HEAL);
     const healedArmor = healArmor(p, TAKUTO_BEATSAVE_ARMOR);
     p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + TAKUTO_FORTUNE_GRANT);
     p.fortuneIdle = 0;
-    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} ได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT} และร่างฉันคว้ามันได้แล้วจะคงอยู่ถาวรไม่หมดเวลาอีกต่อไป`);
+    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} ได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT} และร่างฉันคว้ามันได้แล้วนับเวลาใหม่เต็ม ${TAKUTO_APPRIVOISE_TURNS} เทิร์น`);
     return true;
   }
   return false;
@@ -5012,8 +5015,11 @@ function useSkill(id, tier, targets, item) {
     p.doomCharge = 0;
     for (const o of alivePlayers()) {
       if (o.id === p.id) continue;
-      o.busted = true;
-      o.locked = true; // บังคับแตกจริง — ล็อกกันจั่วเพิ่มจนแต้มจริงเกิน 21 แล้วหลุดจากสถานะแตก (เหมือนแตกเองตอนจั่ว)
+      // แตกจริงแบบเดียวกับ Ashen Trail (โอกูริ) — บังคับจั่วเพิ่ม + บวกแต้มการ์ดตรงๆ การันตีเกิน 21 แม้เปิดไพ่/ล็อกไปแล้วก็ตาม
+      for (let i = 0; i < DOOM_CRUCIBLE_BUST_DRAWS; i++) o.cards.push(drawCardFor(o));
+      o.cardBonus = (o.cardBonus || 0) + DOOM_CRUCIBLE_BUST_BONUS;
+      o.busted = bustedOf(o);
+      o.locked = true;
       voidUltimateOnBust(o);
       maybeMoonBurst(o);
       dealDirect(o, DOOM_CRUCIBLE_BUST_DMG);
@@ -5021,7 +5027,7 @@ function useSkill(id, tier, targets, item) {
       o.wasAttacked = true;
       if (o.alive && o.hp <= 0) { instantDeath(o); if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`); }
     }
-    lastLog.push(`⚔️ Crucible! ${p.name} คว้าดาบแห่งการล่า — บังคับทุกคนแตกทันที รับความเสียหาย -${DOOM_CRUCIBLE_BUST_DMG} (พลังโจมตี 7 หน่วย คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง)`);
+    lastLog.push(`⚔️ Crucible! ${p.name} คว้าดาบแห่งการล่า — บังคับทุกคนจั่วเพิ่ม ${DOOM_CRUCIBLE_BUST_DRAWS} ใบ บวกแต้มการ์ด +${DOOM_CRUCIBLE_BUST_BONUS} การันตีแตกทันที (แม้เปิดไพ่/ล็อกไปแล้ว) รับความเสียหาย -${DOOM_CRUCIBLE_BUST_DMG} (พลังโจมตี 7 หน่วย คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง)`);
   }
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   // ข้าขอบัญชา (ชาย): การโจมตีปกติครั้งถัดไปติดผกผันให้เป้าหมาย 3 เทิร์น — คงอยู่จนกว่าจะได้โจมตี + แต้มคำสาปแห่งดวงจันทร์ +1
@@ -7226,8 +7232,6 @@ function endTurn() {
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
       if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อฉันคว้ามันได้แล้ว
-      // ฉันคว้ามันได้แล้ว (สึงาชิ ทาคุโตะ patch 2.2.4): ปกติลดเทิร์นตามปกติ (10 เทิร์น) — แต่ถ้ากันตาย (สกิลติดตัว 1) ทำงานแล้ว จะกลายเป็นถาวร ไม่ลดเทิร์นอีกต่อไป
-      if (k === "apprivoise" && p.characterId === "takuto" && p.beatSaved) continue;
       if (k === "emeraude" || k === "saphir") continue; // Star Sword (สึงาชิ ทาคุโตะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "doomCrucible") continue; // Crucible (ดูมกาย patch 2.2 new): คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง (ไม่ลดเทิร์น)
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
