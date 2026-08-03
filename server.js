@@ -97,7 +97,7 @@ const TEPEU_PONDER_SKILL_GAIN_LAST = 2;
 const TEPEU_DEATHLINE_CAP = 5;        // เส้นชีวิตที่เทเปาเกี่ยวข้อง สะสมได้สูงสุด 5 หน่วยต่อคน
 const TEPEU_LOSE_STREAK_DECAY = 3;    // แพ้ติดกันเกิน 3 เทิร์น -> เส้นชีวิตลด 1 (แพ้ชนะสลับกันไปมาจะไม่ลด)
 const TEPEU_KILL_CHANCE_PER_LINE = 0.10; // นายเป็นคนทำตัวเองนะ: เส้นชีวิต 1 หน่วย = โอกาสสังหาร 10%
-const TEPEU_EYE_TURNS = 3;            // นายเป็นคนทำตัวเองนะ: ฉากหลัง/เพลงจบ (แบบโทโนะ ชิกิ) คงอยู่กี่เทิร์นหลังใช้ท่า
+const TEPEU_EYE_TURNS = 1;            // นายเป็นคนทำตัวเองนะ: ฉากหลัง/เพลงจบ (แบบโทโนะ ชิกิ) คงอยู่ถึงจบเทิร์นที่ผลทำงานเท่านั้น
 // สุ่มอาวุธถัดไปแบบถ่วงน้ำหนัก (ไม่สุ่มซ้ำกระบอกเดิม)
 function rollDoomWeapon(excludeId) {
   const total = DOOM_WEAPON_IDS.reduce((n, id) => n + (id === excludeId ? 0 : DOOM_WEAPONS[id].weight), 0);
@@ -977,15 +977,14 @@ function shikiGiveLifeline(shiki, target, amount) {
 }
 // เทเปา: นายเป็นคนทำตัวเองนะ — คิดโอกาสสังหารจากเส้นชีวิตที่เป้าหมายมี (1 หน่วย = 10%)
 //  พลาด/ไม่มีเส้นชีวิต -> ล้างเส้นชีวิตของเป้าหมายทั้งหมด — สำเร็จ/พลาดก็ตาม เล่นวีดีโอ + ฉากหลัง/เพลงจบแบบเดียวกัน
+//  เรียกจาก afterResolve() (หลังเปิดไพ่ทุกคนแล้ว) — คัตซีนที่ queue ไว้จะเล่นตอน afterResolve() เรียก runCutsceneQueue(goSummary) เอง
 function tepeuResolveKill(p, t) {
   const lines = t.statuses.deathline || 0;
   const chance = lines * TEPEU_KILL_CHANCE_PER_LINE;
   p.transformAt = ++transformCounter; // เพลง/ฉากหลังใช้ลำดับล่าสุด (กรณีมีเทเปาหลายคน)
   p.tepeuEyeTurns = TEPEU_EYE_TURNS;
   triggerCutscene(p, "tepeuUlt");
-  let suffix;
   if (lines > 0 && Math.random() < chance) {
-    suffix = ` — สังหาร ${t.name} สำเร็จ!`;
     lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — สังหาร ${t.name} สำเร็จ! (เส้นชีวิต ${lines} หน่วย = โอกาส ${Math.round(chance * 100)}%)`);
     instantDeath(t);
     t.wasAttacked = true;
@@ -993,11 +992,8 @@ function tepeuResolveKill(p, t) {
   } else {
     delete t.statuses.deathline;
     if (t.statusAmt) delete t.statusAmt.deathline;
-    suffix = ` — พลาด! ล้างเส้นชีวิตของ ${t.name}`;
     lastLog.push(`💫 ${p.name} นายเป็นคนทำตัวเองนะ — พลาด! เส้นชีวิตของ ${t.name} ถูกล้างทั้งหมด (มีอยู่ ${lines} หน่วย = โอกาสแค่ ${Math.round(chance * 100)}%)`);
   }
-  if (cutsceneQueue.length) pausePlayingForCutscene();
-  return suffix;
 }
 
 // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
@@ -1231,8 +1227,9 @@ const TRANSFORMS = {
   banagherPassive2: { img: "/characters/banagher/banagher_update/unicorn_new_ndt.png", video: "/characters/banagher/banagher_update/unicorn_passvie2.mp4", title: "ฉันไม่อยากให้เราต้องมาสู้กัน", label: "สกิลติดตัวทำงาน", seconds: 15, music: null, afterReveal: false },
   // unibeam2: ท่าไม้ตาย 2 แสงที่ไม่อยู่เพียงลำพัง — เล่นก่อนสรุปผลตอนได้โจมตี วีดีโอ 5 วิ
   unibeam2: { img: "/characters/banagher/banagher_update/unicorn_skill3.2.jpg", video: "/characters/banagher/banagher_update/unicorn_and_banshee_beam.mp4", title: "แสงที่ไม่อยู่เพียงลำพัง", label: "ปล่อยท่าไม้ตาย", seconds: 6, music: null, afterReveal: false },
-  // tepeuUlt: นายเป็นคนทำตัวเองนะ (เทเปา ชิกิ) — เล่นก่อนสรุปผลสังหาร/พลาด วีดีโอ 13 วิ — จบแล้วเพลง tepeu + ฉากหลังซ้อนแบบโทโนะ ชิกิ (shiki_fill.png)
-  tepeuUlt: { img: "/characters/tepeu/skill3/tepeu_skill3.jpg", video: "/characters/tepeu/skill3/tepeu_skill3.mp4", title: "นายเป็นคนทำตัวเองนะ", label: "ปล่อยท่าไม้ตาย", seconds: 13, music: "tepeu", afterReveal: false },
+  // tepeuUlt: นายเป็นคนทำตัวเองนะ (เทเปา ชิกิ) — ผลสังหาร/พลาดคำนวณและเล่นวีดีโอนี้หลังทุกคนเปิดไพ่แล้ว (afterResolve) วีดีโอ 13 วิ
+  //  จบแล้วเพลง tepeu + ฉากหลังซ้อนแบบโทโนะ ชิกิ (shiki_fill.png) จนกว่าเทิร์นนั้นจะจบ — เรียก triggerCutscene เอง ไม่ผ่านลูป afterReveal อัตโนมัติ (afterReveal:true ไว้เพื่อบันทึกความหมายเท่านั้น)
+  tepeuUlt: { img: "/characters/tepeu/skill3/tepeu_skill3.jpg", video: "/characters/tepeu/skill3/tepeu_skill3.mp4", title: "นายเป็นคนทำตัวเองนะ", label: "ปล่อยท่าไม้ตาย", seconds: 13, music: "tepeu", afterReveal: true },
   // seconds ≈ ความยาววิดีโอ (วีดีโอจบ = ตัดกลับจอปกติทันที ไม่ค้างเฟรม)
   //  เสียงพากย์ + เอฟเฟกต์ระเบิด + แจ้งเปลี่ยนร่าง จะเล่นบนจอปกติหลังวีดีโอจบ (ฝั่ง client)
   //  rachan: วีดีโอ 11.62 | beat: วีดีโอ 4.70
@@ -2198,6 +2195,7 @@ function resetCombat(p) {
   p.tepeuPonderTurns = 0; // เป็นแบบนี้นี่เอง: นับถอยหลังครุ่นคิด (0 = ไม่ได้ครุ่นคิดอยู่ กดใช้ได้/จั่วไพ่ได้)
   p.tepeuEyeTurns = 0;    // นายเป็นคนทำตัวเองนะ: ฉากหลัง/เพลงจบ (แบบโทโนะ ชิกิ) คงอยู่กี่เทิร์น
   p.tepeuLoseStreak = 0;  // แพ้ติดกันกี่เทิร์นแล้ว (ครบเกิน 3 = เส้นชีวิตลด 1 — รีเซ็ตทุกครั้งที่ชนะ)
+  p.tepeuKillTargetId = null; // นายเป็นคนทำตัวเองนะ: เป้าหมายที่เล็งไว้ รอผลหลังเปิดไพ่ (afterResolve)
   // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
   p.miyakoComboHits = 0;          // เพลงหมัด อาริมะ: จำนวนครั้งที่ตีไปแล้วในคอมโบปัจจุบัน
   p.miyakoKillResist = 0;         // นั่นพี่จ๋าหรอ?: จำนวนชั้นที่สะสม (ลดโอกาสถูกสังหารทันที 40%/ชั้น)
@@ -4316,28 +4314,15 @@ function useSkill(id, tier, targets, item) {
     p.tepeuPonderTurns = TEPEU_PONDER_TURNS;
     lastLog.push(`🤔 ${p.name} เป็นแบบนี้นี่เอง — เริ่มครุ่นคิด ${TEPEU_PONDER_TURNS} เทิร์น (จั่วไพ่ไม่ได้ แต่ยังโจมตีได้ถ้าชนะ — จบเทิร์นได้แต้มสกิลเพิ่ม เทิร์นสุดท้ายได้ +${TEPEU_PONDER_SKILL_GAIN_LAST})`);
   }
-  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — เลือกเป้าหมาย 1 คน สังหารตามเส้นชีวิตที่เป้าหมายมี ----------
-  //  (พลาด = ล้างเส้นชีวิตของเป้าหมายทั้งหมด) — จบแล้วเล่นเพลง tepeu_theme + ฉากหลังซ้อนแบบโทโนะ ชิกิ (shiki_fill.png)
-  //  หลบหลีกของ Apple guy (ระหว่างชิวๆครับน้องๆ) รอดพ้นความสามารถสังหารทันทีนี้ได้เหมือนกัน
+  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — เลือกเป้าหมาย 1 คน (ผลสังหาร/พลาดทำงานหลังเปิดไพ่ทุกคน — ดูใน afterResolve) ----------
   if (isTepeuKill && tepeuKillTarget) {
     const t = tepeuKillTarget;
     if (satoruOnTargeted(t, p, `สกิล ${skill.name} `).negated) {
       flashSuffix = " — ถูกลบล้าง";
-    } else if (t.characterId === "appleguy" && !passiveSealed(t) && (t.statuses.chill || 0) > 0) {
-      const dodgeRate = Math.max(CHILL_DODGE_MIN, Math.min(100, t.chillDodge != null ? t.chillDodge : 100));
-      if (Math.random() * 100 < dodgeRate) {
-        const firstDodge = dodgeRate === 100;
-        t.chillDodge = dodgeRate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
-        healHp(t, 1);
-        t.appleGiveUses = (t.appleGiveUses || 0) + 1;
-        flashSuffix = ` — ${t.name} หลบพ้น!`;
-        lastLog.push(`🏖️ ${t.name} ชิวๆครับน้องๆ — หลบนายเป็นคนทำตัวเองนะของ ${p.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${t.chillDodge}%)`);
-        if (firstDodge && !t.cutsceneShown.appleguyDodge) { t.cutsceneShown.appleguyDodge = true; queueCutscene(t, "appleguyDodge"); }
-      } else {
-        flashSuffix = tepeuResolveKill(p, t);
-      }
     } else {
-      flashSuffix = tepeuResolveKill(p, t);
+      p.tepeuKillTargetId = t.id;
+      flashSuffix = ` — เลือกเป้าหมาย ${t.name} (ผลจะทราบหลังเปิดไพ่)`;
+      lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — เล็งเป้าหมาย ${t.name} ไว้ (ผลจะทำงานหลังทุกคนเปิดไพ่)`);
     }
   }
   // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
@@ -5646,6 +5631,31 @@ function afterResolve() {
     maybeWakeKotone(t);
     t.wasAttacked = true;
     lastLog.push(`🌘 ฝันร้ายยามค่ำคืน! ${p.name} เล่นงาน ${t.name} -${dmg}${sleeping ? " (เป้าหมายหลับไหล +2)" : ""}`);
+  }
+  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — ผลสังหาร/พลาดทำงานหลังเปิดไพ่ทุกคน (ไพ่แตก = สกิลไม่ทำงาน) ----------
+  //  หลบหลีกของ Apple guy (ระหว่างชิวๆครับน้องๆ) รอดพ้นความสามารถสังหารทันทีนี้ได้เหมือนกัน
+  for (const p of alivePlayers()) {
+    if (!p.tepeuKillTargetId) continue;
+    const t = players[p.tepeuKillTargetId];
+    p.tepeuKillTargetId = null;
+    if (bustedOf(p)) {
+      lastLog.push(`💥 ${p.name} ไพ่แตก! นายเป็นคนทำตัวเองนะใช้งานไม่ได้ — แต้มสกิลเสียฟรี`);
+      continue;
+    }
+    if (!t || !t.alive) continue;
+    if (t.characterId === "appleguy" && !passiveSealed(t) && (t.statuses.chill || 0) > 0) {
+      const dodgeRate = Math.max(CHILL_DODGE_MIN, Math.min(100, t.chillDodge != null ? t.chillDodge : 100));
+      if (Math.random() * 100 < dodgeRate) {
+        const firstDodge = dodgeRate === 100;
+        t.chillDodge = dodgeRate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
+        healHp(t, 1);
+        t.appleGiveUses = (t.appleGiveUses || 0) + 1;
+        lastLog.push(`🏖️ ${t.name} ชิวๆครับน้องๆ — หลบนายเป็นคนทำตัวเองนะของ ${p.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${t.chillDodge}%)`);
+        if (firstDodge && !t.cutsceneShown.appleguyDodge) { t.cutsceneShown.appleguyDodge = true; queueCutscene(t, "appleguyDodge"); }
+        continue;
+      }
+    }
+    tepeuResolveKill(p, t);
   }
   // ---------- Ashen Trail: Cinderella Gray (โอกูริ patch 2.0.8.1): หลังเปิดไพ่ — โจมตีทุกคนที่ไพ่แตก ----------
   //  (โอกูริไพ่แตกเอง = ไม่มีการโจมตีซ้ำ — การบังคับจั่ว/ห้ามใช้สกิลเกิดไปแล้วตอนกด)
@@ -7536,7 +7546,7 @@ io.on("connection", (socket) => {
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
       sunriseDrop: 0, sleepFresh: false,
       appleItem: "drink", appleAtkBuffs: [], chillDodge: 100, appleGiveUses: APPLE_GIVE_USES,
-      tepeuCookTurns: 0, tepeuPonderTurns: 0, tepeuEyeTurns: 0, tepeuLoseStreak: 0,
+      tepeuCookTurns: 0, tepeuPonderTurns: 0, tepeuEyeTurns: 0, tepeuLoseStreak: 0, tepeuKillTargetId: null,
       coins: 0, nightWork: 0, overworkNext: false, senaNext: false,
       contractPartner: null, contractWith: null, contractOffer: null,
       contractTurns: 0, renewPending: false, skillDrain: 0, skillDrainPending: 0,
