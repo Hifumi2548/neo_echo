@@ -80,14 +80,16 @@ const DOOM_CHARGE_CHANCE = 0.35; // patch 2.2 new: 10% -> 25% -> 35%
 const DOOM_TIE_ATTACK_CHANCE = 0.60; // patch 2.2 new: 50% -> 60% (ชนะมากขึ้น)
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
 // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-const TAKUTO_HEAL_BASIC = 2;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +2
+const TAKUTO_HEAL_BASIC = 1;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +1 (patch 2.2.4 — เดิม 2)
 const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> ฉันคว้ามันได้แล้ว (Apprivoise!) ทันที
 const TAKUTO_APPRIVOISE_TURNS = 10;   // ฉันคว้ามันได้แล้ว: คงอยู่ 10 เทิร์น หมดแล้วกลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวใหม่ (patch 2.2.3 — เดิมถาวร)
-const TAKUTO_ATK_BONUS = 1;           // สกิลติดตัว 1 / ฉันคว้ามันได้แล้ว ให้พลังโจมตีถาวร +1 หน่วยต่อครั้ง (รวมสูงสุด +2)
-const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: กันตายทำงานเมื่อไหร่ มอบโชคลาภ 2 หน่วยให้ตัวเองตอนนั้นเลย (ไม่ใช่ตั้งแต่เริ่มเกม)
-const TAKUTO_MISSILE_DMG = 4;         // Tau Missile: ดาเมจตรงหลังลบเกราะเป้าหมาย (ไม่สนเกราะ)
-const TAKUTO_MISSILE_NORECOVER_TURNS = 3;
-const TAKUTO_MISSILE_CARD_SCORE = 19; // Tau Missile: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
+const TAKUTO_ATK_BONUS = 1;           // ฉันคว้ามันได้แล้ว: พลังโจมตีถาวร +1 หน่วย (patch 2.2.4: สกิลติดตัว 1 ไม่ให้โบนัสนี้แล้ว)
+const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: กันตายทำงานเมื่อไหร่ มอบโชคลาภ 2 หน่วยให้ตัวเองตอนนั้นเลย
+const TAKUTO_BEATSAVE_HEAL = 2;       // สกิลติดตัว 1 (patch 2.2.4): กันตายทำงาน -> ฟื้นพลังชีวิต +2 เพิ่มเติม
+const TAKUTO_BEATSAVE_ARMOR = 2;      // สกิลติดตัว 1 (patch 2.2.4): กันตายทำงาน -> ฟื้นเกราะ +2 เพิ่มเติม
+const TAKUTO_LASTSTAND_DMG = 4;       // สกิลติดตัว 3 (patch 2.2.4) ฉันยังคง..มองเห็นมันอยู่: ตายขณะไม่มี Apprivoise! -> โจมตีหลังตาย 4 หน่วย (นับเกราะ)
+const TAKUTO_ULT_CARD_SCORE = 19;     // ท่าไม้ตายใหม่: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
+const TAKUTO_THIRD_ATK_CHANCE = 0.5;  // ท่าไม้ตายใหม่: หลังคอมโบ Saphir+Emeraude มีโอกาส 50% ได้โจมตีต่อครั้งที่ 3
 // ---------- เทเปา (ชิกิ) (patch 2.2 new) ----------
 const TEPEU_COOK_TURNS = 2;           // วันนี้อากาศดีจัง: ทำอาหารครบ 2 เทิร์น -> ได้ "มื้อที่สุข" เข้าคลัง
 const TEPEU_MEAL_HEAL = 3;            // มื้อที่สุข: ฟื้นพลังชีวิต +3 เมื่อใช้จากคลัง
@@ -1245,13 +1247,17 @@ const TRANSFORMS = {
   // fourth: ท่าไม้ตายเอวา 13 (หลังเปิดไพ่) — วีดีโอ 10 วิ + เพลงค้างระหว่างมีผล
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: false }, // patch 2.2 new: ทำงานทันทีก่อนเปิดไพ่
-  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-  // patch 2.2.3: seconds ปรับให้ตรงความยาวจริง (วัดจาก mvhd atom) — takuto_passive 24.96 / takuto_skill2 6.13 / takuto_skill3 24.12 วิ
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new / 2.2.3 / 2.2.4) ----------
+  // seconds ปรับให้ตรงความยาวจริง (วัดจาก mvhd atom): takuto_passive 24.96 / takuto_2sword 5.20 / takuto_passive2 14.65 / takuto_passive3 26.03 / takuto_skill3_new 17.32 วิ
   apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "ฉันคว้ามันได้แล้ว", label: "สกิลติดตัวทำงาน", seconds: 25, music: "takuto", afterReveal: false }, // แปลงร่างเป็นทาวเบิร์นทันทีที่ดวงดาวครบ 5 — คงอยู่ 10 เทิร์น
-  takutoEmeraude: { img: "/characters/takuto/skill1/takuto_skill1.2.webp", video: "/characters/takuto/skill1/takuto_skill1.2.mp4", title: "Star Sword Emeraude", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
-  takutoSaphir: { img: "/characters/takuto/skill2/takuto_skill2.webp", video: "/characters/takuto/skill2/takuto_skill2.mp4", title: "Star Sword Saphir", label: "ใช้สกิล", seconds: 7, music: null, afterReveal: false },
+  // patch 2.2.4: ตัดวีดีโอเดี่ยวของ Emeraude/Saphir ออก — เหลือแค่วีดีโอตอนดาบทั้ง 2 อันพร้อมกัน (takutoBothSwords)
   takutoBothSwords: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/takuto_2sword.mp4", title: "ถ้าพร้อมแล้วก็เข้ามาเลย", label: "เอฟเฟกต์พิเศษ", seconds: 6, music: null, afterReveal: false },
-  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 25, music: null, afterReveal: false },
+  // patch 2.2.4: สกิลติดตัว 1 กันตายทำงาน — เปลี่ยนภาพเป็น tauburn_un.jpg + เพลง takuto2 ถาวร
+  takutoAwaken: { img: "/characters/takuto/upadate/tauburn_un.jpg", video: "/characters/takuto/upadate/takuto_passive2.mp4", title: "ฉันยัง...มองเห็นอยู่!!!", label: "สกิลติดตัวทำงาน", seconds: 15, music: "takuto2", afterReveal: false },
+  // patch 2.2.4: สกิลติดตัว 3 ใหม่ — ตายขณะไม่มี Apprivoise! เลือกเป้าหมายโจมตีหลังตาย 1 คน
+  takutoLastStand: { img: "/characters/takuto/takuto.jpg", video: "/characters/takuto/upadate/takuto_passive3.mp4", title: "ฉันยังคง..มองเห็นมันอยู่", label: "สกิลติดตัวทำงาน", seconds: 27, music: null, afterReveal: false },
+  // patch 2.2.4: ท่าไม้ตายใหม่ "อย่างนายน่ะ จะไปเข้าใจอะไร" — แทน Tau Missile เดิม
+  takutoUlt2: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/upadate/takuto_skill3_new.mp4", title: "อย่างนายน่ะ จะไปเข้าใจอะไร", label: "ปล่อยท่าไม้ตาย", seconds: 18, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -1539,12 +1545,17 @@ function maybeBeatSave(p) {
     return true;
   }
   if (p.characterId === "takuto") {
+    // patch 2.2.4: ทำงานเฉพาะตอนฉันคว้ามันได้แล้ว (Apprivoise!) กำลังทำงานอยู่เท่านั้น — ไม่ใช่ร่างปกติจะไม่กันตาย (ดูสกิลติดตัว 3 แทน)
+    if (!((p.statuses.apprivoise || 0) > 0)) return false;
     p.hp = 1;
     p.beatSaved = true;
-    // ฉันยัง...มองเห็นอยู่!!!: กันตายทำงาน -> พลังโจมตีถาวร +1 (ดูสูตรใน doAttack) และได้รับโชคลาภ 2 หน่วยตอนนี้เลย (ไม่ใช่ตั้งแต่เริ่มเกม)
+    p.takutoAwakenAt = ++transformCounter; // เพลง/ภาพซ้อนทับใช้ลำดับล่าสุด (กรณีมีทาคุโตะหลายคน)
+    triggerCutscene(p, "takutoAwaken"); // takuto_passive2.mp4 -> เปลี่ยนภาพเป็น tauburn_un.jpg + เพลง takuto2 ถาวร
+    const healedHp = healHp(p, TAKUTO_BEATSAVE_HEAL);
+    const healedArmor = healArmor(p, TAKUTO_BEATSAVE_ARMOR);
     p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + TAKUTO_FORTUNE_GRANT);
     p.fortuneIdle = 0;
-    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) พลังโจมตีถาวร +1 และได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT}`);
+    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} และได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT}`);
     return true;
   }
   return false;
@@ -1590,6 +1601,24 @@ function phenexReleasePain(p) {
   if (pool.length === 1) { resolvePhenexRelease(p, pool[0], pain); return; }
   p.phenexReleaseAsk = { pain, options: pool.map((o) => o.id) };
 }
+// สึงาชิ ทาคุโตะ สกิลติดตัว 3 (patch 2.2.4) ฉันยังคง..มองเห็นมันอยู่: ตายขณะไม่มี Apprivoise! -> เลือกเป้าหมายโจมตีหลังตาย 1 คน
+//  แบบเดียวกับริต้า — มีเป้าหมายให้เลือกมากกว่า 1 คน = รอผู้เล่นเลือกเอง (takutoLastStandAsk) มีตัวเลือกเดียวยิงทันที
+function resolveTakutoLastStand(p, target) {
+  if (!target || !target.alive) return;
+  triggerCutscene(p, "takutoLastStand"); // takuto_passive3.mp4 -> ค่อยเกิดความเสียหาย
+  dealMixed(target, TAKUTO_LASTSTAND_DMG); // นับเกราะก่อนตามปกติ
+  lastLog.push(`👁️💥 ${p.name} ฉันยังคง..มองเห็นมันอยู่ — โจมตีหลังตายใส่ ${target.name} -${TAKUTO_LASTSTAND_DMG}!`);
+  if (target.alive && target.hp <= 0) {
+    instantDeath(target);
+    if (!target.alive) lastLog.push(`💀 ${target.name} เลือดจริงหมด ตกรอบ!`);
+  }
+}
+function takutoLastStandSetup(p) {
+  const pool = Object.values(players).filter((o) => o.alive && o.id !== p.id);
+  if (!pool.length) return;
+  if (pool.length === 1) { resolveTakutoLastStand(p, pool[0]); return; }
+  p.takutoLastStandAsk = { options: pool.map((o) => o.id) };
+}
 // ตายกลางเทิร์น (เลือดหมดจากสกิล/ผลสถานะ): ตกรอบทันที — อควาเรียนที่ตายขณะไปยังพฤกษาแห่งชีวิต
 //  จะติดธงรอฟื้นคืนชีพ (ตั้งเวลา 12 เทิร์นตอนจบเทิร์น ถ้าเกมยังไม่จบ)
 function instantDeath(p) {
@@ -1599,6 +1628,8 @@ function instantDeath(p) {
     phenexRebirth(p);
     return;
   }
+  // สึงาชิ ทาคุโตะ (สกิลติดตัว 3 patch 2.2.4): ตายขณะไม่มี Apprivoise! ทำงานอยู่ -> เลือกเป้าหมายโจมตีหลังตาย 1 คน
+  if (p.characterId === "takuto" && !((p.statuses.apprivoise || 0) > 0) && !passiveSealed(p)) takutoLastStandSetup(p);
   // ริต้า เบอร์นัล (สกิลติดตัว 2 patch 2.1.7): ตกรอบจริงขณะท่าไม้ตาย 2 (ไม่อยากให้ใครต้องเจ็บปวด) ยังทำงานอยู่เท่านั้น
   //  -> ปลดปล่อยความเจ็บปวดที่สะสมทั้งหมดก่อนตาย — ตายนอกช่วงท่าไม้ตาย 2 จะไม่ปลดปล่อย (ความเจ็บปวดที่มียังคงค้างอยู่)
   //  phenexTauntGrace: หมดเวลาพอดีเทิร์นที่ตาย (เช่น เทิร์นที่ 3) ก็ยังนับว่าตายขณะท่าไม้ตายทำงาน
@@ -1717,6 +1748,8 @@ function displayImg(p) {
     return leader.profileImg;
   }
   if (p.seen && p.seen.beat) return OHGER_FORM;
+  // สึงาชิ ทาคุโตะ (patch 2.2.4): สกิลติดตัว 1 กันตายทำงานแล้ว — ภาพเปลี่ยนเป็น tauburn_un.jpg ถาวร (เหนือกว่าภาพฉันคว้ามันได้แล้วปกติ)
+  if (p.characterId === "takuto" && p.beatSaved) return TRANSFORMS.takutoAwaken.img;
   if (p.humanityActivated) return FUJIMARU_FINAL_IMG; // Everything For Humanity: คงร่างจนตาย
   // เอวา 13: Fourth Impact (ท่าไม้ตาย) > สกิลติดตัว 3 (เลือด <= 3)
   if (p.seen && p.seen.fourth && (p.statuses.fourth || 0) > 0) return TRANSFORMS.fourth.img;
@@ -1748,6 +1781,14 @@ function activeSkillMusic() {
     }
   }
   if (bestBeat) return bestBeat;
+  // สึงาชิ ทาคุโตะ (patch 2.2.4): สกิลติดตัว 1 กันตายทำงานแล้ว — เพลง takuto2 เล่นค้างถาวร (รองจาก Beat Mode)
+  let bestTakutoAwaken = null;
+  for (const p of alivePlayers()) {
+    if (p.characterId === "takuto" && p.beatSaved) {
+      if (!bestTakutoAwaken || (p.takutoAwakenAt || 0) > bestTakutoAwaken.at) bestTakutoAwaken = { music: "takuto2", at: p.takutoAwakenAt || 0 };
+    }
+  }
+  if (bestTakutoAwaken) return bestTakutoAwaken;
   // แด่เพื่อนรักของฉัน (ชเรด เอลัน): เพลง shrade_theme เล่นค้างตลอดช่วงชาร์จ (รองจาก Beat Mode)
   let bestShrade = null;
   for (const p of alivePlayers()) {
@@ -2088,6 +2129,9 @@ function resetCombat(p) {
   p.doomCharge = 0;            // ชาร์จสำหรับปลดล็อก Crucible (ครบ 5)
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
   p.takutoComboReady = false; // Saphir+Emeraude ร่วมกัน: รอ postAttackFollowup อ่านเพื่อโจมตีเพิ่มอีกครั้ง (patch 2.2.3 — เดิมเก็บเป็นโอกาส 50/50)
+  p.takutoThirdAtkReady = false; // อย่างนายน่ะ จะไปเข้าใจอะไร (patch 2.2.4): รอ postAttackFollowup อ่านเพื่อลุ้นโจมตีครั้งที่ 3 (50%)
+  p.takutoLastStandAsk = null;   // ฉันยังคง..มองเห็นมันอยู่: รอเลือกเป้าหมายโจมตีหลังตาย { options: [id] }
+  p.takutoAwakenAt = 0;          // สกิลติดตัว 1 กันตายทำงานแล้ว: ลำดับสำหรับเพลง/ภาพซ้อนทับ (ถ้ามีทาคุโตะหลายคน)
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
   p.noDrawNext = 0;       // จำนวนเทิร์นที่จั่วเพิ่มไม่ได้ เริ่มเทิร์นถัดไป (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -2288,6 +2332,15 @@ function buildStateFor(viewerId) {
       .map((o) => ({ id: o.id, name: o.name, color: POSITION_COLORS[o.position] || "#9B4F96", img: displayImg(o) }));
     if (options.length) phenexReleaseAsk = { pain: viewer.phenexReleaseAsk.pain, options };
   }
+  // สึงาชิ ทาคุโตะ: ฉันยังคง..มองเห็นมันอยู่ — เลือกเป้าหมายโจมตีหลังตาย (ใช้ได้แม้ตกรอบไปแล้ว/ทุกเฟส)
+  let takutoLastStandAsk = null;
+  if (viewer && viewer.takutoLastStandAsk) {
+    const options = viewer.takutoLastStandAsk.options
+      .map((id) => players[id])
+      .filter((o) => o && o.alive)
+      .map((o) => ({ id: o.id, name: o.name, color: POSITION_COLORS[o.position] || "#9B4F96", img: displayImg(o) }));
+    if (options.length) takutoLastStandAsk = { options };
+  }
   // ---------- ริดดี้ มาร์เซนาส (patch 2.0.9): popup ระบบพันธมิตร ----------
   let allyChoices = null;   // ริดดี้: เลือกบานาจที่จะยื่นข้อเสนอ (Event เริ่มเกม)
   let allyOfferAsk = null;  // บานาจ: ข้อเสนอพันธมิตรที่รอเราตอบ
@@ -2327,6 +2380,7 @@ function buildStateFor(viewerId) {
     renewAsk,      // คำถามต่อสัญญาที่รอเราตอบ (ชำระค่าบริการ)
     locaOffer,     // ข้อเสนอผลโลกากากาที่รอเราตอบ (ซาโตรุ)
     phenexReleaseAsk, // ริต้า เบอร์นัล: เลือกเป้าหมายปลดปล่อยความเจ็บปวด (ขอแค่ได้พบกันอีก)
+    takutoLastStandAsk, // สึงาชิ ทาคุโตะ: เลือกเป้าหมายโจมตีหลังตาย (ฉันยังคง..มองเห็นมันอยู่)
     // นานายะ ชิกิ (patch 2.1.9): หัวใจฆาตกร — กำลังรอเลือกโจมตีซ้ำ/ยกเลิกอยู่ (เฉพาะผู้เล่นที่เป็นเจ้าของสิทธิ์นี้)
     nanayaReattack: !!(viewer && viewer.nanayaReattackReady && gameState === "ATTACK" && attackerId === viewer.id),
     gameState,
@@ -2494,6 +2548,7 @@ function buildStateFor(viewerId) {
         appleGiveUses: p.appleGiveUses != null ? p.appleGiveUses : APPLE_GIVE_USES, // Apple guy: จำนวนใช้ เอาไปสิ คงเหลือ
         tepeuCookTurns: p.tepeuCookTurns || 0,     // เทเปา: วันนี้อากาศดีจัง — เทิร์นที่เหลือก่อนได้ "มื้อที่สุข" (0 = กดใช้ได้)
         tepeuPonderTurns: p.tepeuPonderTurns || 0, // เทเปา: เป็นแบบนี้นี่เอง — ครุ่นคิดเหลือกี่เทิร์น (0 = กดใช้ได้/จั่วไพ่ได้)
+        takutoThirdAtkReady: !!p.takutoThirdAtkReady, // สึงาชิ ทาคุโตะ: มีโอกาสโจมตีครั้งที่ 3 ค้างอยู่ไหม (กดท่าไม้ตายซ้ำไม่ได้ระหว่างนี้)
         coins: p.coins || 0,               // โคโตเนะ: coin ในกระปุกออมสิน (สูงสุด 6)
         // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
         lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
@@ -3834,8 +3889,10 @@ function useSkill(id, tier, targets, item) {
   const isTakutoSaphir = p.characterId === "takuto" && tier === "secondary";
   if (isTakutoSaphir && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น
   if (isTakutoSaphir && (p.statuses.saphir || 0) > 0) return; // ยังไม่ถูกใช้ กดซ้ำไม่ได้
-  const isTakutoMissile = p.characterId === "takuto" && tier === "ultimate";
-  if (isTakutoMissile && !takutoApprivoiseOn) return; // ต้องอยู่ในสถานะ Apprivoise! ก่อนเท่านั้น — ไม่ต้องเลือกเป้าหมายตอนกด (ชนะรอบแล้วได้โจมตีจริงคือการเลือกเป้าหมาย)
+  // patch 2.2.4: ท่าไม้ตายใหม่ "อย่างนายน่ะ จะไปเข้าใจอะไร" — ต้องมีดาบทั้ง 2 อัน (Emeraude+Saphir) พร้อมกันเท่านั้นถึงจะใช้ได้
+  const isTakutoUlt2 = p.characterId === "takuto" && tier === "ultimate";
+  if (isTakutoUlt2 && !((p.statuses.emeraude || 0) > 0 && (p.statuses.saphir || 0) > 0)) return;
+  if (isTakutoUlt2 && p.takutoThirdAtkReady) return; // มีโอกาสค้างอยู่แล้ว กดซ้ำไม่ได้จนกว่าจะได้ใช้ผล
   // ---------- เจ้าแห่งเน็ตบ้าน (patch 1.9) ----------
   const isTiger = p.characterId === "broadband_man" && tier === "basic";     // เสือนอนกิน
   const isLan = p.characterId === "broadband_man" && tier === "secondary";   // กระชากสายแลน
@@ -4670,9 +4727,8 @@ function useSkill(id, tier, targets, item) {
   }
   if (isTakutoEmeraude) {
     p.statuses.emeraude = 1;
-    triggerCutscene(p, "takutoEmeraude");
     lastLog.push(`💚 ${p.name} Star Sword Emeraude — การโจมตีปกติครั้งถัดไปจะฟื้นพลังชีวิตตามความเสียหายที่ทำได้`);
-    // มี Saphir อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษเลย ไม่ต้องรอถึงตอนโจมตี
+    // มี Saphir อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษ (วีดีโอเดี่ยวของแต่ละดาบถูกตัดออกแล้ว patch 2.2.4)
     if ((p.statuses.saphir || 0) > 0) {
       triggerCutscene(p, "takutoBothSwords");
       lastLog.push(`⚔️ ${p.name} มี Star Sword Emeraude และ Saphir พร้อมกัน — ถ้าพร้อมแล้วก็เข้ามาเลย!`);
@@ -4680,25 +4736,25 @@ function useSkill(id, tier, targets, item) {
   }
   if (isTakutoSaphir) {
     p.statuses.saphir = 1;
-    triggerCutscene(p, "takutoSaphir");
-    lastLog.push(`💙 ${p.name} Star Sword Saphir — การโจมตีปกติครั้งถัดไปมีโอกาสโจมตีเพิ่มอีกครั้ง`);
-    // มี Emeraude อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษเลย ไม่ต้องรอถึงตอนโจมตี
+    lastLog.push(`💙 ${p.name} Star Sword Saphir — ลำพังยังไม่มีผลอะไรเพิ่มเติม ต้องมี Emeraude ร่วมด้วยการโจมตีปกติครั้งถัดไปถึงจะได้โจมตีเพิ่มอีกครั้ง`);
+    // มี Emeraude อยู่แล้วด้วย -> ครบทั้งคู่ทันที เล่นวีดีโอพิเศษ (วีดีโอเดี่ยวของแต่ละดาบถูกตัดออกแล้ว patch 2.2.4)
     if ((p.statuses.emeraude || 0) > 0) {
       triggerCutscene(p, "takutoBothSwords");
       lastLog.push(`⚔️ ${p.name} มี Star Sword Emeraude และ Saphir พร้อมกัน — ถ้าพร้อมแล้วก็เข้ามาเลย!`);
     }
   }
-  if (isTakutoMissile) {
-    // ไม่ต้องเลือกเป้าหมายตอนกด — ชนะรอบนี้แล้วได้โจมตีจริงคือการเลือกเป้าหมาย (ดูผลจริงใน doAttack)
-    // ถ้าแพ้รอบนี้ สถานะจะหมดอายุไปเอง (turns:1) เสียแต้มสกิลฟรี
-    p.statuses.tauMissile = 1;
+  // ---------- สึงาชิ ทาคุโตะ ท่าไม้ตายใหม่ (patch 2.2.4): อย่างนายน่ะ จะไปเข้าใจอะไร — แทน Tau Missile เดิม ----------
+  //  เงื่อนไข: ต้องมีดาบทั้ง 2 อัน (Emeraude+Saphir) พร้อมกันเท่านั้นถึงจะใช้ได้ (เช็คที่ gate ด้านบนแล้ว)
+  if (isTakutoUlt2) {
+    p.takutoThirdAtkReady = true; // หลังคอมโบ Saphir+Emeraude โอกาส 50% ได้โจมตีต่อครั้งที่ 3 (ดูใน postAttackFollowup)
+    triggerCutscene(p, "takutoUlt2");
     if (scoreOf(p) !== 21) {
-      p.cardBonus = TAKUTO_MISSILE_CARD_SCORE - calculateScore(p.cards);
+      p.cardBonus = TAKUTO_ULT_CARD_SCORE - calculateScore(p.cards);
       p.busted = bustedOf(p);
       p.hakunoLowDraw = true; // จั่วเพิ่มได้อีก แต่ได้แค่แต้ม 2 หรือ 3 เท่านั้น (50/50)
-      lastLog.push(`🚀 ${p.name} เตรียม Tau Missile ไว้ — แต้มการ์ดของตัวเองพุ่งเป็น ${TAKUTO_MISSILE_CARD_SCORE} แต้มทันที (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
+      lastLog.push(`👁️ ${p.name} อย่างนายน่ะ จะไปเข้าใจอะไร — แต้มการ์ดของตัวเองพุ่งเป็น ${TAKUTO_ULT_CARD_SCORE} แต้มทันที และการโจมตีคอมโบครั้งนี้มีโอกาสได้โจมตีเพิ่มเป็นครั้งที่ 3 (${Math.round(TAKUTO_THIRD_ATK_CHANCE * 100)}%)`);
     } else {
-      lastLog.push(`🚀 ${p.name} เตรียม Tau Missile ไว้ — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว (ต้องชนะรอบนี้แล้วได้โจมตีก่อนถึงจะยิงจริง ไม่งั้นเสียแต้มสกิลฟรี)`);
+      lastLog.push(`👁️ ${p.name} อย่างนายน่ะ จะไปเข้าใจอะไร — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว แต่การโจมตีคอมโบครั้งนี้มีโอกาสได้โจมตีเพิ่มเป็นครั้งที่ 3 (${Math.round(TAKUTO_THIRD_ATK_CHANCE * 100)}%)`);
     }
   }
   // Full Assault: ตีหมู่ทุกคนทันที 1 หน่วย (เทิร์นถัดไปอีก 2 ครั้งผ่าน dealRound) แล้วเล่นวีดีโอ
@@ -5359,6 +5415,14 @@ function resolveRound() {
       const target = options.length ? options[Math.floor(Math.random() * options.length)] : null;
       resolvePhenexRelease(p, target, ask.pain);
     }
+    // สึงาชิ ทาคุโตะ: ฉันยังคง..มองเห็นมันอยู่ — ยังไม่เลือกเป้าหมายก่อนเปิดไพ่รอบถัดไป = สุ่มให้
+    if (p.takutoLastStandAsk) {
+      const ask = p.takutoLastStandAsk;
+      p.takutoLastStandAsk = null;
+      const options = ask.options.map((id) => players[id]).filter((o) => o && o.alive);
+      const target = options.length ? options[Math.floor(Math.random() * options.length)] : null;
+      resolveTakutoLastStand(p, target);
+    }
     // ---------- ริดดี้ มาร์เซนาส (patch 2.0.9): คำถามพันธมิตรที่ยังไม่ตอบเมื่อถึงเวลาเปิดไพ่ ----------
     if (p.allyPrompt) {
       p.allyPrompt = false;
@@ -5920,6 +5984,28 @@ function postAttackFollowup(attacker) {
       return;
     }
   }
+  // สึงาชิ ทาคุโตะ (patch 2.2.4): อย่างนายน่ะ จะไปเข้าใจอะไร — หลังคอมโบ Saphir+Emeraude โอกาส 50% ได้โจมตีต่อเป็นครั้งที่ 3
+  //  พลาด = เสียโอกาสไปเลย ต้องกดท่าไม้ตายใหม่อีกครั้งถึงจะได้ลุ้นอีกครั้ง
+  if (attacker && attacker.alive && attacker.characterId === "takuto" && attacker.takutoThirdAtkReady) {
+    attacker.takutoThirdAtkReady = false;
+    if (Math.random() < TAKUTO_THIRD_ATK_CHANCE) {
+      const targets = attackableTargets(attacker.id);
+      if (targets.length > 0) {
+        lastLog.push(`⚔️ ${attacker.name} อย่างนายน่ะ จะไปเข้าใจอะไร — โจมตีต่อเป็นครั้งที่ 3 สำเร็จ!`);
+        attackerId = attacker.id;
+        gameState = "ATTACK";
+        startPhaseTimer(ATTACK_TIME, () => {
+          const t = attackableTargets(attackerId);
+          if (t.length) doAttack(attackerId, t[Math.floor(Math.random() * t.length)].id);
+          else endTurn();
+        });
+        broadcastState();
+        return;
+      }
+    } else {
+      lastLog.push(`⚔️ ${attacker.name} อย่างนายน่ะ จะไปเข้าใจอะไร — โอกาสโจมตีครั้งที่ 3 ไม่สำเร็จ (${Math.round(TAKUTO_THIRD_ATK_CHANCE * 100)}%)`);
+    }
+  }
   if (attacker) { delete attacker.statuses.miyakoHeal; delete attacker.statuses.yaak; }
   endTurn();
 }
@@ -6363,11 +6449,8 @@ function doAttack(byId, targetId) {
   // หอกลองกินัส (เอวา 13) ล็อคเป้า (DoomGuy Heavy Cannon): ดาเมจแรงขึ้น +1 ครั้งเดียวเมื่อโจมตีเป้าหมายที่ติดล็อคเป้า
   const doomLockonAtk = (attacker.characterId === "doomguy" && (target.statuses.doomLockon || 0) > 0) ? DOOM_LOCKON_BONUS : 0;
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
-  const takutoAtk = attacker.characterId === "takuto"
-    ? (attacker.beatSaved ? TAKUTO_ATK_BONUS : 0) + ((attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0)
-    : 0;
-  // Tau Missile: เก็บไว้ก่อนล่างจะลบสถานะทิ้งหลังใช้ผล — ต้องเล่นวีดีโอก่อนขึ้นเลขความเสียหาย (เหมือน Beam Magnum/ย๊ากก! ฯลฯ)
-  const takutoMissileAtk = attacker.characterId === "takuto" && (attacker.statuses.tauMissile || 0) > 0;
+  // patch 2.2.4: เอาโบนัสจากกันตาย (สกิลติดตัว 1) ออก — เหลือเฉพาะช่วงฉันคว้ามันได้แล้ว (Apprivoise!) ทำงานอยู่
+  const takutoAtk = attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0;
   let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
@@ -6789,20 +6872,6 @@ function doAttack(byId, targetId) {
       if (emeraudeOn) attacker.takutoComboReady = true;
       else lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — ไม่มี Emeraude ร่วมด้วย จึงไม่ได้โจมตีเพิ่ม`);
     }
-    // Tau Missile: ชนะรอบแล้วได้โจมตีจริงถึงจะยิง — ลบเกราะเป้าหมายก่อนยิงตรงเพิ่มเติม แล้วฟื้นเกราะคืนหลังจบ
-    if ((attacker.statuses.tauMissile || 0) > 0) {
-      delete attacker.statuses.tauMissile;
-      triggerCutscene(attacker, "takutoMissile");
-      const savedArmor = target.armor;
-      target.armor = 0;
-      dealDirect(target, TAKUTO_MISSILE_DMG, true);
-      maybeBeatSave(target); maybeBeatMode(target); maybeEva3(target); maybeWakeKotone(target);
-      target.wasAttacked = true;
-      if (target.alive) target.armor = Math.min(maxArmorOf(target), savedArmor); // ฟื้นเกราะกลับคืนหลังจบการโจมตี (ลบแค่ชั่วคราว)
-      target.statuses.norecover = Math.max(target.statuses.norecover || 0, TAKUTO_MISSILE_NORECOVER_TURNS);
-      lastLog.push(`🚀 ${attacker.name} Tau Missile — ลบเกราะ ${target.name} ก่อนยิงตรงเพิ่มเติม -${TAKUTO_MISSILE_DMG} (เกราะฟื้นคืนหลังจบ) ติดไร้ทางเยียวยา ${TAKUTO_MISSILE_NORECOVER_TURNS} เทิร์น`);
-      if (target.alive && target.hp <= 0) { instantDeath(target); if (!target.alive) lastLog.push(`💀 ${target.name} เลือดจริงหมด ตกรอบ!`); }
-    }
   }
   // เนตรมารแห่งความมรณะ (ชิกิ): โจมตีปกติระหว่างท่าไม้ตายทำงาน (แต่เส้นตายยังไม่ถึง 10)
   //  -> เส้นตายของเป้าหมายถูกลบออกทั้งหมด เริ่มนับใหม่ (นับเป็นรายคน)
@@ -7045,7 +7114,7 @@ function doAttack(byId, targetId) {
   //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || takutoMissileAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 
@@ -7200,8 +7269,8 @@ function endTurn() {
         if (k === "apprivoise" && p.characterId === "takuto") {
           delete p.statuses.emeraude;
           delete p.statuses.saphir;
-          delete p.statuses.tauMissile;
           p.takutoComboReady = false;
+          p.takutoThirdAtkReady = false;
           lastLog.push(`🌠 ${p.name} ฉันคว้ามันได้แล้วหมดเวลา — กลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวให้ครบ ${TAKUTO_STAR_NEED} อีกครั้งเพื่อแปลงร่าง`);
         }
       }
@@ -7550,7 +7619,7 @@ io.on("connection", (socket) => {
       beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       gold: 0, inventory: [],
       doomWeapon: ch.id === "doomguy" ? DOOM_STARTING_WEAPON : null, doomQuickSwapUsed: false, doomCharge: 0,
-      takutoComboReady: false,
+      takutoComboReady: false, takutoThirdAtkReady: false, takutoLastStandAsk: null, takutoAwakenAt: 0,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
@@ -7611,6 +7680,29 @@ io.on("connection", (socket) => {
     //  ต้องเล่นวีดีโอที่ค้างคิว (ถ้ามี) โดยไม่ทำลาย gameState/ตัวจับเวลาของเฟสที่กำลังทำงานอยู่ตอนนี้
     //  (บั๊กเดิม: เรียก runCutsceneQueue(() => broadcastState()) ตรงๆ ทำให้ gameState ค้างที่ "CUTSCENE"
     //   แบบไม่มีตัวจับเวลาใดๆ ทำงานต่อ — เกมค้างถาวรถ้าคำตอบมาถึงตอนไม่ใช่เฟส PLAYING พอดี)
+    if (cutsceneQueue.length) {
+      const resumeState = gameState;
+      const resumeSeconds = Math.max(3, timeLeft);
+      const resumeOnExpire = currentPhaseOnExpire;
+      runCutsceneQueue(() => {
+        gameState = resumeState;
+        if (resumeOnExpire) startPhaseTimer(resumeSeconds, resumeOnExpire);
+        broadcastState();
+      });
+    } else {
+      broadcastState();
+    }
+  });
+  // สึงาชิ ทาคุโตะ: ฉันยังคง..มองเห็นมันอยู่ — เลือกเป้าหมายโจมตีหลังตาย (ใช้ได้แม้ตกรอบไปแล้ว)
+  socket.on("takutoLastStand", ({ targetId } = {}) => {
+    const p = players[socket.id];
+    if (!p || !p.takutoLastStandAsk) return;
+    const ask = p.takutoLastStandAsk;
+    p.takutoLastStandAsk = null;
+    const options = ask.options.map((id) => players[id]).filter((o) => o && o.alive);
+    const target = options.find((o) => o.id === targetId) || null;
+    resolveTakutoLastStand(p, target);
+    // คำตอบนี้มาแบบ async นอกรอบ resolveRound ปกติ (เหมือนขอแค่ได้พบกันอีก — ดูคอมเมนต์ด้านบน)
     if (cutsceneQueue.length) {
       const resumeState = gameState;
       const resumeSeconds = Math.max(3, timeLeft);
