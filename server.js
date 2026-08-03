@@ -976,14 +976,13 @@ function shikiGiveLifeline(shiki, target, amount) {
   return amount;
 }
 // เทเปา: นายเป็นคนทำตัวเองนะ — คิดโอกาสสังหารจากเส้นชีวิตที่เป้าหมายมี (1 หน่วย = 10%)
-//  พลาด/ไม่มีเส้นชีวิต -> ล้างเส้นชีวิตของเป้าหมายทั้งหมด — สำเร็จ/พลาดก็ตาม เล่นวีดีโอ + ฉากหลัง/เพลงจบแบบเดียวกัน
-//  เรียกจาก afterResolve() (หลังเปิดไพ่ทุกคนแล้ว) — คัตซีนที่ queue ไว้จะเล่นตอน afterResolve() เรียก runCutsceneQueue(goSummary) เอง
+//  พลาด/ไม่มีเส้นชีวิต -> ล้างเส้นชีวิตของเป้าหมายทั้งหมด — วีดีโอเล่นไปแล้วตอนกด (useSkill) จุดนี้แค่ตัดสินผล + เปิดฉากหลัง/เพลงจบ
+//  เรียกจาก afterResolve() (หลังเปิดไพ่ทุกคนแล้ว)
 function tepeuResolveKill(p, t) {
   const lines = t.statuses.deathline || 0;
   const chance = lines * TEPEU_KILL_CHANCE_PER_LINE;
   p.transformAt = ++transformCounter; // เพลง/ฉากหลังใช้ลำดับล่าสุด (กรณีมีเทเปาหลายคน)
   p.tepeuEyeTurns = TEPEU_EYE_TURNS;
-  triggerCutscene(p, "tepeuUlt");
   if (lines > 0 && Math.random() < chance) {
     lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — สังหาร ${t.name} สำเร็จ! (เส้นชีวิต ${lines} หน่วย = โอกาส ${Math.round(chance * 100)}%)`);
     instantDeath(t);
@@ -4307,20 +4306,23 @@ function useSkill(id, tier, targets, item) {
   // ---------- เทเปา (ชิกิ): วันนี้อากาศดีจัง — เริ่มทำอาหาร 2 เทิร์น ----------
   if (isTepeuCook) {
     p.tepeuCookTurns = TEPEU_COOK_TURNS;
+    p.statuses.tepeuCook = 1; // ป้ายสถานะ "กำลังทำอาหาร" (ให้ engine จัดการนับเทิร์นเองผ่าน tepeuCookTurns — ไม่ลดเทิร์นผ่านลูปทั่วไป)
     lastLog.push(`🍳 ${p.name} วันนี้อากาศดีจัง — เริ่มทำอาหาร! อีก ${TEPEU_COOK_TURNS} เทิร์นจะได้ "มื้อที่สุข" เข้าคลัง (ระหว่างนี้กดสกิลนี้ซ้ำไม่ได้)`);
   }
   // ---------- เทเปา (ชิกิ): เป็นแบบนี้นี่เอง — ครุ่นคิด 3 เทิร์น จั่วไพ่ไม่ได้ (ยังโจมตีได้ถ้าชนะ) ----------
   if (isTepeuPonder) {
     p.tepeuPonderTurns = TEPEU_PONDER_TURNS;
+    p.statuses.tepeuPonder = 1; // ป้ายสถานะ "ครุ่นคิด" (ให้ engine จัดการนับเทิร์นเองผ่าน tepeuPonderTurns — ไม่ลดเทิร์นผ่านลูปทั่วไป)
     lastLog.push(`🤔 ${p.name} เป็นแบบนี้นี่เอง — เริ่มครุ่นคิด ${TEPEU_PONDER_TURNS} เทิร์น (จั่วไพ่ไม่ได้ แต่ยังโจมตีได้ถ้าชนะ — จบเทิร์นได้แต้มสกิลเพิ่ม เทิร์นสุดท้ายได้ +${TEPEU_PONDER_SKILL_GAIN_LAST})`);
   }
-  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — เลือกเป้าหมาย 1 คน (ผลสังหาร/พลาดทำงานหลังเปิดไพ่ทุกคน — ดูใน afterResolve) ----------
+  // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — เลือกเป้าหมาย 1 คน + เล่นวีดีโอทันทีตอนกด (ผลสังหาร/พลาดทำงานหลังเปิดไพ่ทุกคน — ดูใน afterResolve) ----------
   if (isTepeuKill && tepeuKillTarget) {
     const t = tepeuKillTarget;
     if (satoruOnTargeted(t, p, `สกิล ${skill.name} `).negated) {
       flashSuffix = " — ถูกลบล้าง";
     } else {
       p.tepeuKillTargetId = t.id;
+      triggerCutscene(p, "tepeuUlt"); // วีดีโอเล่นทันทีตอนกด — ผลสังหารจะรู้หลังเปิดไพ่
       flashSuffix = ` — เลือกเป้าหมาย ${t.name} (ผลจะทราบหลังเปิดไพ่)`;
       lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — เล็งเป้าหมาย ${t.name} ไว้ (ผลจะทำงานหลังทุกคนเปิดไพ่)`);
     }
@@ -7152,6 +7154,7 @@ function endTurn() {
       if (k === "kotoneAtk") continue; // โคโตเนะ: คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น — เหมือน empower)
       if (k === "freecast") continue; // พรแห่งการจั่ว (patch 2.0.8): ใช้สกิลไม่เสียแต้ม — คงอยู่จนกว่าจะได้ใช้
       if (k === "deathline") continue; // เส้นตาย (ชิกิ): สแตคถาวร จนกว่าจะถูกชิกิโจมตีปกติระหว่างท่าไม้ตาย
+      if (k === "tepeuCook" || k === "tepeuPonder") continue; // เทเปา: ป้ายสถานะแสดงผลเฉยๆ — engine ลบเองตาม tepeuCookTurns/tepeuPonderTurns (ดูด้านล่าง)
       // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
       if (k === "graybeast") continue;  // ร่าง Zone: ถาวรจนกว่าจะเข้าร่างหมดแรง
       if (k === "burnout") continue;    // ร่างหมดแรง: ถาวรจนกว่า Stamina จะกลับมามากกว่า 0
@@ -7273,6 +7276,7 @@ function endTurn() {
       addSkill(p, gain);
       lastLog.push(`🤔 ${p.name} ครุ่นคิด — จบเทิร์นได้แต้มสกิลเพิ่ม +${gain}`);
       p.tepeuPonderTurns--;
+      if (p.tepeuPonderTurns === 0) delete p.statuses.tepeuPonder;
     }
   }
   // วันนี้อากาศดีจัง (เทเปา): ทำอาหารนับถอยหลังลง ครบ 0 = ส่ง "มื้อที่สุข" เข้าคลัง
@@ -7280,6 +7284,7 @@ function endTurn() {
     if ((p.tepeuCookTurns || 0) > 0) {
       p.tepeuCookTurns--;
       if (p.tepeuCookTurns === 0) {
+        delete p.statuses.tepeuCook;
         p.inventory = p.inventory || [];
         p.inventory.push({ uid: `tepeu_meal_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, type: "tepeuMeal", value: TEPEU_MEAL_HEAL });
         lastLog.push(`🍲 ${p.name} วันนี้อากาศดีจัง — ทำอาหารเสร็จแล้ว! ได้ "มื้อที่สุข" เข้าคลัง (ฟื้นพลังชีวิต +${TEPEU_MEAL_HEAL} เมื่อใช้)`);

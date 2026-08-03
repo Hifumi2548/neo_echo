@@ -387,7 +387,7 @@ const CHARACTERS = [
     ultimate: {
       name: "ชิวๆครับน้องๆ",
       desc: "ทำงานก่อนเปิดการ์ด: หลบหนีอย่างสบายใจ — เมื่อจบเทิร์นจะได้แต้มสกิล +1 ผลสกิลจะคงอยู่จนกว่าจะถูกโจมตีจากผู้เล่นอื่น (หลบไม่พ้นเมื่อไหร่ ผลจบลง)",
-      cost: 6,
+      cost: 8,
       img: "/characters/appleguy/appleguy_skill3.jpg",
       instant: true, // มีผลทันทีช่วงจั่วการ์ด
       effect: { type: "status", status: "chill", turns: 1 }, // คงอยู่จนถูกโจมตี: engine ไม่ลดเทิร์นสถานะนี้
