@@ -562,7 +562,7 @@ function statusEntries(p, full) {
   if ((p.sunriseDrop || 0) > 0) out.push({ key: "sunriseDrop", v: p.sunriseDrop, icon: "🌄", label: "แสงรุ่งอรุณ", cls: "bg-echo-hp", desc: "ผลรุ่งอรุณแห่งวันใหม่: เสียพลังชีวิต 1/เทิร์นแบบไม่สนเกราะ ตามจำนวนเทิร์นที่เหลือ" });
   if ((p.tonkatsu || 0) > 0) out.push({ key: "tonkatsu", v: p.tonkatsu, icon: "🍜", label: "ทงคัสสึ", cls: "bg-echo-cyan text-gray-900", desc: "ชามทงคัสสึสะสม (สูงสุด 4) — ใช้กับ Song for you: 1 ชาม = +1 พลังขิง และล้างสถานะผิดปกติทั้งหมด" });
   if ((p.profit || 0) > 0) out.push({ key: "profit", v: p.profit, icon: "💰", label: "กำไร", cls: "bg-echo-gold text-gray-900", desc: "กำไรเท่าตัวโว้ย: การโจมตีครั้งถัดไป +N และทะลุเกราะ (คงอยู่จนได้ตี)" });
-  if ((p.appleAtk || 0) > 0) out.push({ key: "appleAtk", v: p.appleAtk, icon: "🍎", label: "มอบของ", cls: "bg-echo-gold text-gray-900", desc: "เอาไปสิ: พลังโจมตีเพิ่มจากการมอบของ +1 ต่อครั้ง ซ้อนทับได้สูงสุด 2 หน่วย — แต่ละหน่วยคงอยู่ 5 เทิร์นแยกกัน" });
+  if ((p.appleAtk || 0) > 0) out.push({ key: "appleAtk", v: p.appleAtk, icon: "🍎", label: "มอบของ", cls: "bg-echo-gold text-gray-900", desc: "เอาไปสิ: พลังโจมตีเพิ่มจากการมอบของ +1 ต่อครั้ง ซ้อนทับได้สูงสุด 2 หน่วย — แต่ละหน่วยคงอยู่ 3 เทิร์นแยกกัน" });
   if ((p.coins || 0) > 0) out.push({ key: "coins", v: p.coins, icon: "🐷", label: "Coin", cls: "bg-echo-gold text-gray-900", desc: "กระปุกออมสินน้องหมูน้อย: coin สะสม (สูงสุด 6) — ตอนโจมตีแปลงเป็นความเสียหาย 3 coin = +1 (ใช้แล้วเหรียญหมดไป)" });
   if ((p.gold || 0) > 0) out.push({ key: "gold", v: p.gold, icon: "🪙", label: "เหรียญ", cls: "bg-echo-gold text-gray-900", desc: "เหรียญสะสม (เพดาน 30) — ใช้ซื้อของที่ร้านค้ามายา (เปิดทุก 5 เทิร์น)" });
   // โอกูริ แคป: Stamina สะสม (โชว์เสมอ — ทรัพยากรหลักของตัวละคร)
