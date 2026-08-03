@@ -81,10 +81,10 @@ const DOOM_TIE_ATTACK_CHANCE = 0.60; // patch 2.2 new: 50% -> 60% (ชนะม�
 const DOOM_CRUCIBLE_BUST_DMG = 2; // Crucible: บังคับทุกคนแตก -> รับความเสียหายเหมือนแพ้จั่ว/ไพ่แตก
 // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
 const TAKUTO_HEAL_BASIC = 2;          // ฉันได้ยินเสียงของโลก: ฟื้นพลังชีวิต +2
-const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> Apprivoise! ทันที
-const TAKUTO_ATK_BONUS = 1;           // สกิลติดตัว 1 / Apprivoise! ให้พลังโจมตีถาวร +1 หน่วยต่อครั้ง (รวมสูงสุด +2)
+const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> ฉันคว้ามันได้แล้ว (Apprivoise!) ทันที
+const TAKUTO_APPRIVOISE_TURNS = 10;   // ฉันคว้ามันได้แล้ว: คงอยู่ 10 เทิร์น หมดแล้วกลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวใหม่ (patch 2.2.3 — เดิมถาวร)
+const TAKUTO_ATK_BONUS = 1;           // สกิลติดตัว 1 / ฉันคว้ามันได้แล้ว ให้พลังโจมตีถาวร +1 หน่วยต่อครั้ง (รวมสูงสุด +2)
 const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: กันตายทำงานเมื่อไหร่ มอบโชคลาภ 2 หน่วยให้ตัวเองตอนนั้นเลย (ไม่ใช่ตั้งแต่เริ่มเกม)
-const TAKUTO_SAPHIR_EXTRA_CHANCE = 0.5; // Saphir: ไม่มี Emeraude ร่วม -> โอกาสโจมตีเพิ่ม 50%
 const TAKUTO_MISSILE_DMG = 4;         // Tau Missile: ดาเมจตรงหลังลบเกราะเป้าหมาย (ไม่สนเกราะ)
 const TAKUTO_MISSILE_NORECOVER_TURNS = 3;
 const TAKUTO_MISSILE_CARD_SCORE = 19; // Tau Missile: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
@@ -1246,11 +1246,12 @@ const TRANSFORMS = {
   fourth:   { img: "/characters/eva13/eva13_final.jpg", video: "/characters/eva13/eva13_final.mp4", title: "FOURTH IMPACT", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: "eva13", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   doomCrucible: { img: "/characters/doomguy/สกิลอัลติเมติ/crucible.jpg", video: "/characters/doomguy/สกิลอัลติเมติ/doom.mp4", title: "Crucible", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: "doomguy", afterReveal: false }, // patch 2.2 new: ทำงานทันทีก่อนเปิดไพ่
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-  apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "Apprivoise!", label: "สกิลติดตัวทำงาน", seconds: 24, music: "takuto", afterReveal: false }, // แปลงร่างถาวรทันทีที่ดวงดาวครบ 5
+  // patch 2.2.3: seconds ปรับให้ตรงความยาวจริง (วัดจาก mvhd atom) — takuto_passive 24.96 / takuto_skill2 6.13 / takuto_skill3 24.12 วิ
+  apprivoise: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/passive/takuto_passive.mp4", title: "ฉันคว้ามันได้แล้ว", label: "สกิลติดตัวทำงาน", seconds: 25, music: "takuto", afterReveal: false }, // แปลงร่างเป็นทาวเบิร์นทันทีที่ดวงดาวครบ 5 — คงอยู่ 10 เทิร์น
   takutoEmeraude: { img: "/characters/takuto/skill1/takuto_skill1.2.webp", video: "/characters/takuto/skill1/takuto_skill1.2.mp4", title: "Star Sword Emeraude", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
-  takutoSaphir: { img: "/characters/takuto/skill2/takuto_skill2.webp", video: "/characters/takuto/skill2/takuto_skill2.mp4", title: "Star Sword Saphir", label: "ใช้สกิล", seconds: 8, music: null, afterReveal: false },
+  takutoSaphir: { img: "/characters/takuto/skill2/takuto_skill2.webp", video: "/characters/takuto/skill2/takuto_skill2.mp4", title: "Star Sword Saphir", label: "ใช้สกิล", seconds: 7, music: null, afterReveal: false },
   takutoBothSwords: { img: "/characters/takuto/tauburn.jpg", video: "/characters/takuto/takuto_2sword.mp4", title: "ถ้าพร้อมแล้วก็เข้ามาเลย", label: "เอฟเฟกต์พิเศษ", seconds: 6, music: null, afterReveal: false },
-  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 24, music: null, afterReveal: false },
+  takutoMissile: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/skill3/takuto_skill3.mp4", title: "Tau Missile", label: "ปล่อยท่าไม้ตาย", seconds: 25, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
   evaboom:  { img: "/characters/eva13/eva13.webp", video: "/characters/eva13/eva13_passive1.mp4", title: "ไม่สามารถแก้ไขอะไรได้อีกแล้ว", label: "สกิลติดตัวทำงาน", seconds: 18, music: null, afterReveal: false },
@@ -2086,7 +2087,7 @@ function resetCombat(p) {
   p.doomQuickSwapUsed = false; // Quick Swap: 1 ครั้งต่อเทิร์น
   p.doomCharge = 0;            // ชาร์จสำหรับปลดล็อก Crucible (ครบ 5)
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
-  p.takutoSaphirExtraChance = null; // Saphir: เก็บโอกาสโจมตีเพิ่มไว้ให้ postAttackFollowup อ่าน
+  p.takutoComboReady = false; // Saphir+Emeraude ร่วมกัน: รอ postAttackFollowup อ่านเพื่อโจมตีเพิ่มอีกครั้ง (patch 2.2.3 — เดิมเก็บเป็นโอกาส 50/50)
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
   p.songAtk = 0;          // Song for you: พลังขิงที่ล็อกไว้ตอนใช้สกิล (สูงสุด 2)
   p.noDrawNext = 0;       // จำนวนเทิร์นที่จั่วเพิ่มไม่ได้ เริ่มเทิร์นถัดไป (ทงคัสสึ / กำไรเท่าตัวโว้ย)
@@ -4660,11 +4661,11 @@ function useSkill(id, tier, targets, item) {
     lastLog.push(`⭐ ${p.name} ฉันได้ยินเสียงของโลก — ฟื้นพลังชีวิต +${heal} และดวงดาว +1 (${Math.min(p.statuses.star, TAKUTO_STAR_NEED)}/${TAKUTO_STAR_NEED})`);
     if (p.statuses.star >= TAKUTO_STAR_NEED) {
       delete p.statuses.star;
-      p.statuses.apprivoise = 1; // สแตคถาวร (ไม่ลดเทิร์น — ดู endTurn skip-list)
+      p.statuses.apprivoise = TAKUTO_APPRIVOISE_TURNS; // patch 2.2.3: คงอยู่ 10 เทิร์น (เดิมถาวร) — ลดเทิร์นปกติผ่านลูปทั่วไป
       p.seen.apprivoise = true;
       p.transformAt = ++transformCounter;
       triggerCutscene(p, "apprivoise");
-      lastLog.push(`✨ ${p.name} Apprivoise! — แปลงร่างเป็นทาวเบิร์นถาวร ปลดล็อกสกิลพื้นฐาน 2/สกิลรอง/ท่าไม้ตาย`);
+      lastLog.push(`✨ ${p.name} ฉันคว้ามันได้แล้ว — แปลงร่างเป็นทาวเบิร์น ${TAKUTO_APPRIVOISE_TURNS} เทิร์น! ปลดล็อกสกิลพื้นฐาน 2/สกิลรอง/ท่าไม้ตาย`);
     }
   }
   if (isTakutoEmeraude) {
@@ -5902,26 +5903,21 @@ function postAttackFollowup(attacker) {
     delete attacker.statuses.miyakoCombo;
     attacker.miyakoComboHits = 0;
   }
-  // สึงาชิ ทาคุโตะ (patch 2.2 new): Star Sword Saphir — โจมตีเพิ่มอีก 1 ครั้งทันที (การันตีถ้ามี Emeraude ด้วย ไม่งั้น 50/50)
-  if (attacker && attacker.alive && attacker.characterId === "takuto" && attacker.takutoSaphirExtraChance != null) {
-    const chance = attacker.takutoSaphirExtraChance;
-    attacker.takutoSaphirExtraChance = null;
-    if (Math.random() < chance) {
-      const targets = attackableTargets(attacker.id);
-      if (targets.length > 0) {
-        lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — โจมตีเพิ่มอีกครั้งทันที!`);
-        attackerId = attacker.id;
-        gameState = "ATTACK";
-        startPhaseTimer(ATTACK_TIME, () => {
-          const t = attackableTargets(attackerId);
-          if (t.length) doAttack(attackerId, t[Math.floor(Math.random() * t.length)].id);
-          else endTurn();
-        });
-        broadcastState();
-        return;
-      }
-    } else {
-      lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — โอกาสโจมตีเพิ่มไม่สำเร็จ (${Math.round(chance * 100)}%)`);
+  // สึงาชิ ทาคุโตะ (patch 2.2.3): Star Sword Saphir + Emeraude ร่วมกัน — โจมตีเพิ่มอีก 1 ครั้งทันที (การันตี — Saphir ลำพังไม่มีผลนี้แล้ว)
+  if (attacker && attacker.alive && attacker.characterId === "takuto" && attacker.takutoComboReady) {
+    attacker.takutoComboReady = false;
+    const targets = attackableTargets(attacker.id);
+    if (targets.length > 0) {
+      lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — โจมตีเพิ่มอีกครั้งทันที!`);
+      attackerId = attacker.id;
+      gameState = "ATTACK";
+      startPhaseTimer(ATTACK_TIME, () => {
+        const t = attackableTargets(attackerId);
+        if (t.length) doAttack(attackerId, t[Math.floor(Math.random() * t.length)].id);
+        else endTurn();
+      });
+      broadcastState();
+      return;
     }
   }
   if (attacker) { delete attacker.statuses.miyakoHeal; delete attacker.statuses.yaak; }
@@ -6787,9 +6783,11 @@ function doAttack(byId, targetId) {
       const heal = healHp(attacker, dmg);
       lastLog.push(`💚 ${attacker.name} Star Sword Emeraude — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
     }
+    // patch 2.2.3: คอมโบโจมตี 2 ครั้งต้องมี Emeraude ร่วมด้วยเท่านั้น (การันตี) — มี Saphir ลำพังไม่ได้โจมตีเพิ่มอีกต่อไป
     if (saphirOn) {
       delete attacker.statuses.saphir;
-      attacker.takutoSaphirExtraChance = emeraudeOn ? 1 : TAKUTO_SAPHIR_EXTRA_CHANCE;
+      if (emeraudeOn) attacker.takutoComboReady = true;
+      else lastLog.push(`⚔️ ${attacker.name} Star Sword Saphir — ไม่มี Emeraude ร่วมด้วย จึงไม่ได้โจมตีเพิ่ม`);
     }
     // Tau Missile: ชนะรอบแล้วได้โจมตีจริงถึงจะยิง — ลบเกราะเป้าหมายก่อนยิงตรงเพิ่มเติม แล้วฟื้นเกราะคืนหลังจบ
     if ((attacker.statuses.tauMissile || 0) > 0) {
@@ -7137,8 +7135,7 @@ function endTurn() {
       if (k === "godtree") continue; // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด/ยกเลิกเอง ไม่ลดเทิร์น
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
-      if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อ Apprivoise!
-      if (k === "apprivoise") continue; // Apprivoise! (สึงาชิ ทาคุโตะ): แปลงร่างถาวร ไม่ลดเทิร์น
+      if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อฉันคว้ามันได้แล้ว
       if (k === "emeraude" || k === "saphir") continue; // Star Sword (สึงาชิ ทาคุโตะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "doomCrucible") continue; // Crucible (ดูมกาย patch 2.2 new): คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง (ไม่ลดเทิร์น)
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
@@ -7199,6 +7196,14 @@ function endTurn() {
         }
         // MOON*CELL หมดเวลา (คิชินามิ ฮาคุโนะ patch 2.2.1): คืนบัฟ/ดีบัฟที่ล้างไว้ทั้งหมด หลังลูปนี้จบ (ดูด้านล่าง)
         if (k === "moonCell" && p.characterId === "hakuno") moonCellEndedBy = p;
+        // ฉันคว้ามันได้แล้ว หมดเวลา (สึงาชิ ทาคุโตะ patch 2.2.3): กลับเป็นทาคุโตะปกติ — ล้างดาบที่ค้างอยู่ ต้องเก็บดวงดาวใหม่ให้ครบ 5 อีกครั้ง
+        if (k === "apprivoise" && p.characterId === "takuto") {
+          delete p.statuses.emeraude;
+          delete p.statuses.saphir;
+          delete p.statuses.tauMissile;
+          p.takutoComboReady = false;
+          lastLog.push(`🌠 ${p.name} ฉันคว้ามันได้แล้วหมดเวลา — กลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวให้ครบ ${TAKUTO_STAR_NEED} อีกครั้งเพื่อแปลงร่าง`);
+        }
       }
     }
     for (const k of Object.keys(p.seen || {})) {
@@ -7545,7 +7550,7 @@ io.on("connection", (socket) => {
       beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       gold: 0, inventory: [],
       doomWeapon: ch.id === "doomguy" ? DOOM_STARTING_WEAPON : null, doomQuickSwapUsed: false, doomCharge: 0,
-      takutoSaphirExtraChance: null,
+      takutoComboReady: false,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
