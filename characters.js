@@ -861,7 +861,7 @@ const CHARACTERS = [
     id: "tohno",
     name: "โทโนะ ชิกิ",
     avatar: 21,
-    difficulty: "easy",
+    difficulty: "impossible", // ย้ายลงมาระดับทักษิณ (patch 2.2.4 — เดิม easy)
     img: "/characters/tohno/tohno.webp", // ภาพหน้าเลือกตัวละคร — ระดับ 2 ขึ้นไปเปลี่ยนเป็น tohno_death.jpg (engine override)
     // ---------- โทโนะ ชิกิ (patch 2.1.7) ----------
     //  ลงสนาม: tohno.webp ปกติ | ระดับมีดพับประจำตระกูล 2 ขึ้นไป (เปิดใช้งานสกิลติดตัว): tohno_death.jpg

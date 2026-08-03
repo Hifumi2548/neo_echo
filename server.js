@@ -1257,6 +1257,7 @@ const TRANSFORMS = {
   // patch 2.2.4: สกิลติดตัว 3 ใหม่ — ตายขณะไม่มี Apprivoise! เลือกเป้าหมายโจมตีหลังตาย 1 คน
   takutoLastStand: { img: "/characters/takuto/takuto.jpg", video: "/characters/takuto/upadate/takuto_passive3.mp4", title: "ฉันยังคง..มองเห็นมันอยู่", label: "สกิลติดตัวทำงาน", seconds: 27, music: null, afterReveal: false },
   // patch 2.2.4: ท่าไม้ตายใหม่ "อย่างนายน่ะ จะไปเข้าใจอะไร" — แทน Tau Missile เดิม
+  //  วีดีโอเล่นตอนโจมตีจริงครั้งถัดไป (ไม่ใช่ตอนกดสกิล — ดู doAttack ผ่าน p.takutoUlt2VideoPending)
   takutoUlt2: { img: "/characters/takuto/skill3/takuto_skill3.webp", video: "/characters/takuto/upadate/takuto_skill3_new.mp4", title: "อย่างนายน่ะ จะไปเข้าใจอะไร", label: "ปล่อยท่าไม้ตาย", seconds: 18, music: null, afterReveal: false },
   // eva3: สกิลติดตัว 3 เอวา 13 (เลือด <= 3) — วีดีโอ 9 วิ | evaboom: สกิลติดตัว 1 ตายขณะ fourth impact — วีดีโอ 17 วิ
   eva3:     { img: "/characters/eva13/eva13_passive3.jpg", video: "/characters/eva13/eva13_passive3.mp4", title: "อย่าให้ฉันทำแแบบนี้เลย", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
@@ -2105,6 +2106,7 @@ function resetRoundDisplay(p) {
   p.wasAttacked = false; p.isWinner = false; p.isLoser = false;
 }
 function resetCombat(p) {
+  p.ready = false; // ห้องรอ: ต้องกดพร้อมใหม่ทุกครั้งที่กลับมาห้องรอ/เริ่มแมตช์ใหม่
   p.skillPoints = 0; p.alive = true; p.shield = 0;
   p.statuses = {}; p.seen = {}; p.ntdTarget = null; p.transformAt = 0; p.beatAt = 0;
   // ---------- บานาจ ลิงก์ (patch 2.1.2) ----------
@@ -2130,6 +2132,7 @@ function resetCombat(p) {
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new) ----------
   p.takutoComboReady = false; // Saphir+Emeraude ร่วมกัน: รอ postAttackFollowup อ่านเพื่อโจมตีเพิ่มอีกครั้ง (patch 2.2.3 — เดิมเก็บเป็นโอกาส 50/50)
   p.takutoThirdAtkReady = false; // อย่างนายน่ะ จะไปเข้าใจอะไร (patch 2.2.4): รอ postAttackFollowup อ่านเพื่อลุ้นโจมตีครั้งที่ 3 (50%)
+  p.takutoUlt2VideoPending = false; // อย่างนายน่ะ จะไปเข้าใจอะไร: รอโจมตีจริงครั้งถัดไปแล้วค่อยเล่นวีดีโอ
   p.takutoLastStandAsk = null;   // ฉันยังคง..มองเห็นมันอยู่: รอเลือกเป้าหมายโจมตีหลังตาย { options: [id] }
   p.takutoAwakenAt = 0;          // สกิลติดตัว 1 กันตายทำงานแล้ว: ลำดับสำหรับเพลง/ภาพซ้อนทับ (ถ้ามีทาคุโตะหลายคน)
   p.tonkatsu = 0;         // เทมาริ: ชามทงคัสสึที่กินสะสม (สูงสุด 3 — Song for you ล้างตอนใช้)
@@ -2589,6 +2592,7 @@ function buildStateFor(viewerId) {
         hakunoCommandUses: p.hakunoCommandUses != null ? p.hakunoCommandUses : HAKUNO_COMMAND_USES, // อาคมบัญชาระดับ EX+ คงเหลือ
         atCap: scoreOf(p) >= scoreCap(p), // แต้มเต็มเพดาน (21/UPG) -> ปิดปุ่มจั่ว รอเปิดไพ่เอง
         skillUsed: !!p.skillUsedRound,    // ใช้สกิลไปแล้วในเทิร์นนี้ (1 อันต่อเทิร์น)
+        ready: !!p.ready,                 // ห้องรอ: กดพร้อมแล้วหรือยัง
         alive: p.alive,
         statuses: show ? { ...p.statuses, ...((p.ntdTarget || p.ntdRivalId) ? { ntd: 1 } : {}) } : publicStatuses(p),
         statusAmt: p.statusAmt || {}, // จำนวน (amount) ของบัฟ/ดีบัฟพื้นฐาน (patch 2.0.8)
@@ -2693,6 +2697,12 @@ function runCutsceneQueue(onDone) {
 // ============================================================
 //  วงจรรอบ
 // ============================================================
+// ห้องรอ: ทุกคนกดพร้อมครบ (อย่างน้อย 2 คน) -> เริ่มเกมทันที ไม่ต้องกดปุ่มเริ่มเกมเอง
+function checkLobbyReady() {
+  if (gameState !== "LOBBY") return;
+  const list = Object.values(players);
+  if (list.length >= 2 && list.every((p) => p.ready)) startMatch();
+}
 function startMatch() {
   for (const p of Object.values(players)) resetCombat(p);
   roundNumber = 0;
@@ -4747,7 +4757,7 @@ function useSkill(id, tier, targets, item) {
   //  เงื่อนไข: ต้องมีดาบทั้ง 2 อัน (Emeraude+Saphir) พร้อมกันเท่านั้นถึงจะใช้ได้ (เช็คที่ gate ด้านบนแล้ว)
   if (isTakutoUlt2) {
     p.takutoThirdAtkReady = true; // หลังคอมโบ Saphir+Emeraude โอกาส 50% ได้โจมตีต่อครั้งที่ 3 (ดูใน postAttackFollowup)
-    triggerCutscene(p, "takutoUlt2");
+    p.takutoUlt2VideoPending = true; // วีดีโอเล่นตอนกดโจมตีจริงครั้งถัดไป (ดูใน doAttack) ไม่ใช่ตอนกดสกิลนี้
     if (scoreOf(p) !== 21) {
       p.cardBonus = TAKUTO_ULT_CARD_SCORE - calculateScore(p.cards);
       p.busted = bustedOf(p);
@@ -6860,6 +6870,11 @@ function doAttack(byId, targetId) {
   if (attacker.characterId === "takuto") {
     const emeraudeOn = (attacker.statuses.emeraude || 0) > 0;
     const saphirOn = (attacker.statuses.saphir || 0) > 0;
+    // อย่างนายน่ะ จะไปเข้าใจอะไร (patch 2.2.4): วีดีโอเล่นตอนโจมตีจริงครั้งถัดไป (ไม่ใช่ตอนกดสกิล)
+    if (attacker.takutoUlt2VideoPending) {
+      attacker.takutoUlt2VideoPending = false;
+      triggerCutscene(attacker, "takutoUlt2");
+    }
     // วีดีโอ takuto_2sword.mp4 เล่นไปแล้วตอนกดสกิลที่ 2 ครบทั้งคู่ (ดู useSkill) — ตรงนี้แค่ใช้ผลจริงตอนโจมตี
     if (emeraudeOn) {
       delete attacker.statuses.emeraude;
@@ -7111,10 +7126,10 @@ function doAttack(byId, targetId) {
     broadcastState();
   };
   // Beam Magnum Plus (ริดดี้ patch 2.1.1) / Beam Magnum + แสงที่ไม่อยู่เพียงลำพัง (บานาจ patch 2.1.2) / ลำแสงสโตเรียม (ฮิคารุ patch 2.1.3)
-  //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6):
+  //  / อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล patch 2.1.6) / ฉันยัง...มองเห็นอยู่!!! กันตาย (สึงาชิ ทาคุโตะ patch 2.2.4):
   //  เล่นวีดีโอที่ค้างคิวก่อน แล้วค่อยขึ้นสรุปความเสียหาย
   //  (ปกติทุกท่าอื่นจะขึ้นสรุปความเสียหายก่อนแล้วค่อยเล่นวีดีโอค้างคิวตอนจบ — ท่าเหล่านี้กลับลำดับเฉพาะตัว)
-  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
+  if ((beamPlusAtk || (beam && attacker.characterId === "banagher") || unibeam2Atk || storiumAtk || phenexPurgeAtk || miyakoUltAtk || (beatSaveFired && target.characterId === "takuto")) && cutsceneQueue.length) runCutsceneQueue(showAttackFx);
   else showAttackFx();
 }
 
@@ -7271,6 +7286,7 @@ function endTurn() {
           delete p.statuses.saphir;
           p.takutoComboReady = false;
           p.takutoThirdAtkReady = false;
+          p.takutoUlt2VideoPending = false;
           lastLog.push(`🌠 ${p.name} ฉันคว้ามันได้แล้วหมดเวลา — กลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวให้ครบ ${TAKUTO_STAR_NEED} อีกครั้งเพื่อแปลงร่าง`);
         }
       }
@@ -7609,6 +7625,7 @@ io.on("connection", (socket) => {
 
     players[socket.id] = {
       id: socket.id,
+      ready: false, // ห้องรอ: ต้องกดพร้อมก่อนเกมถึงจะเริ่มได้ (ครบทุกคน = เริ่มอัตโนมัติ)
       name: (name || "ผู้เล่น").toString().slice(0, 12),
       position: pos, characterId: ch.id, avatar: ch.avatar, img: ch.img,
       cards: [], locked: false, busted: false, result: null,
@@ -7619,7 +7636,7 @@ io.on("connection", (socket) => {
       beamAmmo: BEAM_AMMO, puddingCount: 0, rsHopperRegenTimer: 0,
       gold: 0, inventory: [],
       doomWeapon: ch.id === "doomguy" ? DOOM_STARTING_WEAPON : null, doomQuickSwapUsed: false, doomCharge: 0,
-      takutoComboReady: false, takutoThirdAtkReady: false, takutoLastStandAsk: null, takutoAwakenAt: 0,
+      takutoComboReady: false, takutoThirdAtkReady: false, takutoUlt2VideoPending: false, takutoLastStandAsk: null, takutoAwakenAt: 0,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
       reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
@@ -7652,6 +7669,15 @@ io.on("connection", (socket) => {
 
   socket.on("startGame", () => {
     if (gameState === "LOBBY" && Object.keys(players).length >= 1) startMatch();
+  });
+  // ห้องรอ: กดพร้อม/ยกเลิกพร้อม — ครบทุกคน (อย่างน้อย 2 คน) เริ่มเกมอัตโนมัติ
+  socket.on("toggleReady", () => {
+    if (gameState !== "LOBBY") return;
+    const p = players[socket.id];
+    if (!p) return;
+    p.ready = !p.ready;
+    broadcastState();
+    checkLobbyReady();
   });
 
   socket.on("hit", () => hit(socket.id));
@@ -7732,12 +7758,15 @@ io.on("connection", (socket) => {
     if (!p) return;
     reservations[socket.id] = p.position;
     delete players[socket.id];
+    // มีคนออกจากห้องรอ -> สถานะพร้อมของคนที่เหลือทั้งหมดรีเซ็ตกลับเป็นไม่พร้อม (กันเริ่มเกมด้วยรายชื่อที่เปลี่ยนไปแล้ว)
+    for (const o of Object.values(players)) o.ready = false;
     broadcastState();
     broadcastPositions();
   });
 
   socket.on("disconnect", () => {
     const wasAttacker = attackerId === socket.id;
+    const wasLobby = gameState === "LOBBY";
     delete players[socket.id];
     delete reservations[socket.id];
 
@@ -7748,6 +7777,8 @@ io.on("connection", (socket) => {
       broadcastPositions();
       return;
     }
+    // มีคนหลุดออกจากห้องรอ -> สถานะพร้อมของคนที่เหลือทั้งหมดรีเซ็ตกลับเป็นไม่พร้อมเช่นกัน
+    if (wasLobby) for (const o of Object.values(players)) o.ready = false;
     if (gameState === "ATTACK" && wasAttacker) endTurn();
     else if (gameState === "PLAYING") { checkAllLocked(); broadcastState(); }
     else broadcastState();
