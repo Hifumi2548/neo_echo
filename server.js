@@ -1556,7 +1556,7 @@ function maybeBeatSave(p) {
     const healedArmor = healArmor(p, TAKUTO_BEATSAVE_ARMOR);
     p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + TAKUTO_FORTUNE_GRANT);
     p.fortuneIdle = 0;
-    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} และได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT}`);
+    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} ได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT} และร่างฉันคว้ามันได้แล้วจะคงอยู่ถาวรไม่หมดเวลาอีกต่อไป`);
     return true;
   }
   return false;
@@ -3929,8 +3929,9 @@ function useSkill(id, tier, targets, item) {
     nanayaSilenceTarget = t;
   }
   // ---------- เทเปา (ชิกิ): วันนี้อากาศดีจัง / เป็นแบบนี้นี่เอง / นายเป็นคนทำตัวเองนะ ----------
+  // patch 2.2.4: ระหว่างทำอาหารอยู่ ใช้สกิลอื่นไม่ได้เลยจนกว่าอาหารจะเสร็จเข้ากระเป๋า (ไม่ใช่แค่กดสกิลพื้นฐานซ้ำไม่ได้)
+  if (p.characterId === "tepeu" && (p.tepeuCookTurns || 0) > 0) return;
   const isTepeuCook = p.characterId === "tepeu" && tier === "basic";
-  if (isTepeuCook && (p.tepeuCookTurns || 0) > 0) return; // ระหว่างทำอาหารอยู่ กดซ้ำไม่ได้
   const isTepeuPonder = p.characterId === "tepeu" && tier === "secondary";
   if (isTepeuPonder && (p.tepeuPonderTurns || 0) > 0) return; // ครุ่นคิดยังไม่หมด กดซ้ำไม่ได้
   const isTepeuKill = p.characterId === "tepeu" && tier === "ultimate";
@@ -5012,6 +5013,9 @@ function useSkill(id, tier, targets, item) {
     for (const o of alivePlayers()) {
       if (o.id === p.id) continue;
       o.busted = true;
+      o.locked = true; // บังคับแตกจริง — ล็อกกันจั่วเพิ่มจนแต้มจริงเกิน 21 แล้วหลุดจากสถานะแตก (เหมือนแตกเองตอนจั่ว)
+      voidUltimateOnBust(o);
+      maybeMoonBurst(o);
       dealDirect(o, DOOM_CRUCIBLE_BUST_DMG);
       maybeBeatSave(o); maybeBeatMode(o); maybeEva3(o); maybeWakeKotone(o);
       o.wasAttacked = true;
@@ -7222,6 +7226,8 @@ function endTurn() {
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
       if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อฉันคว้ามันได้แล้ว
+      // ฉันคว้ามันได้แล้ว (สึงาชิ ทาคุโตะ patch 2.2.4): ปกติลดเทิร์นตามปกติ (10 เทิร์น) — แต่ถ้ากันตาย (สกิลติดตัว 1) ทำงานแล้ว จะกลายเป็นถาวร ไม่ลดเทิร์นอีกต่อไป
+      if (k === "apprivoise" && p.characterId === "takuto" && p.beatSaved) continue;
       if (k === "emeraude" || k === "saphir") continue; // Star Sword (สึงาชิ ทาคุโตะ): คงอยู่จนกว่าจะได้โจมตี (ไม่ลดเทิร์น)
       if (k === "doomCrucible") continue; // Crucible (ดูมกาย patch 2.2 new): คงอยู่จนกว่าจะได้โจมตี 1 ครั้ง (ไม่ลดเทิร์น)
       if (k === "fortune") continue; // โชคลาภ (Bard): คงอยู่จนกว่าจะจั่วไพ่ครั้งถัดไป (หมดอายุเองถ้าไม่ใช้ 3 เทิร์น — ดูด้านบน)
