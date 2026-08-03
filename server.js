@@ -153,10 +153,10 @@ const APPLE_ITEMS = {
 };
 const APPLE_ATK_MAX = 2;    // บัฟพลังโจมตีจากการมอบของ ซ้อนทับได้สูงสุด 2 หน่วย (patch 2.2 new — เดิม 1 ไม่ซ้อนทับ)
 const APPLE_ATK_DURATION = 5; // patch 2.2 new: แต่ละหน่วยคงอยู่ 5 เทิร์นแยกกัน (คนละก้อนกัน)
-const APPLE_GIVE_USES = 3;  // เอาไปสิ ใช้ได้จำกัด 3 ครั้ง (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมได้ไม่มีเพดาน) (patch 2.2 new — เดิม 1)
-// อัตราหลบขณะชิวๆครับน้องๆ: เริ่ม 100% -> หลบได้เหลือ 75% -> หลบได้อีกเหลือ 50% และคงที่จนกว่าผลจะหมด (patch 2.2 new — เดิม 100/50/25)
-const CHILL_DODGE_MID = 75; // อัตราหลบขั้นกลาง (%)
-const CHILL_DODGE_MIN = 50; // อัตราหลบต่ำสุด (%)
+const APPLE_GIVE_USES = 2;  // เอาไปสิ ใช้ได้จำกัด 2 ครั้ง (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — ไม่สามารถซ้อนทับได้ เกินเพดานตัดทิ้ง) (patch 2.2.3 — เดิม 3 ไม่มีเพดาน)
+// อัตราหลบขณะชิวๆครับน้องๆ: เริ่ม 100% -> หลบได้เหลือ 50% -> หลบได้อีกเหลือ 25% และคงที่จนกว่าผลจะหมด (patch 2.2.3 — เดิม 100/75/50)
+const CHILL_DODGE_MID = 50; // อัตราหลบขั้นกลาง (%)
+const CHILL_DODGE_MIN = 25; // อัตราหลบต่ำสุด (%)
 
 // ---------- ไรโด ฮิคารุ / อุลตร้าแมนกิงกะ (rework patch 2.1.3) ----------
 //  สกิลพื้นฐาน 1 MonsterLive: เพดานเกราะ+2 ฟื้นเกราะทันที+2 คงอยู่ 3 เทิร์น — เกราะลด = ฟื้นเลือดตามเกราะที่เสีย
@@ -871,7 +871,7 @@ function appleGuyDodgesKill(attacker, target) {
   const firstDodge = rate === 100; // patch 2.2 new: วีดีโอเล่นตอนหลบครั้งแรกที่ 100% แทน (เดิมเล่นตอนอัตราหลบลดถึงต่ำสุด)
   target.chillDodge = rate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
   healHp(target, 1);
-  target.appleGiveUses = (target.appleGiveUses || 0) + 1; // สะสมได้ ไม่มีเพดานแล้ว (patch 2.2 new)
+  target.appleGiveUses = Math.min(APPLE_GIVE_USES, (target.appleGiveUses || 0) + 1); // ไม่สามารถซ้อนทับได้ เกินเพดานตัดทิ้ง
   target.wasAttacked = true;
   lastLog.push(`🏖️ ${target.name} ชิวๆครับน้องๆ — หลบความสามารถสังหารทันทีของ ${attacker.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${target.chillDodge}%)`);
   if (firstDodge && !target.cutsceneShown.appleguyDodge) {
@@ -2107,7 +2107,7 @@ function resetCombat(p) {
   p.appleItem = "drink"; // Apple guy: ของส่งมอบที่เลือกอยู่ (ค่าเริ่มต้น เครื่องดื่มชูกำลัง)
   p.appleAtkBuffs = [];  // Apple guy: บัฟพลังโจมตีจากการมอบของ — 1 หน่วย/ครั้ง (สูงสุด 2 หน่วย) นับถอยหลังแยกกัน 5 เทิร์น/หน่วย
   p.chillDodge = 100;    // Apple guy: อัตราหลบขณะชิวๆครับน้องๆ (%) — รีเซ็ตเมื่อเปิดท่าไม้ตายใหม่
-  p.appleGiveUses = APPLE_GIVE_USES; // Apple guy: จำนวนใช้ เอาไปสิ (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมได้ไม่มีเพดาน)
+  p.appleGiveUses = APPLE_GIVE_USES; // Apple guy: จำนวนใช้ เอาไปสิ (เติมจากสกิลติดตัวเมื่อหลบสำเร็จ — ไม่สามารถซ้อนทับได้ เกินเพดานตัดทิ้ง)
   // ---------- ฟุจิตะ โคโตเนะ (patch 1.9.1) ----------
   p.coins = 0;            // กระปุกออมสินน้องหมูน้อย: coin สะสม (สูงสุด 6)
   p.nightWork = 0;        // จำนวนครั้งที่ทำงาน Part-time ในเฟสกลางคืนนี้ (>1 = โหมงานหนัก)
@@ -5649,7 +5649,7 @@ function afterResolve() {
         const firstDodge = dodgeRate === 100;
         t.chillDodge = dodgeRate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
         healHp(t, 1);
-        t.appleGiveUses = (t.appleGiveUses || 0) + 1;
+        t.appleGiveUses = Math.min(APPLE_GIVE_USES, (t.appleGiveUses || 0) + 1);
         lastLog.push(`🏖️ ${t.name} ชิวๆครับน้องๆ — หลบนายเป็นคนทำตัวเองนะของ ${p.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${t.chillDodge}%)`);
         if (firstDodge && !t.cutsceneShown.appleguyDodge) { t.cutsceneShown.appleguyDodge = true; queueCutscene(t, "appleguyDodge"); }
         continue;
@@ -6189,7 +6189,7 @@ function doAttack(byId, targetId) {
   }
 
   // สกิลติดตัว Apple guy (ชิวๆ ไม่โดนหรอกครับ): ขณะชิวๆครับน้องๆ ทำงาน มีโอกาสหลบการถูกเลือกโจมตี
-  //  เริ่มต้น 100% -> หลบได้เหลือ 75% -> หลบได้อีกเหลือ 50% และคงที่จนกว่าผลจะหมด (patch 2.2 new — เดิม 100/50/25)
+  //  เริ่มต้น 100% -> หลบได้เหลือ 50% -> หลบได้อีกเหลือ 25% และคงที่จนกว่าผลจะหมด (patch 2.2.3 — เดิม 100/75/50)
   //  หลบได้ฟื้นเลือด 1 + ขึ้นวีดีโอตอนหลบครั้งแรก — หลบไม่พ้น = โดนโจมตีตามปกติ และผลชิวๆครับน้องๆ จบลง
   if (target.characterId === "appleguy" && (target.statuses.chill || 0) > 0 && !passiveSealed(target)) {
     const rate = Math.max(CHILL_DODGE_MIN, Math.min(100, target.chillDodge != null ? target.chillDodge : 100));
@@ -6197,8 +6197,8 @@ function doAttack(byId, targetId) {
       const firstDodge = rate === 100; // patch 2.2 new: วีดีโอเล่นตอนหลบครั้งแรกที่ 100% แทน (เดิมเล่นตอนอัตราหลบลดถึงต่ำสุด)
       target.chillDodge = rate > CHILL_DODGE_MID ? CHILL_DODGE_MID : CHILL_DODGE_MIN;
       healHp(target, 1); // หลบได้ ฟื้นพลังชีวิต 1 หน่วย
-      // หลบได้ ฟื้นฟูจำนวนการใช้งานสกิลรอง เอาไปสิ +1 ครั้ง (สะสมได้ ไม่มีเพดานแล้ว) (patch 2.2 new)
-      target.appleGiveUses = (target.appleGiveUses || 0) + 1;
+      // หลบได้ ฟื้นฟูจำนวนการใช้งานสกิลรอง เอาไปสิ +1 ครั้ง (ไม่สามารถซ้อนทับได้ เกินเพดานตัดทิ้ง) (patch 2.2.3)
+      target.appleGiveUses = Math.min(APPLE_GIVE_USES, (target.appleGiveUses || 0) + 1);
       // patch 2.1.3.5: ถูกโจมตีไม่ได้แต้มสกิลอีกต่อไป (แม้หลบพ้น)
       target.wasAttacked = true;
       lastLog.push(`🏖️ ${target.name} ชิวๆครับน้องๆ — หลบการโจมตีของ ${attacker.name} ได้! ฟื้นพลังชีวิต +1 เติมเอาไปสิ +1 (อัตราหลบเหลือ ${target.chillDodge}%)`);
