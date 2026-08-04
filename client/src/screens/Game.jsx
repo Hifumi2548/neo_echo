@@ -519,6 +519,8 @@ const STATUS_INFO = {
   apprivoise: { icon: "🔥", label: "ฉันคว้ามันได้แล้ว", cls: "bg-echo-hp", desc: "ร่างทาวเบิร์น: ปลดล็อกสกิลพื้นฐาน 2/สกิลรอง/ท่าไม้ตาย พลังโจมตีถาวร +1 — คงอยู่ 10 เทิร์น หมดแล้วกลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวให้ครบ 5 อีกครั้งเพื่อแปลงร่างใหม่ (กันตายสกิลติดตัว 1 ทำงานเมื่อไหร่ เวลาจะถูกนับใหม่เต็ม 10 เทิร์น)" },
   emeraude:   { icon: "💚", label: "ดาบแห่งแสงเอเมอโรด", cls: "bg-echo-armor", desc: "Star Sword Emeraude: การโจมตีปกติครั้งถัดไปฟื้นพลังชีวิตตามความเสียหายที่ทำได้ — มีร่วมกับดาบแห่งแสงแซฟไฟร์ (Saphir) = การันตีโจมตีเพิ่มอีกครั้งทันที" },
   saphir:     { icon: "💙", label: "ดาบแห่งแสงแซฟไฟร์", cls: "bg-echo-cyan text-gray-900", desc: "Star Sword Saphir: ลำพังไม่มีผลอะไรเพิ่มเติม — ต้องมีดาบแห่งแสงเอเมอโรด (Emeraude) ติดตัวด้วยเท่านั้น การโจมตีปกติครั้งถัดไปจึงจะได้โจมตีเพิ่มอีกครั้งทันที (การันตี)" },
+  lance:      { icon: "🔱", label: "หอกผู้พิชิต", cls: "bg-echo-gold text-gray-900", desc: "ทั้งสองสิ่งรวมเป็นหนึ่ง: ดาบเอเมอโรดและแซฟไฟร์หลอมรวมเป็นหอกเดียว — การโจมตีปกติครั้งถัดไปดาเมจคงที่ 5 หน่วย และฟื้นพลังชีวิต +3 ใช้แล้วหอกจะถูกล้างออก ต้องรวมดาบทั้งคู่ใหม่อีกครั้ง" },
+  takutoThirdAtk: { icon: "✨", label: "พิชิตแสงดาว", cls: "bg-echo-hp", desc: "อย่างนายน่ะ จะไปเข้าใจอะไร: การโจมตีคอมโบครั้งนี้มีโอกาส 50% ได้โจมตีเพิ่มเป็นครั้งที่ 3" },
   // ---------- ซาโตรุ อาเคฟุ (patch 2.0.8.2) ----------
   oblada:   { icon: "🎵", label: "สิ่งแปลกปลอม", cls: "bg-echo-hp", desc: "Obla Di, Obla Da: รับความเสียหาย 1 หน่วยทุกๆ 2 เทิร์น ตามจำนวนเทิร์นที่เหลือ (ดีบัฟพื้นฐาน — ต้าน/ล้างได้)" },
   // ---------- ริดดี้ มาร์เซนาส (patch 2.0.9) ----------
@@ -1430,29 +1432,6 @@ function PhenexReleaseModal({ ask, onPick }) {
     </div>
   );
 }
-// สึงาชิ ทาคุโตะ: ฉันยังคง..มองเห็นมันอยู่ — ตายขณะไม่มีฉันคว้ามันได้แล้ว เลือกเป้าหมายโจมตีหลังตาย
-function TakutoLastStandModal({ ask, onPick }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/70 grid place-items-center p-4">
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl border-2 border-echo-hp/60">
-        <div className="text-lg font-black text-echo-hp">👁️ ฉันยังคง..มองเห็นมันอยู่</div>
-        <div className="text-sm opacity-80 mb-3">เลือกเป้าหมายที่จะโจมตีหลังตาย (ความเสียหาย 4 หน่วย นับเกราะก่อน)</div>
-        <div className="flex flex-col gap-2">
-          {ask.options.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => { clickSound(); onPick(c.id); }}
-              className="text-left flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/15 px-3 py-2 transition"
-            >
-              <img src={c.img} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" />
-              <div className="font-bold" style={{ color: c.color }}>{c.name}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 // บานาจ: ข้อเสนอพันธมิตรจากริดดี้ — ตอบรับ/ปฏิเสธ (ไม่ตอบก่อนเปิดไพ่ = ปฏิเสธ)
 function AllyOfferModal({ offer, onAnswer }) {
   return (
@@ -1777,14 +1756,19 @@ export default function Game({ state, lowQ }) {
   // สกิลติดตัว: ไม่ติดคูลดาวน์การใช้สกิล — Quick Swap (สกิลพื้นฐาน) และ Weapon (สกิลรอง) ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน
   const doomBasicLocked = isDoomguy && !!me?.doomQuickSwapUsed; // Quick Swap เอง ยังจำกัด 1 ครั้ง/เทิร์นตามปกติ
   const doomNoEffectLocked = isDoomguy && me?.doomWeaponHasEffect === false; // ปืนกระบอกนี้ไม่มีความสามารถพิเศษให้กด (Plasma Rifle/BFG 9000)
-  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new / 2.2.4) ----------
+  // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new / 2.2.4 / 2.2.5) ----------
   const isTakuto = ch?.id === "takuto";
   const takutoApprivoiseOn = isTakuto && !!(me?.statuses?.apprivoise);
   const takutoNotApprivoiseLocked = isTakuto && !takutoApprivoiseOn; // สกิลรอง: ต้องฉันคว้ามันได้แล้วก่อน
-  const takutoBasicPending = isTakuto && !!(me?.statuses?.emeraude); // Emeraude ยังไม่ถูกใช้ — กดสกิลพื้นฐานซ้ำไม่ได้
-  const takutoSecPending = isTakuto && !!(me?.statuses?.saphir); // Saphir ยังไม่ถูกใช้ — กดสกิลรองซ้ำไม่ได้
-  // ท่าไม้ตายใหม่ "อย่างนายน่ะ จะไปเข้าใจอะไร": ต้องมีดาบทั้ง 2 อันพร้อมกัน + ไม่มีโอกาสโจมตีครั้งที่ 3 ค้างอยู่
-  const takutoUlt2Locked = isTakuto && !((me?.statuses?.emeraude || 0) > 0 && (me?.statuses?.saphir || 0) > 0 && !me?.takutoThirdAtkReady);
+  const takutoLanceOn = isTakuto && (me?.statuses?.lance || 0) > 0; // หอกผู้พิชิต: ถือว่าดาบทั้ง 2 อันทำงานอยู่ กดซ้ำไม่ได้
+  const takutoBasicPending = isTakuto && (!!(me?.statuses?.emeraude) || takutoLanceOn); // Emeraude ยังไม่ถูกใช้ — กดสกิลพื้นฐานซ้ำไม่ได้
+  const takutoSecPending = isTakuto && (!!(me?.statuses?.saphir) || takutoLanceOn); // Saphir ยังไม่ถูกใช้ — กดสกิลรองซ้ำไม่ได้
+  // ท่าไม้ตาย 1 "อย่างนายน่ะ จะไปเข้าใจอะไร" (พิชิตแสงดาว): ใช้ได้ก่อนกันตายทำงานเท่านั้น ต้องมีดาบทั้ง 2 อันพร้อมกัน + ไม่มีโอกาสโจมตีครั้งที่ 3 ค้างอยู่
+  const takutoUlt2Locked = isTakuto && (!!me?.beatSaved || !((me?.statuses?.emeraude || 0) > 0 && (me?.statuses?.saphir || 0) > 0 && !(me?.statuses?.takutoThirdAtk || 0)));
+  // ท่าไม้ตาย 2 "ร่วมเดินทางไปกับฉันเถอะ": แทนท่าไม้ตาย 1 ถาวรหลังกันตายทำงานแล้ว ต้องอยู่ในร่างฉันคว้ามันได้แล้วเท่านั้น (ไม่ต้องมีดาบ)
+  const takutoUlt3Locked = isTakuto && !!me?.beatSaved && !takutoApprivoiseOn;
+  // ปุ่มท่าไม้ตายที่แสดงอยู่ตอนนี้คือแบบไหน — สลับล็อกให้ตรงกับสกิลที่ ch?.ultimate ส่งมาจาก server
+  const takutoUltLockedNow = isTakuto ? (me?.beatSaved ? takutoUlt3Locked : takutoUlt2Locked) : false;
   // ---------- ฟุจิมารุ ----------
   const isFuji = ch?.id === "fujimaru";
   const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
@@ -2446,7 +2430,7 @@ export default function Game({ state, lowQ }) {
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                 <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || doomUltLocked || takutoUlt2Locked || tepeuCookLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2658,7 +2642,6 @@ export default function Game({ state, lowQ }) {
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
-        {state.takutoLastStandAsk && <TakutoLastStandModal ask={state.takutoLastStandAsk} onPick={(id) => socket.emit("takutoLastStand", { targetId: id })} />}
         {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
         {state.allyBreakAsk && me?.alive && <AllyBreakModal ask={state.allyBreakAsk} onAnswer={(c) => socket.emit("allyBreakAnswer", { cancel: c })} />}
         {state.allyFinalAsk && me?.alive && <AllyFinalModal ask={state.allyFinalAsk} onAnswer={(k) => socket.emit("allyFinalAnswer", { keep: k })} />}
@@ -2913,7 +2896,7 @@ export default function Game({ state, lowQ }) {
                 <div className="grid grid-cols-3 gap-3 mt-2">
                   <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                   <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || doomUltLocked || takutoUlt2Locked || tepeuCookLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -3141,7 +3124,6 @@ export default function Game({ state, lowQ }) {
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
       {state.allyChoices && me?.alive && <AllyChoiceModal choices={state.allyChoices} onPick={(id) => socket.emit("riddheAlly", { targetId: id })} onDecline={() => socket.emit("riddheAlly", {})} />}
         {state.phenexReleaseAsk && <PhenexReleaseModal ask={state.phenexReleaseAsk} onPick={(id) => socket.emit("phenexRelease", { targetId: id })} />}
-        {state.takutoLastStandAsk && <TakutoLastStandModal ask={state.takutoLastStandAsk} onPick={(id) => socket.emit("takutoLastStand", { targetId: id })} />}
         {shopOpen && <ShopModal shop={state.shop} me={me} onClose={() => setShopOpen(false)} />}
         {bagOpen && <InventoryModal me={me} onClose={() => setBagOpen(false)} />}
       {state.allyOfferAsk && me?.alive && <AllyOfferModal offer={state.allyOfferAsk} onAnswer={(a) => socket.emit("allyAnswer", { accept: a })} />}
