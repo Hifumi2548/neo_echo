@@ -48,6 +48,7 @@ const SHOP_RESIST_PRICE = 5;
 const SHOP_RESIST_TURNS = 3;     // ยาต้านสถานะ: ต้านสถานะผิดปกติ 3 เทิร์น
 const SHOP_ARMOR_PRICE = 3;
 const SHOP_ARMOR_AMOUNT = 1;     // ยาฟื้นเกราะ: ฟื้นเกราะ +1 หน่วย
+const SHOP_CARD_REMOVE_PRICE = 5; // ยาลดไพ่: ลดไพ่ใบล่าสุดของตัวเองออก 1 ใบ (กันแตกได้)
 const SHOP_SKILL_SIZES = [
   { size: "small", amount: 1, price: 2 },
   { size: "medium", amount: 4, price: 6 },
@@ -2704,12 +2705,13 @@ function startMatch() {
 }
 
 // ---------- ร้านค้ามายา (patch 2.2 full) ----------
-// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 20% / โชคลาภ 5% (หายากสุด) / ต้านสถานะ 20% / ฟื้นแต้มสกิล 35% (เยอะกว่าอันอื่น สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 20%
+// สุ่มสินค้า 1 ชิ้น ตามน้ำหนัก: แต้มการ์ด 20% / โชคลาภ 5% (หายากสุด) / ต้านสถานะ 20% / ยาลดไพ่ 15% (ทั่วไป แต่ไม่หายากเท่าโชคลาภ) / ฟื้นแต้มสกิล 20% (สุ่มขนาดย่อยอีกที) / ฟื้นเกราะ 20%
 function rollShopItem() {
   const roll = Math.random();
   if (roll < 0.20) return { type: "cardPoint", value: 1 + Math.floor(Math.random() * 10), price: SHOP_CARD_POINT_PRICE };
   if (roll < 0.25) return { type: "fortune", price: SHOP_FORTUNE_PRICE };
   if (roll < 0.45) return { type: "resist", price: SHOP_RESIST_PRICE };
+  if (roll < 0.60) return { type: "cardRemove", price: SHOP_CARD_REMOVE_PRICE };
   if (roll < 0.80) {
     const s = SHOP_SKILL_SIZES[Math.floor(Math.random() * SHOP_SKILL_SIZES.length)];
     return { type: "skillPoint", size: s.size, value: s.amount, price: s.price };
@@ -2720,6 +2722,7 @@ function shopItemName(item) {
   if (item.type === "cardPoint") return `แต้มการ์ด +${item.value}`;
   if (item.type === "fortune") return "ยาโชคลาภ";
   if (item.type === "resist") return "ยาต้านสถานะ";
+  if (item.type === "cardRemove") return "ยาลดไพ่";
   if (item.type === "skillPoint") return `ยาฟื้นแต้มสกิล +${item.value}`;
   if (item.type === "armor") return `ยาฟื้นเกราะ +${item.value}`;
   return "สินค้า";
@@ -2767,6 +2770,11 @@ function useInventoryItem(id, uid) {
   } else if (item.type === "resist") {
     p.statuses.resist = Math.max(p.statuses.resist || 0, SHOP_RESIST_TURNS);
     lastLog.push(`🛡️ ${p.name} ใช้ยาต้านสถานะ — ต้านสถานะผิดปกติ ${SHOP_RESIST_TURNS} เทิร์น จากคลัง`);
+  } else if (item.type === "cardRemove") {
+    if (gameState !== "PLAYING" || p.locked || !p.cards || p.cards.length === 0) return;
+    const removed = p.cards.pop();
+    p.busted = bustedOf(p);
+    lastLog.push(`✂️ ${p.name} ใช้ยาลดไพ่ — ลดไพ่ใบล่าสุด (${removed.value}) ออกจากคลัง${p.busted ? "" : " — ไพ่ไม่แตกแล้ว!"}`);
   } else if (item.type === "skillPoint") {
     addSkill(p, item.value);
     lastLog.push(`⚡ ${p.name} ใช้ยาฟื้นแต้มสกิล +${item.value} จากคลัง (เพดาน ${maxSkillOf(p)})`);
@@ -3089,7 +3097,6 @@ function dealRound() {
       p.busted = bustedOf(p);
       lastLog.push(`🌩️ [Calamity] บังคับ ${p.name} จั่วไพ่เพิ่ม ${n} ใบ${p.busted ? " — ไพ่แตกตั้งแต่ต้นเทิร์น!" : ""}`);
       if (p.busted) {
-        p.locked = true;
         voidUltimateOnBust(p);
         maybeMoonBurst(p);
       }
@@ -3349,8 +3356,8 @@ function hit(id) {
   // พรแห่งการจั่ว (patch 2.0.8): จั่วการ์ดเพิ่มมีโอกาส 30% ได้รับพร — 1 ครั้งต่อเทิร์น
   maybeDrawBlessing(p);
   p.busted = bustedOf(p);
-  if (p.busted) { p.locked = true; voidUltimateOnBust(p); maybeMoonBurst(p); }
-  // ถึงเพดานพอดี: ไม่ล็อกอัตโนมัติ — ปิดปุ่มจั่ว (atCap) แล้วรอผู้ใช้เลือกสกิลก่อนเปิดไพ่เอง
+  if (p.busted) { voidUltimateOnBust(p); maybeMoonBurst(p); }
+  // ไพ่แตก: ไม่ล็อกอัตโนมัติ — ยังกดสกิล/ใช้ไอเทมได้ต่อไป จนกว่าจะกดเปิดไพ่เอง หรือทุกคนเปิดไพ่ครบ
   broadcastState();
   checkAllLocked();
 }
@@ -3429,7 +3436,7 @@ function lwCardBurn(id, indices) {
   p.cardBonus = (p.cardBonus || 0) + total;
   p.busted = bustedOf(p);
   lastLog.push(`🃏 ${p.name} Arc Drive finish — แปลงของในคลัง ${burned.length} ชิ้นเป็นแต้มการ์ด +${total} (คลังเหลือ ${bank.length})${p.busted ? " — ไพ่แตก!" : ""}`);
-  if (p.busted) { p.locked = true; voidUltimateOnBust(p); maybeMoonBurst(p); }
+  if (p.busted) { voidUltimateOnBust(p); maybeMoonBurst(p); }
   broadcastState();
   checkAllLocked();
 }
@@ -5105,8 +5112,8 @@ function useSkill(id, tier, targets, item) {
   roundSkills.push({ playerId: id, name: skill.name, img: skill.img || null, status: st });
 
   p.busted = bustedOf(p);
-  if (p.busted) { p.locked = true; voidUltimateOnBust(p); maybeMoonBurst(p); }
-  // ถึงเพดานพอดี (เช่น 21): ไม่ล็อกอัตโนมัติ — รอผู้ใช้เปิดไพ่เอง
+  if (p.busted) { voidUltimateOnBust(p); maybeMoonBurst(p); }
+  // ไพ่แตก/ถึงเพดานพอดี: ไม่ล็อกอัตโนมัติ — ยังกดสกิล/ใช้ไอเทมได้ต่อไป จนกว่าจะกดเปิดไพ่เอง หรือทุกคนเปิดไพ่ครบ
 
   // วีดีโอสวนกลับที่ค้างคิว (Wonder of U ซาโตรุ) — เล่นทันทีช่วงจั่วการ์ด
   if (gameState === "PLAYING" && cutsceneQueue.length) pausePlayingForCutscene();

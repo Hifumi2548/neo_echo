@@ -678,6 +678,7 @@ const SHOP_ITEM_INFO = {
   cardPoint: { icon: "🃏", label: (it) => `แต้มการ์ด +${it.value}`, desc: "บวกเข้าแต้มไพ่ที่กำลังจั่วอยู่ทันที (ใช้ได้เฉพาะช่วงกำลังจั่วไพ่และยังไม่ล็อก)" },
   fortune: { icon: "🍀", label: () => "ยาโชคลาภ", desc: "ได้รับโชคลาภ +2 หน่วย — จั่วครั้งถัดไปจะปรับไพ่ที่จั่วให้แต้มรวมตกช่วง 19-21 ทันที แล้วหน่วยนั้นหายไป" },
   resist: { icon: "🛡️", label: () => "ยาต้านสถานะ", desc: "ต้านสถานะผิดปกติทุกประเภท 3 เทิร์น (ป้องกันล่วงหน้าเท่านั้น ไม่ใช่ยารักษา)" },
+  cardRemove: { icon: "✂️", label: () => "ยาลดไพ่", desc: "ลดไพ่ใบล่าสุดของตัวเองออก 1 ใบทันที — ใช้กันไพ่แตกได้ (ใช้ได้เฉพาะช่วงกำลังจั่วไพ่และยังไม่ล็อก)" },
   skillPoint: { icon: "⚡", label: (it) => `ยาฟื้นแต้มสกิล +${it.value}`, desc: "ฟื้นแต้มสกิลทันที (เกินเพดานจะหายทิ้งส่วนที่เกิน)" },
   armor: { icon: "🔧", label: (it) => `ยาฟื้นเกราะ +${it.value}`, desc: "ฟื้นเกราะทันที" },
   tepeuMeal: { icon: "🍲", label: (it) => `มื้อที่สุข (ฟื้นเลือด +${it.value})`, desc: "ฟื้นพลังชีวิตทันที — ผลิตได้จากเทเปาเท่านั้น (วันนี้อากาศดีจัง)" },
@@ -2493,7 +2494,7 @@ export default function Game({ state, lowQ }) {
                     </div>
                     {noDraw && <div className="text-center text-sm font-bold text-echo-hp mt-1">🚫 เทิร์นนี้จั่วไม่ได้</div>}
                     {shCharging && <div className="text-center text-sm font-bold text-echo-hp mt-1">🎻 กำลังบรรเลงบทเพลงสุดท้าย — จั่ว/ใช้สกิลไม่ได้ (ชนะจั่วยังโจมตีได้)</div>}
-                    {me.atCap && <div className="text-center text-sm font-bold text-echo-gold mt-1">แต้มเต็มแล้ว! ใช้สกิล หรือเปิดไพ่ได้เลย</div>}
+                    {me.atCap && <div className="text-center text-sm font-bold text-echo-gold mt-1">{me.busted ? "ไพ่แตก! 😢 ยังกดสกิล/ใช้ไอเทมได้ จนกว่าจะเปิดไพ่" : "แต้มเต็มแล้ว! ใช้สกิล หรือเปิดไพ่ได้เลย"}</div>}
                   </>
                 ) : phase === "PLAYING" && me.alive && done ? (
                   <div className="text-center text-lg font-bold py-2">{me.busted ? "แตก! 😢" : me.statuses?.sleep || me.statuses?.ksleep ? "หลับไหลอยู่ 💤" : me.statuses?.sena ? "หนีเซนะอยู่ 🏃‍♀️" : me.statuses?.kstun ? "สตั้นอยู่ 😵" : "พร้อมแล้ว ✅"} รอเพื่อน...</div>
@@ -2965,7 +2966,7 @@ export default function Game({ state, lowQ }) {
                     <Button variant="gold" className="px-3 py-4 text-lg" onClick={() => { clickSound(); socket.emit("lock"); }}>เปิดไพ่</Button>
                     {noDraw && <div className="text-center text-xs font-bold text-echo-hp">🚫 เทิร์นนี้จั่วไม่ได้</div>}
                     {shCharging && <div className="text-center text-xs font-bold text-echo-hp">🎻 บรรเลงบทเพลงสุดท้าย<br />จั่ว/ใช้สกิลไม่ได้</div>}
-                    {me.atCap && <div className="text-center text-xs font-bold text-echo-gold">แต้มเต็มแล้ว!<br />ใช้สกิล/เปิดไพ่ได้เลย</div>}
+                    {me.atCap && <div className="text-center text-xs font-bold text-echo-gold">{me.busted ? <>ไพ่แตก! 😢<br />ยังใช้สกิล/ไอเทมได้</> : <>แต้มเต็มแล้ว!<br />ใช้สกิล/เปิดไพ่ได้เลย</>}</div>}
                   </>
                 ) : phase === "PLAYING" && me.alive && done ? (
                   <div className="text-center text-base font-bold text-white/90">{me.busted ? "แตก! 😢" : me.statuses?.sleep || me.statuses?.ksleep ? "หลับไหลอยู่ 💤" : me.statuses?.sena ? "หนีเซนะอยู่ 🏃‍♀️" : me.statuses?.kstun ? "สตั้นอยู่ 😵" : "พร้อมแล้ว ✅"}<br />รอเพื่อน...</div>
