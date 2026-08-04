@@ -267,8 +267,7 @@ function currentSkillOf(target, tier) {
     if (tier === "basic") key = ((target.statuses.ginga || 0) > 0 || (target.statuses.gingastrium || 0) > 0) ? "basic2" : "basic";
     if (tier === "secondary") key = (target.statuses.gingastrium || 0) > 0 ? "secondary2" : "secondary";
   } else if (ch.id === "oguri") {
-    if (tier === "basic") key = (target.stamina || 0) <= 0 ? "basic2" : "basic";
-    if (tier === "ultimate") key = oguriGoldStacks(target) >= OGURI_GOLD_MAX ? "ultimate2" : "ultimate";
+    if (tier === "ultimate") key = oguriAshenReady(target) ? "ultimate2" : "ultimate";
   } else if (ch.id === "aquarion") {
     if (tier === "secondary") key = target.fused ? "secondaryRevert" : "secondary";
     else if (tier === "ultimate") {
@@ -1007,35 +1006,67 @@ function tepeuResolveKill(p, t) {
 //  ยุคทอง (goldenera): พลังโจมตี +1 / เพดานเกราะ +1 — สะสม 2 แต้ม อยู่ 3 เทิร์น หายเมื่อฝึกฝนล้มเหลว
 //  ครบ 2 แต้ม -> เข้าร่าง Zone (GrayBeast: Stamina +1/เทิร์น, แต้มสกิล +1 ทุก 2 เทิร์น)
 //  Stamina หมด + ไม่มียุคทอง -> ร่างหมดแรง (Burnout: ใช้ได้แค่ A Big Meal)
-const OGURI_STAMINA_START = 8;   // GrayBeast: ได้ Stamina เริ่มเกม
-const OGURI_STAMINA_MAX = 16;    // Stamina สะสมสูงสุด
-const OGURI_GOLD_MAX = 2;        // ยุคทอง สะสมสูงสุด
-const OGURI_GOLD_TURNS = 6;      // ยุคทอง อยู่ 6 เทิร์น (patch 2.0.8.4 — เพิ่มจาก 3, รีเฟรชเมื่อได้แต้มใหม่)
-const OGURI_GOLD_ATK_PER = 1;     // ยุคทอง: พลังโจมตีพื้นฐาน +1 ทุกๆแต้มที่ติดอยู่บนตัว (patch 2.1.3)
-const OGURI_GRIT_MAX = 2;        // เวลากัดฟันทน สะสมสูงสุด
-const OGURI_TRAIN_STAMINA = 4;   // Training: หัก Stamina 4
-const OGURI_TRAIN_STAMINA_OW = 2; // Training ระหว่าง Overweight: หัก Stamina 2 + Cost 0
-const OGURI_TRAIN_BASE = 0.6;    // โอกาสฝึกฝนสำเร็จพื้นฐาน 60% (+10%/เวลากัดฟันทน −10%/ยุคทอง)
-const OGURI_TRAIN_OW = 0.9;      // โอกาสฝึกฝนสำเร็จระหว่าง Overweight: 90% คงที่
-const OGURI_ULT_STAMINA = 8;     // The Beat of Victory: หัก Stamina 8
-const OGURI_ULT2_STAMINA = 12;   // Ashen Trail: หัก Stamina 12 + ยุคทอง 2 (patch 2.0.8.4 — ลดจาก 16)
+// ---------- โอกูริ แคป (Rework): Energy (ทรัพยากรของสกิล) + Stamina ชาร์จ (ทรัพยากรท่าไม้ตาย แยกกัน) ----------
+const OGURI_ENERGY_START = 8;      // Energy: เริ่มเกมได้รับ 8 แต้ม
+const OGURI_ENERGY_MAX = 16;       // Energy สะสมสูงสุด
+const OGURI_CHARGE_BASE_CAP = 52;  // Stamina ชาร์จ: ความจุพื้นฐาน
+const OGURI_CHARGE_CAP_MAX_BONUS = 48; // Training: เพิ่มความจุได้สูงสุดสะสม +48 (รวมเพดานสูงสุด 100)
+const OGURI_CHARGE_GAIN_MIN = 8;   // Stamina ชาร์จ: ได้รับทุกเทิร์น 8-16 หน่วย (สุ่ม)
+const OGURI_CHARGE_GAIN_MAX = 16;
+const OGURI_GOLD_MAX = 3;          // ยุคทอง สะสมสูงสุด (Rework: เดิม 2 -> 3)
+const OGURI_GOLD_TURNS = 6;        // ยุคทอง อยู่ 6 เทิร์น (รีเฟรชเมื่อได้แต้มใหม่)
+const OGURI_GOLD_ATK_PER = 1;      // ยุคทอง: พลังโจมตีพื้นฐาน +1 ทุกๆแต้มที่ติดอยู่บนตัว
+const OGURI_GOLD_ATK_CAP = 2;      // ยุคทอง: พลังโจมตีบวกได้ไม่เกิน 2 หน่วย (Rework)
+const OGURI_GOLD_ARMOR_AT = 2;     // ยุคทอง: ครบ 2 แต้มขึ้นไป ได้เพดานเกราะ +1 (Rework — เดิมแค่มียุคทองก็ได้แล้ว)
+const OGURI_GRAYBEAST_SP_TURNS = 2; // GrayBeast: แต้มสกิล +1 ทุก 2 เทิร์น (Energy +1 ได้ทุกเทิร์น)
+const OGURI_BURNOUT_TURNS = 2;     // Burnout: คงอยู่ 2 เทิร์น (ไม่ใช่ถาวรแบบเดิมแล้ว)
+const OGURI_BURNOUT_ENERGY_PENALTY = 2; // Burnout: Breakfast ได้ Energy ลดลง -2
+const OGURI_BURNOUT_DECAY_TURNS = 2; // Burnout: มอบสถานะผุพัง 2 เทิร์น
+const OGURI_BREAKFAST_HEAL = 1;    // Breakfast: ฟื้นเลือด 1
+const OGURI_BREAKFAST_ENERGY = 4;  // Breakfast: Energy +4 ปกติ (Burnout ลดเหลือ +2)
+const OGURI_TRAIN_ENERGY_COST = 4; // Training: หัก Energy 4 (เดิมหัก Stamina)
+const OGURI_TRAIN_CAP_GAIN_MIN = 4; // Training: เพิ่มความจุ Stamina ชาร์จ 4-8 หน่วย (สุ่ม)
+const OGURI_TRAIN_CAP_GAIN_MAX = 8;
+const OGURI_TRAIN_BASE = 0.6;      // โอกาสฝึกฝนสำเร็จพื้นฐาน 60%
+const OGURI_TRAIN_BONUS_RATE = 0.8; // บัฟ Bonus ทำงานอยู่: โอกาสสำเร็จเพิ่มเป็น 80%
+const OGURI_TRAIN_FAIL_DMG = 1;    // ฝึกฝนล้มเหลว: ดาเมจ 1 หน่วยไม่สนเกราะ
+const OGURI_TRAIN_EXTRA_ROLL = 0.25; // ฝึกฝนสำเร็จ: โอกาส 25% ได้บัฟเสริมเพิ่มอีก 1 อัน
+const OGURI_TRAIN_FLOW_W = 0.40;   // บัฟเสริม 3 แบบ (สุ่มถ่วงน้ำหนัก): Flow 40%
+const OGURI_TRAIN_BONUS_W = 0.40;  // Bonus 40%
+const OGURI_TRAIN_SUNNY_W = 0.20;  // Sunny Day 20%
+const OGURI_FLOW_TURNS = 3;        // Flow: อยู่ 3 เทิร์น หรือจนกว่าจะถูกโจมตี
+const OGURI_FLOW_DODGE = 0.5;      // Flow: โอกาสหลบการโจมตี 50%
+const OGURI_BONUS_TURNS = 3;       // Bonus: อยู่ 3 เทิร์น
+const OGURI_SUNNY_TURNS = 3;       // Sunny Day: อยู่ 3 เทิร์น
+const OGURI_SUNNY_FORTUNE = 1;     // Sunny Day: ได้โชคลาภ +1 ทุกเทิร์นที่มีบัฟนี้
+const OGURI_ULT_CHARGE_COST = 35;  // The Beat of Victory: Stamina ชาร์จ 35
+const OGURI_ULT_ATK_BONUS = 2;     // ชนะ: พลังโจมตีพื้นฐาน +2 (ซ้อนทับกับยุคทองได้)
+const OGURI_ULT_NOREGEN_TURNS = 2; // เป้าหมาย: เกินเยียวยา 2 เทิร์น
+const OGURI_ULT_STAGGER_TURNS = 2; // เป้าหมาย: ชะงัก 2 เทิร์น (ฟื้นฟูแต้มสกิลไม่ได้)
+const OGURI_ULT2_CHARGE_COST = 75; // Ashen Trail: Stamina ชาร์จ 75 (ต้องมียุคทองครบด้วย)
 const OGURI_ASHEN_DRAWS = 2;     // Ashen Trail: บังคับทุกคนจั่วเพิ่ม 2 ใบ
-const OGURI_ASHEN_DMG = 2;       // Ashen Trail: โจมตีทุกคนที่ไพ่แตกหลังเปิดไพ่ (1 พื้นฐาน + 1 โบนัสสกิล)
-const OGURI_ASHEN_CARD_BONUS = 8; // Ashen Trail (patch 2.1.1): คู่ต่อสู้ทุกคนบวกแต้มการ์ด +8
-const OGURI_ASHEN_ATK = 2;        // Ashen Trail (patch 2.1.1): โจมตีพื้นฐาน +2 (เดิม +1)
-const OGURI_STAGGER_CAP = 16;    // ชะงัก: จั่วไพ่ได้ไม่เกิน 16 แต้ม
+const OGURI_ASHEN_DMG = 2;       // Ashen Trail: โจมตีทุกคนที่ไพ่แตกหลังเปิดไพ่
+const OGURI_ASHEN_CARD_BONUS = 8; // Ashen Trail: คู่ต่อสู้ทุกคนบวกแต้มการ์ด +8
 const OGURI_ZONE_IMG = "/characters/oguri/zone_form.jpg";
 // แต้มยุคทองปัจจุบัน (เก็บจำนวนใน statusAmt คู่กับเวลาใน statuses)
 function oguriGoldStacks(p) {
   return ((p.statuses && p.statuses.goldenera) || 0) > 0 ? ((p.statusAmt && p.statusAmt.goldenera) || 0) : 0;
 }
-// เพิ่ม/ลด Stamina (0..16) — Stamina กลับมามากกว่า 0 = ฟื้นจากร่างหมดแรงทันที
-function oguriAddStamina(p, n) {
-  p.stamina = Math.max(0, Math.min(OGURI_STAMINA_MAX, (p.stamina || 0) + n));
-  if (p.stamina > 0 && ((p.statuses && p.statuses.burnout) || 0) > 0) {
-    delete p.statuses.burnout;
-    lastLog.push(`🐴 ${p.name} ฟื้นจากร่างหมดแรง — Stamina กลับคืนมาแล้ว!`);
-  }
+// ความจุ Stamina ชาร์จปัจจุบัน (พื้นฐาน 52 + ที่เพิ่มจาก Training สะสมสูงสุด +48 = เพดาน 100)
+function oguriChargeCapOf(p) {
+  return OGURI_CHARGE_BASE_CAP + Math.min(OGURI_CHARGE_CAP_MAX_BONUS, p.oguriChargeCapBonus || 0);
+}
+// ยุคทองครบ + Stamina ชาร์จพอ -> ปลดล็อกท่าไม้ตาย 2 Ashen Trail แทนท่าไม้ตาย 1
+function oguriAshenReady(p) {
+  return oguriGoldStacks(p) >= OGURI_GOLD_MAX && (p.stamina || 0) >= OGURI_ULT2_CHARGE_COST;
+}
+// เพิ่ม/ลด Energy (0..16) — ทรัพยากรของ Breakfast/Training/GrayBeast
+function oguriAddEnergy(p, n) {
+  p.oguriEnergy = Math.max(0, Math.min(OGURI_ENERGY_MAX, (p.oguriEnergy || 0) + n));
+}
+// เพิ่ม/ลด Stamina ชาร์จ (0..ความจุปัจจุบัน) — ทรัพยากรของท่าไม้ตาย ได้รับอัตโนมัติทุกเทิร์น
+function oguriAddCharge(p, n) {
+  p.stamina = Math.max(0, Math.min(oguriChargeCapOf(p), (p.stamina || 0) + n));
 }
 
 // ---------- ซาโตรุ อาเคฟุ (patch 2.0.8.2) ----------
@@ -1465,8 +1496,6 @@ function scoreCap(p) {
   // แต้มสูงสุดที่รับได้ก่อนล็อกไพ่อัตโนมัติ (UPG! = เพดานของมัน, เสือนอนกิน (fiber) = 19, ปกติ = 21)
   if (p.statuses && p.statuses.upg) return upgCap(p);
   if (p.statuses && p.statuses.fiber) return FIBER_CAP;
-  // ชะงัก (โอกูริ patch 2.0.8.1): จั่วไพ่เกิน 16 ไม่ได้ (แต่ยังแตกได้ตามปกติถ้าใบที่จั่วทำให้เกิน 21)
-  if (p.statuses && p.statuses.stagger) return OGURI_STAGGER_CAP;
   return 21;
 }
 function scoreOf(p) {
@@ -1513,7 +1542,7 @@ function maxArmorOf(p) {
   return armorBase
     + ((((p.statuses && p.statuses.humanity) || 0) > 0) ? 3 : 0)
     + ((((p.statuses && p.statuses.vortarmor) || 0) > 0) ? 1 : 0)
-    + ((((p.statuses && p.statuses.goldenera) || 0) > 0) ? 1 : 0) // ยุคทอง (โอกูริ patch 2.0.8.1): เพดานเกราะ +1
+    + (oguriGoldStacks(p) >= OGURI_GOLD_ARMOR_AT ? 1 : 0) // ยุคทอง (โอกูริ Rework): ครบ 2 แต้มขึ้นไป เพดานเกราะ +1
     + ((p.characterId === "hikaru" && ((p.statuses && p.statuses.monster) || 0) > 0) ? HIKARU_MONSTER_ARMOR_BONUS : 0) // MonsterLive (ฮิคารุ patch 2.1.3): เพดานเกราะ +2
     // ริดดี้ (patch 2.0.9): Absorb Shield +2 (1 เทิร์น) / ท่าไม้ตาย 2 +2 ทั้งริดดี้ (riddheguard) และบานาจ (riddheward)
     + ((((p.statuses && p.statuses.absorbplus) || 0) > 0) ? RIDDHE_ABSORB_ARMOR : 0)
@@ -2004,8 +2033,8 @@ function dealMixed(p, n, isNormalAttack) { // เกราะก่อนแล�
   }
 }
 function addSkill(p, n) {
-  // Overweight (โอกูริ patch 2.0.8.1): ฟื้นฟูแต้มสกิลไม่ได้ทุกช่องทาง จนกว่าจะถูกลบด้วย Healthfull
-  if (((p.statuses && p.statuses.overweight) || 0) > 0) return;
+  // ชะงัก (โอกูริ Rework): ฟื้นฟูแต้มสกิลไม่ได้ทุกช่องทาง ระหว่างติดสถานะนี้
+  if (((p.statuses && p.statuses.stagger) || 0) > 0) return;
   const before = p.skillPoints;
   p.skillPoints = Math.min(maxSkillOf(p), p.skillPoints + n); // Bard: เพดานพลังงาน 9
   p.gainedSkill += p.skillPoints - before;
@@ -2189,8 +2218,10 @@ function resetCombat(p) {
   // ---------- เรียวกิ ชิกิ (patch 2.0.6) ----------
   //  p.shikiUlt คงไว้ตามที่เลือกตอนเข้าห้อง (deatheye | wither) — ไม่รีเซ็ตระหว่างแมตช์
   p.witherAdded = 0;        // เส้นชีวิตที่ความตายที่โรยราแจกให้คนนี้ (สูงสุด 3 — จบท่าแล้วลบออกคืน)
-  // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
-  p.stamina = OGURI_STAMINA_START; // GrayBeast: ได้ Stamina 8 ตอนเริ่มเกม (สะสมสูงสุด 16)
+  // ---------- โอกูริ แคป (Rework) ----------
+  p.oguriEnergy = OGURI_ENERGY_START; // Energy: เริ่มเกมได้รับ 8 แต้ม (สะสมสูงสุด 16)
+  p.stamina = 0;             // Stamina ชาร์จ: เริ่มเกม 0 หน่วย ได้รับอัตโนมัติทุกเทิร์น
+  p.oguriChargeCapBonus = 0; // ความจุ Stamina ชาร์จที่เพิ่มจาก Training (สะสมสูงสุด +48)
   p.oguriZoneTurns = 0;     // นับเทิร์นระหว่างร่าง Zone (แต้มสกิล +1 ทุก 2 เทิร์น)
   p.staggerNext = 0;        // ติดชะงักตอนเริ่มเทิร์นถัดไป (จาก The Beat of Victory)
   // ---------- ซาโตรุ อาเคฟุ (patch 2.0.8.2) ----------
@@ -2437,12 +2468,9 @@ function buildStateFor(viewerId) {
         basicPub = pub(((p.statuses.ginga || 0) > 0 || (p.statuses.gingastrium || 0) > 0) ? ch.basic2 : ch.basic);
         secondaryPub = pub((p.statuses.gingastrium || 0) > 0 ? ch.secondary2 : ch.secondary);
       }
-      // โอกูริ แคป (patch 2.0.8.1): Stamina หมด — สกิลพื้นฐานกลายเป็น A Big Meal
-      //  / ยุคทองครบ 2 — ท่าไม้ตายกลายเป็น Ashen Trail / Overweight — Training คอสต์ 0
+      // โอกูริ แคป (Rework): ยุคทองครบ 3 + Stamina ชาร์จ 75 ขึ้นไป — ท่าไม้ตายกลายเป็น Ashen Trail
       if (ch.id === "oguri") {
-        basicPub = pub((p.stamina || 0) <= 0 ? ch.basic2 : ch.basic);
-        ultimatePub = pub(oguriGoldStacks(p) >= OGURI_GOLD_MAX ? ch.ultimate2 : ch.ultimate);
-        if (secondaryPub && (p.statuses.overweight || 0) > 0) secondaryPub.cost = 0;
+        ultimatePub = pub(oguriAshenReady(p) ? ch.ultimate2 : ch.ultimate);
       }
       // สึงาชิ ทาคุโตะ (patch 2.2 new): Apprivoise! ทำงานแล้ว — สกิลพื้นฐานเปลี่ยนเป็น Star Sword Emeraude ถาวร
       // patch 2.2.5: กันตาย (สกิลติดตัว 1) เคยทำงานไปแล้ว — ท่าไม้ตายเปลี่ยนเป็นร่วมเดินทางไปกับฉันเถอะถาวร (แทนพิชิตแสงดาว)
@@ -2551,7 +2579,9 @@ function buildStateFor(viewerId) {
         soulSection: p.soulSection || 0,   // Bard: ท่อนทำนองแห่งวิญญาณ (ครบ 5 = มิติวิญญาณ)
         bardPending: p.bardPending ? { name: p.bardPending.name, need: p.bardPending.need, allowSelf: p.bardPending.allowSelf } : null, // Bard: บทเพลงรอเลือกเป้าหมาย
         shikiUlt: p.shikiUlt || "deatheye", // ชิกิ: ท่าไม้ตายที่เลือกตอนเข้าห้อง (deatheye | wither)
-        stamina: p.stamina || 0,           // โอกูริ แคป: Stamina สะสม (สูงสุด 16)
+        stamina: p.stamina || 0,           // โอกูริ แคป: Stamina ชาร์จสะสม (ทรัพยากรท่าไม้ตาย)
+        oguriEnergy: p.oguriEnergy || 0,   // โอกูริ แคป: Energy สะสม (สูงสุด 16 — ทรัพยากร Breakfast/Training)
+        oguriChargeCap: p.characterId === "oguri" ? oguriChargeCapOf(p) : undefined, // โอกูริ แคป: ความจุ Stamina ชาร์จปัจจุบัน
         lightDew: p.lightDew || 0,         // อควาเรียน: แสงละอองสะสม (สูงสุด 10)
         reviveIn: p.reviveIn || 0,         // อควาเรียน: จำนวนเทิร์นก่อนฟื้นคืนชีพจากไปยังพฤกษาแห่งชีวิต
         contractPartnerId: p.contractPartner || null, // เจ้าแห่งเน็ตบ้าน: คู่สัญญาปัจจุบัน
@@ -3000,8 +3030,12 @@ function dealRound() {
     }
     firePassive(p, "roundStart");
 
-    // ---------- โอกูริ แคป (patch 2.0.8.4): GrayBeast — เช็คตอนเริ่มเทิร์น ----------
+    // ---------- โอกูริ แคป (Rework): Stamina ชาร์จ / ยุคทอง / Zone (GrayBeast) / หมดแรง (Burnout) / Sunny Day — เช็คตอนเริ่มเทิร์น ----------
     if (p.characterId === "oguri") {
+      // Stamina ชาร์จ: ได้รับทุกเทิร์น 8-16 หน่วย (สุ่ม) ไม่เกินความจุปัจจุบัน (พื้นฐาน 52 + โบนัสจาก Training)
+      const oguriChargeGain = OGURI_CHARGE_GAIN_MIN + Math.floor(Math.random() * (OGURI_CHARGE_GAIN_MAX - OGURI_CHARGE_GAIN_MIN + 1));
+      oguriAddCharge(p, oguriChargeGain);
+      lastLog.push(`🔋 ${p.name} Stamina ชาร์จ +${oguriChargeGain} (${p.stamina}/${oguriChargeCapOf(p)})`);
       // ร่าง Zone ผูกกับยุคทอง: ไม่มียุคทองเหลือ -> ร่าง Zone และ GrayBeast หายไปทันที
       if ((p.statuses.graybeast || 0) > 0 && oguriGoldStacks(p) <= 0) {
         delete p.statuses.graybeast;
@@ -3009,27 +3043,39 @@ function dealRound() {
         p.oguriZoneTurns = 0;
         lastLog.push(`🐴 ${p.name} ยุคทองหมดลง — ร่าง Zone และ GrayBeast จางหายไป`);
       }
-      // ยุคทองครบ 2 -> เข้าสู่ร่าง Zone (คงอยู่ตราบใดที่ยังมียุคทอง)
+      // ยุคทองครบ 3 -> เข้าสู่ร่าง Zone (คงอยู่ตราบใดที่ยังมียุคทอง)
       if (!((p.statuses.graybeast || 0) > 0) && oguriGoldStacks(p) >= OGURI_GOLD_MAX) {
-        p.statuses.graybeast = 1; // ไม่ลดเทิร์น — หายเมื่อยุคทองหมด/เข้าร่างหมดแรง
+        p.statuses.graybeast = 1; // ไม่ลดเทิร์น — หายเมื่อยุคทองหมด
         p.seen.graybeast = true;  // ให้เพลง oguri_theme เล่นค้างระหว่างอยู่ร่าง Zone
         p.oguriZoneTurns = 0;
         p.transformAt = ++transformCounter;
         triggerCutscene(p, "graybeast");
-        lastLog.push(`🐴⚡ ${p.name} ยุคทองครบ ${OGURI_GOLD_MAX} แต้ม — เข้าสู่ร่าง Zone! ได้รับ GrayBeast (Stamina +1 และแต้มสกิล +1 ทุกเทิร์น)`);
+        lastLog.push(`🐴⚡ ${p.name} ยุคทองครบ ${OGURI_GOLD_MAX} แต้ม — เข้าสู่ร่าง Zone! ได้รับ GrayBeast (Energy +1 ทุกเทิร์น และแต้มสกิล +1 ทุก ${OGURI_GRAYBEAST_SP_TURNS} เทิร์น)`);
       }
-      // GrayBeast: Stamina +1 และแต้มสกิล +1 ทุกเทิร์น (patch 2.0.8.4 — เดิมแต้มสกิลทุก 2 เทิร์น)
+      // GrayBeast: Energy +1 ทุกเทิร์น และแต้มสกิล +1 ทุก 2 เทิร์น
       if ((p.statuses.graybeast || 0) > 0) {
-        oguriAddStamina(p, 1);
-        addSkill(p, 1);
-        lastLog.push(`🐴 ${p.name} GrayBeast — Stamina +1 (${p.stamina}/${OGURI_STAMINA_MAX}) และแต้มสกิล +1`);
+        oguriAddEnergy(p, 1);
+        p.oguriZoneTurns = (p.oguriZoneTurns || 0) + 1;
+        let oguriSpMsg = "";
+        if (p.oguriZoneTurns >= OGURI_GRAYBEAST_SP_TURNS) {
+          p.oguriZoneTurns = 0;
+          addSkill(p, 1);
+          oguriSpMsg = " และแต้มสกิล +1";
+        }
+        lastLog.push(`🐴 ${p.name} GrayBeast — Energy +1 (${p.oguriEnergy}/${OGURI_ENERGY_MAX})${oguriSpMsg}`);
       }
-      // Stamina หมด + ไม่มียุคทอง -> เข้าสู่ร่างหมดแรง (Burnout)
-      if ((p.stamina || 0) <= 0 && oguriGoldStacks(p) <= 0 && !((p.statuses.burnout || 0) > 0)) {
-        p.statuses.burnout = 1; // ถาวรจนกว่า Stamina จะกลับมามากกว่า 0
-        if ((p.statuses.graybeast || 0) > 0) { delete p.statuses.graybeast; delete p.seen.graybeast; }
-        p.oguriZoneTurns = 0;
-        lastLog.push(`🐴💦 ${p.name} Stamina หมดและไม่มียุคทอง — เข้าสู่ร่างหมดแรง! (ใช้สกิลไม่ได้ ยกเว้น A Big Meal)`);
+      // Energy หมด + ไม่มียุคทอง -> เข้าสู่ร่างหมดแรง (Burnout) 2 เทิร์น
+      if ((p.oguriEnergy || 0) <= 0 && oguriGoldStacks(p) <= 0) {
+        const oguriBurnoutWasOn = (p.statuses.burnout || 0) > 0;
+        p.statuses.burnout = OGURI_BURNOUT_TURNS;
+        p.statuses.decay = Math.max(p.statuses.decay || 0, OGURI_BURNOUT_DECAY_TURNS);
+        if (!oguriBurnoutWasOn) lastLog.push(`🐴💦 ${p.name} Energy หมดและไม่มียุคทอง — เข้าสู่ร่างหมดแรง (Burnout)! Breakfast ได้ Energy ลดลง -${OGURI_BURNOUT_ENERGY_PENALTY} และติดผุพัง ${OGURI_BURNOUT_DECAY_TURNS} เทิร์น`);
+      }
+      // Sunny Day: ได้รับโชคลาภ +1 ทุกเทิร์นที่มีบัฟนี้
+      if ((p.statuses.sunny || 0) > 0) {
+        p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + OGURI_SUNNY_FORTUNE);
+        p.fortuneIdle = 0;
+        lastLog.push(`☀️ ${p.name} Sunny Day — ได้รับโชคลาภ +${OGURI_SUNNY_FORTUNE}`);
       }
     }
 
@@ -3180,9 +3226,9 @@ function dealRound() {
       lastLog.push(`😵 ${p.name} ติดสถานะสตั้น — ขยับไม่ได้ทั้งเทิร์น! (เหลืออีก ${p.statuses.stun} เทิร์น)`);
     }
 
-    // Bard: ถูกขัดจังหวะการประพันธ์ (หลับ/สตั้น/ใบ้สกิล/ชะงัก ฯลฯ) -> โน้ตทั้งหมดถูกรีเซ็ต
+    // Bard: ถูกขัดจังหวะการประพันธ์ (หลับ/สตั้น/ใบ้สกิล ฯลฯ) -> โน้ตทั้งหมดถูกรีเซ็ต
     if (p.characterId === "bard" && (p.bardNotes || []).length &&
-      (p.locked || (p.statuses.noskill || 0) > 0 || (p.statuses.stagger || 0) > 0)) {
+      (p.locked || (p.statuses.noskill || 0) > 0)) {
       p.bardNotes = [];
       lastLog.push(`🎼💔 ${p.name} ถูกขัดจังหวะการประพันธ์เพลง — โน้ตทั้งหมดถูกรีเซ็ต!`);
     }
@@ -3482,7 +3528,6 @@ function useSkill(id, tier, targets, item) {
   if (p.characterId === "bard") {
     if (tier === "ultimate") return; // ช่องประพันธ์เพลง — ไม่ใช่ปุ่มสกิล
     if ((p.statuses.noskill || 0) > 0) return;
-    if ((p.statuses.stagger || 0) > 0) return; // ชะงัก (โอกูริ): ใช้สกิลไม่ได้
     if (p.bardPending) return; // ต้องเลือกเป้าหมายบทเพลงที่ค้างอยู่ก่อน
     // จำกัด 2 โน้ตต่อเทิร์น (patch 2.0.5) — ระหว่างมิติมายาบรรเลง (โลหิต/วิญญาณ) ไม่ติดลิมิต 2
     //  แต่กดสกิลได้สูงสุด 6 ครั้งต่อเทิร์น (patch 2.0.8)
@@ -3563,11 +3608,9 @@ function useSkill(id, tier, targets, item) {
     if (tier === "basic") skill = ((p.statuses.ginga || 0) > 0 || (p.statuses.gingastrium || 0) > 0) ? ch.basic2 : ch.basic;
     if (tier === "secondary") skill = (p.statuses.gingastrium || 0) > 0 ? ch.secondary2 : ch.secondary;
   }
-  // โอกูริ แคป (patch 2.0.8.1): Stamina หมด = สกิลพื้นฐานกลายเป็น A Big Meal
-  //  / ยุคทองครบ 2 = ท่าไม้ตายกลายเป็น Ashen Trail: Cinderella Gray
+  // โอกูริ แคป (Rework): ยุคทองครบ 3 + Stamina ชาร์จ 75 ขึ้นไป = ท่าไม้ตายกลายเป็น Ashen Trail: Cinderella Gray
   if (ch && ch.id === "oguri") {
-    if (tier === "basic") skill = (p.stamina || 0) <= 0 ? ch.basic2 : ch.basic;
-    if (tier === "ultimate") skill = oguriGoldStacks(p) >= OGURI_GOLD_MAX ? ch.ultimate2 : ch.ultimate;
+    if (tier === "ultimate") skill = oguriAshenReady(p) ? ch.ultimate2 : ch.ultimate;
   }
   // สึงาชิ ทาคุโตะ (patch 2.2 new): Apprivoise! ทำงานแล้ว — สกิลพื้นฐานเปลี่ยนเป็น Star Sword Emeraude ถาวร
   if (ch && ch.id === "takuto" && tier === "basic" && (p.statuses.apprivoise || 0) > 0) skill = ch.basic2;
@@ -3590,7 +3633,6 @@ function useSkill(id, tier, targets, item) {
   if (tier === "secondary" && ch.secondaryNight && isNightRound(roundNumber)) skill = ch.secondaryNight;
   if (tier === "basic" && ch.basicNight && isNightRound(roundNumber)) skill = ch.basicNight;
   if ((p.statuses.noskill || 0) > 0) return; // โดนหอกลองกินัสปัก: เทิร์นนี้ใช้สกิลไม่ได้
-  if ((p.statuses.stagger || 0) > 0) return; // ชะงัก (โอกูริ patch 2.0.8.1): ใช้สกิลไม่ได้
 
   // ---------- เล็น (patch 2.2 beta) ----------
   //  (ประกาศไว้ก่อนคำนวณ cost — สกิลรอง/ท่าไม้ตายกลางคืนต้องใช้ lenCastEntry/lwUseEntry ทับ cost ตั้งแต่ก่อนเช็คแต้มพอไหม)
@@ -3664,23 +3706,14 @@ function useSkill(id, tier, targets, item) {
   if (p.nightTaxTier === tier && cost < 8) cost += 1;
   // [โหมงานหนัก] (โคโตเนะ): ใช้แต้มสกิลเพิ่มขึ้น 1 แต้มทุกสกิล
   if (p.characterId === "kotone" && overworkActive(p)) cost += 1;
-  // ---------- โอกูริ แคป (patch 2.0.8.1): เงื่อนไข Stamina / ร่างหมดแรง / Overweight ----------
+  // ---------- โอกูริ แคป (Rework): เงื่อนไข Energy / Stamina ชาร์จ ----------
   const isOguri = p.characterId === "oguri";
-  const oguriOW = isOguri && (p.statuses.overweight || 0) > 0;
-  const isBreakfast = isOguri && tier === "basic" && (p.stamina || 0) > 0;
-  const isBigMeal = isOguri && tier === "basic" && (p.stamina || 0) <= 0;   // ใช้ได้เมื่อไม่มี Stamina เท่านั้น
+  const isBreakfast = isOguri && tier === "basic";
   const isOguriTrain = isOguri && tier === "secondary";
-  const isVictoryBeat = isOguri && tier === "ultimate" && oguriGoldStacks(p) < OGURI_GOLD_MAX;
-  const isAshenTrail = isOguri && tier === "ultimate" && oguriGoldStacks(p) >= OGURI_GOLD_MAX;
-  if (isOguri && (p.statuses.burnout || 0) > 0 && !isBigMeal) return; // ร่างหมดแรง: ใช้ได้แค่ A Big Meal
-  const oguriTrainNeed = oguriOW ? OGURI_TRAIN_STAMINA_OW : OGURI_TRAIN_STAMINA;
-  if (isOguriTrain) {
-    if ((p.stamina || 0) < oguriTrainNeed) return;      // Stamina ไม่พอ
-    if (oguriGoldStacks(p) >= OGURI_GOLD_MAX) return;   // ยุคทองครบ 2 อยู่แล้ว ใช้ไม่ได้
-    if (oguriOW) cost = 0;                              // Overweight: Training ไม่เสียแต้มสกิล
-  }
-  if (isVictoryBeat && (p.stamina || 0) < OGURI_ULT_STAMINA) return;  // ต้องมี Stamina 8
-  if (isAshenTrail && (p.stamina || 0) < OGURI_ULT2_STAMINA) return;  // ต้องมี Stamina 16 + ยุคทอง 2
+  const isAshenTrail = isOguri && tier === "ultimate" && oguriAshenReady(p);
+  const isVictoryBeat = isOguri && tier === "ultimate" && !isAshenTrail;
+  if (isOguriTrain && (p.oguriEnergy || 0) < OGURI_TRAIN_ENERGY_COST) return; // Energy ไม่พอ
+  if (isVictoryBeat && (p.stamina || 0) < OGURI_ULT_CHARGE_COST) return;  // Stamina ชาร์จไม่พอ
   // ---------- ซาโตรุ อาเคฟุ (patch 2.0.8.2) ----------
   const isSatoru = p.characterId === "satoru";
   if (isSatoru && tier === "ultimate") return; // Wonder of U ทำงานอัตโนมัติ — กดเองไม่ได้
@@ -4388,66 +4421,54 @@ function useSkill(id, tier, targets, item) {
       lastLog.push(`💀 ${p.name} นายเป็นคนทำตัวเองนะ — เล็งเป้าหมาย ${t.name} ไว้ (ผลจะทำงานหลังทุกคนเปิดไพ่)`);
     }
   }
-  // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
-  // Breakfast: ฟื้นเลือด 1 + Stamina +4 + เต็มอิ่ม (ดาเมจที่ได้รับ -1 ถึงจบเทิร์นนี้)
+  // ---------- โอกูริ แคป (Rework) ----------
+  // Breakfast: ฟื้นเลือด 1 + Energy +4 (ลดเหลือ +2 ระหว่าง Burnout) + เต็มอิ่ม
   if (isBreakfast) {
-    healHp(p, 1);
-    oguriAddStamina(p, 4);
+    const oguriBurnoutOn = (p.statuses.burnout || 0) > 0;
+    const oguriEnergyGain = Math.max(0, OGURI_BREAKFAST_ENERGY - (oguriBurnoutOn ? OGURI_BURNOUT_ENERGY_PENALTY : 0));
+    healHp(p, OGURI_BREAKFAST_HEAL);
+    oguriAddEnergy(p, oguriEnergyGain);
     p.statuses.fullbelly = 1; // สะสมได้ 1 — หมดหลังจบเทิร์นที่กดใช้
-    flashSuffix = ` — Stamina ${p.stamina}/${OGURI_STAMINA_MAX}`;
-    lastLog.push(`🥖 ${p.name} Breakfast — ฟื้นเลือด +1 Stamina +4 (${p.stamina}/${OGURI_STAMINA_MAX}) และเต็มอิ่ม (ดาเมจที่ได้รับ -1 ถึงจบเทิร์น)`);
+    flashSuffix = ` — Energy ${p.oguriEnergy}/${OGURI_ENERGY_MAX}`;
+    lastLog.push(`🥖 ${p.name} Breakfast — ฟื้นเลือด +${OGURI_BREAKFAST_HEAL} Energy +${oguriEnergyGain}${oguriBurnoutOn ? " (ลดลงจาก Burnout)" : ""} (${p.oguriEnergy}/${OGURI_ENERGY_MAX}) และเต็มอิ่ม (ดาเมจที่ได้รับ -1 ถึงจบเทิร์น)`);
   }
-  // A Big Meal: ฟื้นเลือด 3 + Stamina เต็ม 16 + Overweight (ฟื้นแต้มสกิลไม่ได้)
-  if (isBigMeal) {
-    healHp(p, 3);
-    oguriAddStamina(p, OGURI_STAMINA_MAX);
-    p.statuses.overweight = 1; // สะสมได้ 1 — ลบด้วย Healthfull ครบ 2 เท่านั้น
-    flashSuffix = ` — Stamina เต็ม ${p.stamina}/${OGURI_STAMINA_MAX}`;
-    lastLog.push(`🍱 ${p.name} A Big Meal — ฟื้นเลือด +3 Stamina เต็ม ${OGURI_STAMINA_MAX} แต่ติด Overweight (ฟื้นแต้มสกิลไม่ได้จนกว่าจะลบออกด้วย Healthfull)!`);
-  }
-  // Training: หัก Stamina — สุ่มฝึกฝนสำเร็จ/ล้มเหลว
+  // Training: หัก Energy 4 — เพิ่มความจุ Stamina ชาร์จ 4-8 หน่วยเสมอ แล้วสุ่มฝึกฝนสำเร็จ/ล้มเหลว
   if (isOguriTrain) {
-    oguriAddStamina(p, -oguriTrainNeed);
-    const gritNow = p.statuses.grit || 0;
-    const goldNow = oguriGoldStacks(p);
-    // อัตราสำเร็จ: ปกติ 60% +10%/เวลากัดฟันทน −10%/ยุคทอง — ระหว่าง Overweight: 90% คงที่
-    const successRate = oguriOW ? OGURI_TRAIN_OW
-      : Math.max(0.1, Math.min(0.95, OGURI_TRAIN_BASE + 0.1 * gritNow - 0.1 * goldNow));
-    if (Math.random() < successRate) {
+    oguriAddEnergy(p, -OGURI_TRAIN_ENERGY_COST);
+    const oguriCapGain = OGURI_TRAIN_CAP_GAIN_MIN + Math.floor(Math.random() * (OGURI_TRAIN_CAP_GAIN_MAX - OGURI_TRAIN_CAP_GAIN_MIN + 1));
+    p.oguriChargeCapBonus = Math.min(OGURI_CHARGE_CAP_MAX_BONUS, (p.oguriChargeCapBonus || 0) + oguriCapGain);
+    const oguriBonusOn = (p.statuses.trainBonus || 0) > 0;
+    const oguriSuccessRate = oguriBonusOn ? OGURI_TRAIN_BONUS_RATE : OGURI_TRAIN_BASE;
+    const oguriCapMsg = `เพิ่มความจุ Stamina ชาร์จ +${oguriCapGain} (${oguriChargeCapOf(p)})`;
+    if (Math.random() < oguriSuccessRate) {
       addSkill(p, 1);
-      if ((p.statuses.grit || 0) > 0) delete p.statuses.grit; // เวลากัดฟันทน หายเมื่อฝึกฝนสำเร็จ
-      if (oguriOW) {
-        // Overweight อยู่: ได้ Healthfull แทนยุคทอง — ครบ 2 ลบ Overweight ออก
-        p.statuses.healthfull = (p.statuses.healthfull || 0) + 1;
-        let cured = false;
-        if (p.statuses.healthfull >= 2) {
-          delete p.statuses.healthfull;
-          delete p.statuses.overweight;
-          cured = true;
+      p.statusAmt = p.statusAmt || {};
+      p.statusAmt.goldenera = Math.min(OGURI_GOLD_MAX, (p.statusAmt.goldenera || 0) + 1);
+      p.statuses.goldenera = OGURI_GOLD_TURNS; // รีเฟรชเวลาทุกครั้งที่ได้แต้มใหม่
+      // ฝึกฝนสำเร็จ: โอกาส 25% ได้บัฟเสริมเพิ่มอีก 1 อัน — Flow 40% / Bonus 40% / Sunny Day 20%
+      let oguriExtraMsg = "";
+      if (Math.random() < OGURI_TRAIN_EXTRA_ROLL) {
+        const r = Math.random();
+        if (r < OGURI_TRAIN_FLOW_W) {
+          p.statuses.flow = OGURI_FLOW_TURNS;
+          oguriExtraMsg = ` และได้บัฟเสริม Flow (โอกาสหลบการโจมตี ${Math.round(OGURI_FLOW_DODGE * 100)}% — ${OGURI_FLOW_TURNS} เทิร์นหรือจนกว่าจะถูกโจมตี)`;
+        } else if (r < OGURI_TRAIN_FLOW_W + OGURI_TRAIN_BONUS_W) {
+          p.statuses.trainBonus = OGURI_BONUS_TURNS;
+          oguriExtraMsg = ` และได้บัฟเสริม Bonus (โอกาสฝึกฝนสำเร็จเพิ่มเป็น ${Math.round(OGURI_TRAIN_BONUS_RATE * 100)}% — ${OGURI_BONUS_TURNS} เทิร์น)`;
+        } else {
+          p.statuses.sunny = OGURI_SUNNY_TURNS;
+          oguriExtraMsg = ` และได้บัฟเสริม Sunny Day (โชคลาภ +${OGURI_SUNNY_FORTUNE} ทุกเทิร์น — ${OGURI_SUNNY_TURNS} เทิร์น)`;
         }
-        flashSuffix = " — ฝึกฝนสำเร็จ! (Healthfull)";
-        lastLog.push(`🏃 ${p.name} Training — ฝึกฝนสำเร็จ! แต้มสกิล +1 และได้ Healthfull${cured ? " ครบ 2 — Overweight ถูกลบออกแล้ว!" : ` (${p.statuses.healthfull || 0}/2)`}`);
-      } else {
-        p.statusAmt = p.statusAmt || {};
-        p.statusAmt.goldenera = Math.min(OGURI_GOLD_MAX, (p.statusAmt.goldenera || 0) + 1);
-        p.statuses.goldenera = OGURI_GOLD_TURNS; // รีเฟรชเวลา 3 เทิร์นทุกครั้งที่ได้แต้มใหม่
-        flashSuffix = ` — ฝึกฝนสำเร็จ! ยุคทอง ${p.statusAmt.goldenera}/${OGURI_GOLD_MAX}`;
-        lastLog.push(`🏃 ${p.name} Training — ฝึกฝนสำเร็จ! แต้มสกิล +1 และยุคทอง +1 (${p.statusAmt.goldenera}/${OGURI_GOLD_MAX} — พลังโจมตี +1 ทุกๆแต้มที่ติดอยู่บนตัว เพดานเกราะ +1 · อยู่ ${OGURI_GOLD_TURNS} เทิร์น)`);
       }
+      flashSuffix = ` — ฝึกฝนสำเร็จ! ยุคทอง ${p.statusAmt.goldenera}/${OGURI_GOLD_MAX}`;
+      lastLog.push(`🏃 ${p.name} Training — ${oguriCapMsg} — ฝึกฝนสำเร็จ! แต้มสกิล +1 และยุคทอง +1 (${p.statusAmt.goldenera}/${OGURI_GOLD_MAX})${oguriExtraMsg}`);
     } else {
-      // ฝึกฝนล้มเหลว: เจ็บ 1 ไม่สนเกราะ + เวลากัดฟันทน +1 — ยุคทองทั้งหมดหายไป
-      p.statuses.grit = Math.min(OGURI_GRIT_MAX, (p.statuses.grit || 0) + 1);
-      if ((p.statuses.goldenera || 0) > 0) {
-        delete p.statuses.goldenera;
-        if (p.statusAmt) delete p.statusAmt.goldenera;
-        lastLog.push(`🏇 ยุคทองของ ${p.name} จบลงเพราะการฝึกฝนล้มเหลว`);
-      }
-      dealDirect(p, 1);
+      dealDirect(p, OGURI_TRAIN_FAIL_DMG);
       maybeBeatSave(p);
       maybeBeatMode(p);
       maybeEva3(p);
-      flashSuffix = " — ฝึกฝนล้มเหลว! เจ็บ -1";
-      lastLog.push(`🏃💢 ${p.name} Training — ฝึกฝนล้มเหลว! รับดาเมจ -1 (ไม่สนเกราะ) และได้เวลากัดฟันทน +1 (${p.statuses.grit}/${OGURI_GRIT_MAX} — โอกาสสำเร็จครั้งถัดไป +10% ต่อแต้ม)`);
+      flashSuffix = " — ฝึกฝนล้มเหลว!";
+      lastLog.push(`🏃💢 ${p.name} Training — ${oguriCapMsg} — ฝึกฝนล้มเหลว! รับดาเมจ -${OGURI_TRAIN_FAIL_DMG} (ไม่สนเกราะ)`);
       if (p.alive && p.hp <= 0) {
         instantDeath(p);
         if (!p.alive) lastLog.push(`💀 ${p.name} เลือดจริงหมด ตกรอบ!`);
@@ -4456,18 +4477,16 @@ function useSkill(id, tier, targets, item) {
     triggerCutscene(p, "oguriTrain"); // ครั้งแรกเล่นวีดีโอเต็ม / ครั้งถัดไปแจ้งเตือนเล็กๆ
     if (cutsceneQueue.length) pausePlayingForCutscene();
   }
-  // The Beat of Victory: หัก Stamina 8 — ชนะเทิร์นนี้ ดาเมจ +1 และเป้าหมายติดชะงัก 1 เทิร์น
+  // The Beat of Victory: หัก Stamina ชาร์จ 35 — ชนะเทิร์นนี้ พลังโจมตี +2 (ซ้อนยุคทองได้) เป้าหมายติดเกินเยียวยา+ชะงัก 2 เทิร์น
   if (isVictoryBeat) {
-    oguriAddStamina(p, -OGURI_ULT_STAMINA);
-    lastLog.push(`🏆 ${p.name} The Beat of Victory — ใช้ Stamina ${OGURI_ULT_STAMINA} (เหลือ ${p.stamina}/${OGURI_STAMINA_MAX}) หากชนะเทิร์นนี้ ดาเมจ +1 และเป้าหมายติดชะงัก 1 เทิร์น`);
+    oguriAddCharge(p, -OGURI_ULT_CHARGE_COST);
+    lastLog.push(`🏆 ${p.name} The Beat of Victory — ใช้ Stamina ชาร์จ ${OGURI_ULT_CHARGE_COST} (เหลือ ${p.stamina}/${oguriChargeCapOf(p)}) หากชนะเทิร์นนี้ พลังโจมตี +${OGURI_ULT_ATK_BONUS} (ซ้อนทับกับยุคทองได้) และเป้าหมายติดเกินเยียวยา+ชะงัก ${OGURI_ULT_STAGGER_TURNS} เทิร์น`);
   }
-  // Ashen Trail: Cinderella Gray — หัก Stamina 16 + ยุคทอง 2: ทุกคนห้ามใช้สกิล + บังคับจั่ว 2 ใบ
-  //  (ทำงานทันทีก่อนเปิดไพ่ — หลังเปิดไพ่จะโจมตีทุกคนที่ไพ่แตก)
+  // Ashen Trail: Cinderella Gray — หัก Stamina ชาร์จ 75 (ต้องมียุคทองครบ ${OGURI_GOLD_MAX} ด้วย): ทุกคนห้ามใช้สกิล + บังคับจั่ว 2 ใบ
+  //  (ทำงานทันทีก่อนเปิดไพ่ — หลังเปิดไพ่จะโจมตีทุกคนที่ไพ่แตก) — Rework: ไม่เพิ่มพลังโจมตีและไม่ลบยุคทองแล้ว
   if (isAshenTrail) {
-    oguriAddStamina(p, -OGURI_ULT2_STAMINA);
-    delete p.statuses.goldenera; // ใช้ยุคทองทั้ง 2 แต้มไปกับการปลดปล่อย
-    if (p.statusAmt) delete p.statusAmt.goldenera;
-    p.statuses.ashen = 1; // มีผลถึงจบเทิร์นนี้ (+1 ดาเมจ / โจมตีทุกคนที่แตกหลังเปิดไพ่)
+    oguriAddCharge(p, -OGURI_ULT2_CHARGE_COST);
+    p.statuses.ashen = 1; // มีผลถึงจบเทิร์นนี้ (โจมตีทุกคนที่แตกหลังเปิดไพ่)
     p.transformAt = ++transformCounter;
     const bustedNames = [];
     for (const o of alivePlayers()) {
@@ -4484,7 +4503,7 @@ function useSkill(id, tier, targets, item) {
         bustedNames.push(o.name);
       }
     }
-    lastLog.push(`🐴🔥 ${p.name} Ashen Trail: Cinderella Gray — ใช้ Stamina ${OGURI_ULT2_STAMINA} + ยุคทอง ${OGURI_GOLD_MAX}! ทุกคนถูกบังคับจั่วเพิ่ม ${OGURI_ASHEN_DRAWS} ใบ บวกแต้มการ์ด +${OGURI_ASHEN_CARD_BONUS} และห้ามใช้สกิลตลอดเทิร์นนี้${bustedNames.length ? ` — ${bustedNames.join(", ")} ไพ่แตก!` : ""}`);
+    lastLog.push(`🐴🔥 ${p.name} Ashen Trail: Cinderella Gray — ใช้ Stamina ชาร์จ ${OGURI_ULT2_CHARGE_COST}! ทุกคนถูกบังคับจั่วเพิ่ม ${OGURI_ASHEN_DRAWS} ใบ บวกแต้มการ์ด +${OGURI_ASHEN_CARD_BONUS} และห้ามใช้สกิลตลอดเทิร์นนี้${bustedNames.length ? ` — ${bustedNames.join(", ")} ไพ่แตก!` : ""}`);
     triggerCutscene(p, "oguriAshen"); // เล่นวีดีโอทันทีก่อนเปิดไพ่
     if (cutsceneQueue.length) pausePlayingForCutscene();
   }
@@ -6343,6 +6362,29 @@ function doAttack(byId, targetId) {
     lastLog.push(`💢 ${target.name} หลบไม่พ้น — ผลชิวๆครับน้องๆ จบลง`);
   }
 
+  // โอกูริ แคป (Rework — Training บัฟเสริม Flow): โอกาสหลบการโจมตี 50% — ใช้แล้วหมดไปไม่ว่าจะหลบสำเร็จหรือไม่
+  if (target.characterId === "oguri" && (target.statuses.flow || 0) > 0) {
+    delete target.statuses.flow;
+    if (Math.random() < OGURI_FLOW_DODGE) {
+      target.wasAttacked = true;
+      lastLog.push(`💨 ${target.name} Flow — หลบการโจมตีของ ${attacker.name} ได้!`);
+      lastAttack = {
+        byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
+        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined,
+        targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
+        dmg: 0, dodge: true,
+        skills: [{ name: "Flow (หลบพ้น)", img: displayImg(target), by: target.name, color: POSITION_COLORS[target.position] || "#888", side: "def" }],
+      };
+      runCutsceneQueue(() => {
+        gameState = "ATTACKING";
+        startPhaseTimer(ATTACKFX_TIME, endTurn);
+        broadcastState();
+      });
+      return;
+    }
+    lastLog.push(`💢 ${target.name} Flow — หลบไม่พ้น`);
+  }
+
   // ---------- ซาโตรุ อาเคฟุ (patch 2.0.8.2): สกิลติดตัวลบล้างการโจมตี + Wonder of U สวนกลับ ----------
   if (target.characterId === "satoru") {
     const r = satoruOnTargeted(target, attacker, "การโจมตี");
@@ -6428,11 +6470,10 @@ function doAttack(byId, targetId) {
   //  (patch พิเศษ: ตอนเช้าไม่คืนร่าง แต่โบนัสโจมตีไม่ทำงาน — มีผลเฉพาะช่วงกลางคืน)
   const shradeAtk = (attacker.characterId === "shrade_elan" && attacker.shradeForm && isNightRound(roundNumber)) ? SHRADE_ATK_BONUS : 0;
   const shradeDayOff = attacker.characterId === "shrade_elan" && attacker.shradeForm && !isNightRound(roundNumber);
-  // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
-  // ยุคทอง: พลังโจมตี +1 ทุกๆแต้มที่ติดอยู่บนตัว สูงสุด +2 (patch 2.1.3) / The Beat of Victory: +1 และเป้าหมายติดชะงัก / Ashen Trail: +1
-  const oguriGoldAtk = attacker.characterId === "oguri" ? Math.floor(oguriGoldStacks(attacker) / OGURI_GOLD_ATK_PER) : 0;
+  // ---------- โอกูริ แคป (Rework) ----------
+  // ยุคทอง: พลังโจมตี +1 ทุกๆแต้มที่ติดอยู่บนตัว สูงสุด +2 / The Beat of Victory: +2 (ซ้อนทับยุคทองได้) และเป้าหมายติดเกินเยียวยา+ชะงัก
+  const oguriGoldAtk = attacker.characterId === "oguri" ? Math.min(OGURI_GOLD_ATK_CAP, Math.floor(oguriGoldStacks(attacker) / OGURI_GOLD_ATK_PER)) : 0;
   const victoryAtk = (attacker.statuses.victorybeat || 0) > 0;
-  const ashenAtk = (attacker.statuses.ashen || 0) > 0;
   // ---------- ริดดี้ มาร์เซนาส (patch 2.0.9) ----------
   // Beam Magnum Plus: ตีหมู่ +1 / NT-D (ท่าไม้ตาย 1): +1 — ซ้อนกันได้ รวมสูงสุด +1
   const beamPlusAtk = (attacker.statuses.beamplus || 0) > 0;
@@ -6484,7 +6525,7 @@ function doAttack(byId, targetId) {
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
   // patch 2.2.4: เอาโบนัสจากกันตาย (สกิลติดตัว 1) ออก — เหลือเฉพาะช่วงฉันคว้ามันได้แล้ว (Apprivoise!) ทำงานอยู่
   const takutoAtk = attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? 1 : 0) + (ashenAtk ? OGURI_ASHEN_ATK : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -6750,13 +6791,14 @@ function doAttack(byId, targetId) {
       lastLog.push(`🗡️ ดาบแห่งจุดจบ! ${target.name} สะท้อนความเสียหาย -${aquaReflect} กลับให้ ${attacker.name}`);
     }
   }
-  // The Beat of Victory (โอกูริ patch 2.0.8.1): เป้าหมายที่ถูกโจมตีติด "ชะงัก" 1 เทิร์น (เริ่มเทิร์นถัดไป)
+  // The Beat of Victory (โอกูริ Rework): เป้าหมายที่ถูกโจมตีติด "เกินเยียวยา" + "ชะงัก" 2 เทิร์น (ชะงักเริ่มเทิร์นถัดไป)
   if (victoryAtk && target.alive) {
     if (resistActive(target)) {
-      lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — ไม่ติดชะงัก`);
+      lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — ไม่ติดเกินเยียวยา/ชะงัก`);
     } else {
-      target.staggerNext = Math.max(target.staggerNext || 0, 1);
-      lastLog.push(`🏆 The Beat of Victory! ${target.name} ติดชะงัก 1 เทิร์น (ใช้สกิลไม่ได้ / จั่วไพ่ได้ไม่เกิน ${OGURI_STAGGER_CAP} แต้ม)`);
+      target.statuses.norecover = Math.max(target.statuses.norecover || 0, OGURI_ULT_NOREGEN_TURNS);
+      target.staggerNext = Math.max(target.staggerNext || 0, OGURI_ULT_STAGGER_TURNS);
+      lastLog.push(`🏆 The Beat of Victory! ${target.name} ติดเกินเยียวยา ${OGURI_ULT_NOREGEN_TURNS} เทิร์น และชะงัก ${OGURI_ULT_STAGGER_TURNS} เทิร์น (ฟื้นฟูแต้มสกิลไม่ได้)`);
     }
   }
   // หอกลองกินัส (patch 2.2.1 alpha): โจมตีโดนเป้าหมาย -> โอกาส 50/50 ที่เป้าหมายจะใช้สกิลไม่ได้ 2 เทิร์น — ใช้แล้วหมดไป
@@ -7127,10 +7169,9 @@ function doAttack(byId, targetId) {
   if (guardAmt > 0) addFx({ name: `คุ้มครอง (ความเสียหายลด ${guardAmt})`, img: BARD_CRIMSON_IMG, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
   if (bardDiscord) addFx({ name: "Discord — ขัดแย้ง (+1 ดาเมจ)", img: BARD_JADE_IMG, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "atk");
   if (linkedHit) addFx({ name: `เชื่อมผล (${linkedHit.name} -${buddyHpBefore - linkedHit.hp})`, img: BARD_JADE_IMG, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
-  // โอกูริ แคป (patch 2.0.8.1)
+  // โอกูริ แคป (Rework)
   if (oguriGoldAtk > 0) addFx({ name: `ยุคทอง +${oguriGoldAtk}`, img: displayImg(attacker), by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
-  if (victoryAtk) addFx({ name: "The Beat of Victory +1 (เป้าหมายติดชะงัก)", img: TRANSFORMS.victorybeat.img, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
-  if (ashenAtk) addFx({ name: `Ashen Trail +${OGURI_ASHEN_ATK}`, img: TRANSFORMS.oguriAshen.img, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
+  if (victoryAtk) addFx({ name: `The Beat of Victory +${OGURI_ULT_ATK_BONUS} (เป้าหมายติดเกินเยียวยา+ชะงัก)`, img: TRANSFORMS.victorybeat.img, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (fullBelly) addFx({ name: "เต็มอิ่ม (ดาเมจ -1)", img: displayImg(target), by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
   // สถานะพื้นฐาน patch 2.0.8
   if (mightAtk > 0) addFx({ name: `เสริมพลัง +${mightAtk}`, img: displayImg(attacker), by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
@@ -7691,7 +7732,7 @@ io.on("connection", (socket) => {
       bardNotes: [], bardNotesUsed: 0, bardPending: null,
       bloodSection: 0, soulSection: 0, linkedWith: null,
       shikiUlt: shikiUlt === "wither" ? "wither" : "deatheye", witherAdded: 0,
-      stamina: OGURI_STAMINA_START, oguriZoneTurns: 0, staggerNext: 0,
+      oguriEnergy: OGURI_ENERGY_START, stamina: 0, oguriChargeCapBonus: 0, oguriZoneTurns: 0, staggerNext: 0,
       maxHpPenalty: 0, wouGuardCd: 0, calamityDraw: 0, locaOffer: null,
       allyPrompt: false, allyOffer: null, allyId: null, allyBreakAsk: null, allyFinalAsk: false,
       riddheGrudge: 0, riddhePassiveUsed: false, riddheAvenger: false,

@@ -503,17 +503,17 @@ const STATUS_INFO = {
   // ---------- เทเปา (ชิกิ) (patch 2.2 new) ----------
   tepeuCook:   { icon: "🍳", label: "กำลังทำอาหาร", cls: "bg-echo-gold text-gray-900", desc: "วันนี้อากาศดีจัง: กำลังทำอาหารอยู่ — ครบ 2 เทิร์นจะได้ \"มื้อที่สุข\" เข้าคลัง (ฟื้นเลือด 3 เมื่อใช้) ระหว่างนี้กดสกิลนี้ซ้ำไม่ได้" },
   tepeuPonder: { icon: "🤔", label: "ครุ่นคิด", cls: "bg-echo-cyan text-gray-900", desc: "เป็นแบบนี้นี่เอง: ครุ่นคิดอยู่ — จั่วไพ่ไม่ได้ (ยังโจมตีได้ถ้าชนะ) จบเทิร์นได้แต้มสกิลเพิ่ม +1 (เทิร์นสุดท้ายได้ +2) — ผู้เล่นอื่นที่ชนะการจั่วไพ่ระหว่างนี้จะติดเส้นชีวิต +1" },
-  // ---------- โอกูริ แคป (patch 2.0.8.1) ----------
-  graybeast: { icon: "🐴", label: "GrayBeast", cls: "bg-echo-gold text-gray-900", desc: "ร่าง Zone: ได้รับ Stamina +1 และแต้มสกิล +1 ทุกเทิร์น — หายไปเมื่อไม่มียุคทองเหลืออยู่ หรือเข้าร่างหมดแรง" },
-  burnout: { icon: "💦", label: "หมดแรง", cls: "bg-echo-hp", desc: "Burnout: Stamina หมดและไม่มียุคทอง — ใช้สกิลใดๆ ไม่ได้ยกเว้น A Big Meal จนกว่า Stamina จะกลับมามากกว่า 0" },
-  goldenera: { icon: "🏇", label: "ยุคทอง", cls: "bg-echo-gold text-gray-900", desc: "ยุคทอง: พลังโจมตีพื้นฐาน +1 ทุกๆ 2 แต้มที่ติดอยู่บนตัว และเพดานเกราะ +1 — สะสมสูงสุด 2 แต้ม อยู่ 6 เทิร์น (รีเฟรชเมื่อได้แต้มใหม่) ทุกแต้มลดโอกาสฝึกฝนสำเร็จ 10% — หายทั้งหมดเมื่อฝึกฝนล้มเหลว · ครบ 2 แต้มตอนเริ่มเทิร์นจะเข้าสู่ร่าง Zone (ยุคทองหมด = ออกจากร่าง Zone)" },
-  grit: { icon: "😤", label: "เวลากัดฟันทน", cls: "bg-echo-cyan text-gray-900", desc: "เวลากัดฟันทน: ทุกแต้มเพิ่มโอกาสฝึกฝนสำเร็จ 10% (สะสมสูงสุด 2) — หายไปเมื่อฝึกฝนสำเร็จ" },
+  // ---------- โอกูริ แคป (Rework) ----------
+  graybeast: { icon: "🐴", label: "GrayBeast", cls: "bg-echo-gold text-gray-900", desc: "ร่าง Zone: ได้รับ Energy +1 ทุกเทิร์น และแต้มสกิล +1 ทุก 2 เทิร์น — หายไปเมื่อไม่มียุคทองเหลืออยู่" },
+  burnout: { icon: "💦", label: "หมดแรง", cls: "bg-echo-hp", desc: "Burnout: Energy หมดและไม่มียุคทอง — Breakfast ได้ Energy ลดลง -2 และติดผุพัง (เกราะไม่ฟื้น) — หายไปเมื่อครบ 2 เทิร์น" },
+  goldenera: { icon: "🏇", label: "ยุคทอง", cls: "bg-echo-gold text-gray-900", desc: "ยุคทอง: พลังโจมตีพื้นฐาน +1 ทุกแต้มที่ติดอยู่บนตัว (บวกได้ไม่เกิน 2) และครบ 2 แต้มขึ้นไปเพดานเกราะ +1 — สะสมสูงสุด 3 แต้ม อยู่ 6 เทิร์น (รีเฟรชเมื่อได้แต้มใหม่) · ครบ 3 แต้มตอนเริ่มเทิร์นจะเข้าสู่ร่าง Zone (ยุคทองหมด = ออกจากร่าง Zone)" },
+  flow: { icon: "💨", label: "Flow", cls: "bg-echo-cyan text-gray-900", desc: "Flow: โอกาสหลบการโจมตี 50% — ใช้แล้วหมดไปไม่ว่าจะหลบสำเร็จหรือไม่ (หรือหมดเองเมื่อครบ 3 เทิร์น)" },
+  trainBonus: { icon: "🍀", label: "Bonus", cls: "bg-echo-gold text-gray-900", desc: "Bonus: โอกาสฝึกฝนสำเร็จ (Training) เพิ่มเป็น 80% ตามจำนวนเทิร์นที่เหลือ" },
+  sunny: { icon: "☀️", label: "Sunny Day", cls: "bg-echo-gold text-gray-900", desc: "Sunny Day: ได้รับโชคลาภ +1 ทุกเทิร์นที่มีบัฟนี้ ตามจำนวนเทิร์นที่เหลือ" },
   fullbelly: { icon: "🥖", label: "เต็มอิ่ม", cls: "bg-echo-armor", desc: "เต็มอิ่ม (Breakfast): ดาเมจที่ได้รับ -1 หน่วย — หายไปหลังจบเทิร์นที่กดใช้ (สะสมได้ 1 แต้ม)" },
-  overweight: { icon: "🍱", label: "Overweight", cls: "bg-echo-hp", desc: "Overweight (A Big Meal): ฟื้นฟูแต้มสกิลไม่ได้ทุกช่องทาง — ลบออกได้ด้วย Healthfull ครบ 2 แต้ม (จากการฝึกฝนสำเร็จระหว่างติดบัฟนี้) เท่านั้น" },
-  healthfull: { icon: "💪", label: "Healthfull", cls: "bg-echo-cyan text-gray-900", desc: "Healthfull: ได้จากการฝึกฝนสำเร็จระหว่างติด Overweight — ครบ 2 แต้มจะถูกใช้เพื่อลบ Overweight ออก 1 แต้ม" },
-  victorybeat: { icon: "🏆", label: "Beat of Victory", cls: "bg-echo-gold text-gray-900", desc: "The Beat of Victory: หากชนะเทิร์นนี้ การโจมตี +1 ดาเมจ และเป้าหมายติดชะงัก 1 เทิร์น" },
-  ashen: { icon: "🐴", label: "Ashen Trail", cls: "bg-echo-hp", desc: "Ashen Trail: Cinderella Gray — เทิร์นนี้การโจมตี +2 ดาเมจ และหลังเปิดไพ่จะโจมตีใส่ทุกคนที่ไพ่แตก คนละ 2 หน่วย" },
-  stagger: { icon: "🫨", label: "ชะงัก", cls: "bg-echo-hp", desc: "ชะงัก (The Beat of Victory): ใช้สกิลไม่ได้ และจั่วไพ่ได้ไม่เกิน 16 แต้ม ตามจำนวนเทิร์นที่เหลือ" },
+  victorybeat: { icon: "🏆", label: "Beat of Victory", cls: "bg-echo-gold text-gray-900", desc: "The Beat of Victory: หากชนะเทิร์นนี้ พลังโจมตี +2 (ซ้อนทับยุคทองได้) และเป้าหมายติดเกินเยียวยา+ชะงัก 2 เทิร์น" },
+  ashen: { icon: "🐴", label: "Ashen Trail", cls: "bg-echo-hp", desc: "Ashen Trail: Cinderella Gray — หลังเปิดไพ่จะโจมตีใส่ทุกคนที่ไพ่แตก คนละ 2 หน่วย" },
+  stagger: { icon: "🫨", label: "ชะงัก", cls: "bg-echo-hp", desc: "ชะงัก (The Beat of Victory): ฟื้นฟูแต้มสกิลไม่ได้ทุกช่องทาง ตามจำนวนเทิร์นที่เหลือ" },
   // ---------- สึงาชิ ทาคุโตะ (patch 2.2 new / 2.2.3) ----------
   star:       { icon: "⭐", label: "ดวงดาว", cls: "bg-echo-gold text-gray-900", desc: "ดวงดาว: สะสมจากสกิลพื้นฐานฉันได้ยินเสียงของโลก — ครบ 5 หน่วย แปลงร่างเป็นทาวเบิร์นทันที (ฉันคว้ามันได้แล้ว)" },
   apprivoise: { icon: "🔥", label: "ฉันคว้ามันได้แล้ว", cls: "bg-echo-hp", desc: "ร่างทาวเบิร์น: ปลดล็อกสกิลพื้นฐาน 2/สกิลรอง/ท่าไม้ตาย พลังโจมตีถาวร +1 — คงอยู่ 10 เทิร์น หมดแล้วกลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวให้ครบ 5 อีกครั้งเพื่อแปลงร่างใหม่ (กันตายสกิลติดตัว 1 ทำงานเมื่อไหร่ เวลาจะถูกนับใหม่เต็ม 10 เทิร์น)" },
@@ -572,8 +572,11 @@ function statusEntries(p, full) {
   if ((p.appleAtk || 0) > 0) out.push({ key: "appleAtk", v: p.appleAtk, icon: "🍎", label: "มอบของ", cls: "bg-echo-gold text-gray-900", desc: "เอาไปสิ: พลังโจมตีเพิ่มจากการมอบของ +1 ต่อครั้ง ซ้อนทับได้สูงสุด 2 หน่วย — แต่ละหน่วยคงอยู่ 3 เทิร์นแยกกัน" });
   if ((p.coins || 0) > 0) out.push({ key: "coins", v: p.coins, icon: "🐷", label: "Coin", cls: "bg-echo-gold text-gray-900", desc: "กระปุกออมสินน้องหมูน้อย: coin สะสม (สูงสุด 6) — ตอนโจมตีแปลงเป็นความเสียหาย 3 coin = +1 (ใช้แล้วเหรียญหมดไป)" });
   if ((p.gold || 0) > 0) out.push({ key: "gold", v: p.gold, icon: "🪙", label: "เหรียญ", cls: "bg-echo-gold text-gray-900", desc: "เหรียญสะสม (เพดาน 30) — ใช้ซื้อของที่ร้านค้ามายา (เปิดทุก 5 เทิร์น)" });
-  // โอกูริ แคป: Stamina สะสม (โชว์เสมอ — ทรัพยากรหลักของตัวละคร)
-  if (p.character?.id === "oguri") out.push({ key: "stamina", v: 1, icon: "🏇", label: `Stamina ${p.stamina || 0}/16`, cls: "bg-echo-cyan text-gray-900", desc: "Stamina: ทรัพยากรของโอกูริ แคป (สะสมสูงสุด 16) — Training ใช้ 4 / The Beat of Victory ใช้ 8 / Ashen Trail ใช้ 12 — เติมได้จาก Breakfast (+4), A Big Meal (เต็ม 16) และ GrayBeast (+1/เทิร์น)" });
+  // โอกูริ แคป: Energy + Stamina ชาร์จ (โชว์เสมอ — ทรัพยากรหลักของตัวละคร แยกกัน 2 อย่าง)
+  if (p.character?.id === "oguri") {
+    out.push({ key: "oguriEnergy", v: 1, icon: "⚡", label: `Energy ${p.oguriEnergy || 0}/16`, cls: "bg-echo-gold text-gray-900", desc: "Energy: ทรัพยากรของ Breakfast (+4/-2 ระหว่าง Burnout) และ Training (หัก 4) — สะสมสูงสุด 16 — Energy หมด + ไม่มียุคทอง = เข้าร่างหมดแรง (Burnout)" });
+    out.push({ key: "stamina", v: 1, icon: "🏇", label: `Stamina ชาร์จ ${p.stamina || 0}/${p.oguriChargeCap || 52}`, cls: "bg-echo-cyan text-gray-900", desc: "Stamina ชาร์จ: ทรัพยากรของท่าไม้ตาย — ได้รับอัตโนมัติทุกเทิร์น 8-16 หน่วย (สุ่ม) ความจุพื้นฐาน 52 (Training เพิ่มความจุได้สูงสุด +48 รวม 100) — The Beat of Victory หัก 35 / Ashen Trail หัก 75" });
+  }
   // คิชินามิ ฮาคุโนะ (patch 2.2.1): แต้มคำสาปแห่งดวงจันทร์ — สะสมครบ 3 เพื่อเปิด MOON*CELL
   if (p.character?.id === "hakuno") out.push({ key: "hakunoMoon", v: 1, icon: "🌙", label: `คำสาปแห่งดวงจันทร์ ${p.hakunoMoonPoints || 0}/3`, cls: "bg-echo-magenta", desc: "แต้มคำสาปแห่งดวงจันทร์: สะสมจากข้าขอบัญชา (ทั้งสองร่าง) ครั้งละ +1 — ครบ 3 หน่วยเปิดใช้ท่าไม้ตาย MOON*CELL ได้ (ใช้หมดตอนกด)" });
   if ((p.lightDew || 0) > 0) out.push({ key: "lightDew", v: p.lightDew, icon: "✨", label: "แสงละออง", cls: "bg-echo-cyan text-gray-900", desc: "แสงละอองสะสม (สูงสุด 5) — ครบ 5 ขณะอยู่ร่างโซล่าตอนกลางวัน จะกลายเป็นปีกแห่งสุริยัน 5 เทิร์น" });
