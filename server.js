@@ -3922,11 +3922,10 @@ function useSkill(id, tier, targets, item) {
     nanayaSilenceTarget = t;
   }
   // ---------- เทเปา (ชิกิ): วันนี้อากาศดีจัง / เป็นแบบนี้นี่เอง / นายเป็นคนทำตัวเองนะ ----------
-  // patch 2.2.4: ระหว่างทำอาหารอยู่ ใช้สกิลอื่นไม่ได้เลยจนกว่าอาหารจะเสร็จเข้ากระเป๋า (ไม่ใช่แค่กดสกิลพื้นฐานซ้ำไม่ได้)
-  if (p.characterId === "tepeu" && (p.tepeuCookTurns || 0) > 0) return;
+  // patch 2.2.6: ระหว่างทำอาหารหรือครุ่นคิดอยู่ฝั่งใดฝั่งหนึ่ง ใช้สกิลอื่นไม่ได้เลย (รวมกดอีกฝั่งด้วย) จนกว่าฝั่งที่ทำอยู่จะหมดเวลา
+  if (p.characterId === "tepeu" && ((p.tepeuCookTurns || 0) > 0 || (p.tepeuPonderTurns || 0) > 0)) return;
   const isTepeuCook = p.characterId === "tepeu" && tier === "basic";
   const isTepeuPonder = p.characterId === "tepeu" && tier === "secondary";
-  if (isTepeuPonder && (p.tepeuPonderTurns || 0) > 0) return; // ครุ่นคิดยังไม่หมด กดซ้ำไม่ได้
   const isTepeuKill = p.characterId === "tepeu" && tier === "ultimate";
   let tepeuKillTarget = null;
   if (isTepeuKill) {
@@ -5424,7 +5423,8 @@ function checkAllLocked() {
     c.some((p) => p.allyOffer && players[p.allyOffer] && players[p.allyOffer].alive) ||
     c.some((p) => p.allyBreakAsk) ||
     c.some((p) => p.allyFinalAsk);
-  if (c.length > 0 && c.every((p) => p.locked) && !pendingAnswer) resolveRound();
+  // ถ้าไม่เหลือใครรอดเลย (เช่น ทาคุโตะระเบิดใส่ทุกคนตายหมดรวมถึงตัวเอง) ก็ต้องสรุปผลด้วยเช่นกัน ไม่งั้นเกมค้าง
+  if (c.every((p) => p.locked) && !pendingAnswer) resolveRound();
 }
 
 // ---- สรุปผล ----
