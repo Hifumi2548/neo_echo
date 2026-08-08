@@ -11,6 +11,8 @@ const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
 const { CHARACTERS, CHAR_BY_ID, POSITION_COLORS, publicRoster } = require("./characters");
+// ไฟล์มัดรวมสคริปต์ตัวละครที่แยกออกมาจากไฟล์นี้ (โฟลเดอร์ characters/ — คนละอันกับ characters.js ด้านบน)
+const CHAR_HOOKS = require("./characters/index");
 
 const app = express();
 const server = http.createServer(app);
@@ -820,17 +822,8 @@ const SHIKI_PROFILE_IMG = "/characters/shiki/shiki.jpg";
 const SHIKI_DEATH_IMG = "/characters/shiki/shiki_death.jpg"; // ร่างระหว่างท่าไม้ตาย ฉันมองเห็นมันแล้ว
 const SHIKI_WITHER_IMG = "/characters/shiki/shiki2.jpg";     // ร่างระหว่างท่าไม้ตาย 2 ความตายที่โรยรา
 // ---------- โทโนะ ชิกิ (patch 2.1.7) ----------
-const TOHNO_DEATH_IMG = "/characters/tohno/tohno_death.jpg"; // ร่างระหว่างสกิลติดตัวเปิดใช้งาน (ระดับ 2 ขึ้นไป)
-const TOHNO_KNIFE_HEAL = 2;      // ระดับ 1 (ปิดสกิลติดตัว): โจมตีปกติฟื้นเลือดให้ตัวเอง +2 ทุกครั้ง
-const TOHNO_KILL_CHANCE = { 2: 0.05, 3: 0.10, 4: 0.20, 5: 0.50 }; // โอกาสสังหารทันทีตามระดับ
-const TOHNO_MISS_DMG = { 2: 1, 3: 2, 4: 4, 5: 6 }; // สังหารพลาด — เสียพลังชีวิตไม่สนเกราะตามระดับ
-const TOHNO_LEVEL_NAME = {
-  1: "ปิดใช้งานสกิลติดตัว (ฟื้นเลือด +2 ทุกครั้งที่โจมตี)",
-  2: "เปิดใช้งานสกิลติดตัว (โอกาสสังหาร 5%)",
-  3: "เพิ่มโอกาสสังหารเป็น 10%",
-  4: "เพิ่มโอกาสสังหารเป็น 20%",
-  5: "เพิ่มโอกาสสังหารเป็น 50%",
-};
+// ค่าคงที่/logic ส่วนใหญ่ย้ายไปอยู่ characters/tohno.js แล้ว — เหลือแค่ภาพที่โค้ดส่วนกลาง (TRANSFORMS/displayImg) ยังใช้อยู่
+const TOHNO_DEATH_IMG = CHAR_HOOKS.tohno.DEATH_IMG; // ร่างระหว่างสกิลติดตัวเปิดใช้งาน (ระดับ 2 ขึ้นไป)
 // ---------- นานายะ ชิกิ (patch 2.1.9) ----------
 const NANAYA_KILL_CHANCE = 0.5;     // Mystic eye of death perception: โอกาสสังหารทันที 50% (ระหว่างเปิดใช้งาน)
 const NANAYA_MISS_DMG = 6;          // พลาดหรือสังหารไม่ได้: เสียพลังชีวิตไม่สนเกราะ 6 หน่วย
@@ -3765,7 +3758,7 @@ function useSkill(id, tier, targets, item) {
   // มีดพับประจำตระกูล (โทโนะ ชิกิ สกิลพื้นฐาน): เลือกระดับ 1-5 — ไม่นับเป็นการใช้สกิลของเทิร์น (กดเปลี่ยนกี่ครั้งก็ได้)
   const isTohnoPick = p.characterId === "tohno" && tier === "basic";
   const tohnoLevelPick = Number(item);
-  if (isTohnoPick && !(tohnoLevelPick >= 1 && tohnoLevelPick <= 5)) return; // ต้องเลือกระดับ 1-5 เท่านั้น
+  if (isTohnoPick && !CHAR_HOOKS.tohno.validateBasicItem(item)) return; // ต้องเลือกระดับ 1-5 เท่านั้น (characters/tohno.js)
   // เธอ/นาย คือฉันหรอ? (คิชินามิ ฮาคุโนะ สกิลพื้นฐาน): สลับเพศ — ไม่นับเป็นการใช้สกิลของเทิร์น แต่กดสลับได้แค่ 1 ครั้งต่อเทิร์น
   const isHakunoGender = p.characterId === "hakuno" && tier === "basic";
   if (isHakunoGender && p.hakunoGenderSwitched) return;
@@ -4124,17 +4117,9 @@ function useSkill(id, tier, targets, item) {
     if (satoruOnTargeted(nt, p, `สกิล ${skill.name} `).negated) flashSuffix = " — ถูกลบล้าง";
     else p.nightmareTarget = nightmareTarget;
   }
-  // ---------- โทโนะ ชิกิ: มีดพับประจำตระกูล — เลือกระดับสกิลติดตัว 1-5 (กดเปลี่ยนกี่ครั้งก็ได้) ----------
+  // ---------- โทโนะ ชิกิ: มีดพับประจำตระกูล — เลือกระดับสกิลติดตัว 1-5 (กดเปลี่ยนกี่ครั้งก็ได้) (characters/tohno.js) ----------
   if (isTohnoPick) {
-    p.tohnoLevel = tohnoLevelPick;
-    flashSuffix = ` — ${TOHNO_LEVEL_NAME[tohnoLevelPick]}`;
-    lastLog.push(`🔪 ${p.name} มีดพับประจำตระกูล — ${TOHNO_LEVEL_NAME[tohnoLevelPick]}`);
-    if (tohnoLevelPick >= 2) {
-      p.transformAt = ++transformCounter; // เพลง/ภาพซ้อนทับใช้ลำดับล่าสุด (กรณีมีโทโนะหลายคน)
-      triggerCutscene(p, "tohnoSkill1"); // ครั้งแรกที่เข้าระดับ 2 ขึ้นไป = วีดีโอเต็ม, ครั้งต่อไป = แจ้งเตือนเฉยๆ
-    } else {
-      notifyTransform(p, "tohnoSkill1"); // ปิดใช้งาน (กลับระดับ 1) = แจ้งเตือนเฉยๆ เสมอ
-    }
+    flashSuffix = CHAR_HOOKS.tohno.applyBasicPick(engine, p, item);
   }
   // ---------- คิชินามิ ฮาคุโนะ: เธอ/นาย คือฉันหรอ? — สลับเพศ (กดได้แค่ 1 ครั้งต่อเทิร์น) ----------
   if (isHakunoGender) {
@@ -6240,44 +6225,9 @@ function doAttack(byId, targetId) {
     }
   }
 
-  // ---------- โทโนะ ชิกิ: Mystic eye of death perception (อ่อน) — โจมตีปกติมีโอกาสสังหารทันที (patch 2.1.7) ----------
-  //  ระดับ 1 (ปิดสกิลติดตัว): ฟื้นเลือด +2 ทุกครั้งที่ได้โจมตี | ระดับ 2-5: มีโอกาสสังหาร — พลาดเสียเลือดไม่สนเกราะตามระดับ
-  const tohnoLevel = attacker.characterId === "tohno" ? (attacker.tohnoLevel || 1) : 1;
-  if (attacker.characterId === "tohno" && tohnoLevel === 1) {
-    const heal = healHp(attacker, TOHNO_KNIFE_HEAL);
-    if (heal > 0) lastLog.push(`🔪 ${attacker.name} มีดพับประจำตระกูล — ฟื้นพลังชีวิต +${heal}`);
-  }
-  if (attacker.characterId === "tohno" && tohnoLevel >= 2 && !passiveSealed(attacker) && !killSealed(attacker)) {
-    const chance = miyakoKillChance(target, TOHNO_KILL_CHANCE[tohnoLevel]);
-    if (Math.random() < chance) {
-      if (appleGuyDodgesKill(attacker, target)) return; // Apple guy: หลบสังหารทันทีได้ (patch 2.2 new)
-      queueCutscene(attacker, "tohnoKill"); // เล่นวีดีโอก่อนสังหารทุกครั้ง
-      instantDeath(target);
-      target.wasAttacked = true;
-      if (!target.alive) lastLog.push(`👁️💀 Mystic eye of death perception — ${attacker.name} มองเห็นเส้นความตายของ ${target.name} (โอกาส ${Math.round(chance * 100)}%) — สังหารทันที!`);
-      else lastLog.push(`👁️💀 Mystic eye of death perception — ${attacker.name} มองเห็นเส้นความตายของ ${target.name} — แต่ ${target.name} เกิดใหม่หนีความตายไปได้!`);
-      lastAttack = {
-        byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
-        byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
-        targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
-        dmg: 0, kill: !target.alive,
-        skills: [{ name: "Mystic eye of death perception — สังหารทันที", img: TOHNO_DEATH_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888", side: "atk" }],
-      };
-      runCutsceneQueue(() => {
-        gameState = "ATTACKING";
-        startPhaseTimer(ATTACKFX_TIME + 2, endTurn);
-        broadcastState();
-      });
-      return;
-    }
-    const missDmg = TOHNO_MISS_DMG[tohnoLevel];
-    dealDirect(attacker, missDmg);
-    lastLog.push(`👁️💢 Mystic eye of death perception พลาด — ${attacker.name} เสียพลังชีวิต ${missDmg} หน่วย (ไม่สนเกราะ)`);
-    if (attacker.alive && attacker.hp <= 0) {
-      instantDeath(attacker);
-      if (!attacker.alive) lastLog.push(`💀 ${attacker.name} เลือดจริงหมด ตกรอบ!`);
-    }
-    miyakoSurvivedKillAttempt(target);
+  // ---------- โทโนะ ชิกิ: Mystic eye of death perception (patch 2.1.7) — ย้ายไป characters/tohno.js ----------
+  if (attacker.characterId === "tohno") {
+    if (CHAR_HOOKS.tohno.onAttack(engine, attacker, target)) return;
   }
 
   // ---------- นานายะ ชิกิ: Mystic eye of death perception — เปิด/ปิดเองได้ (patch 2.1.9) ----------
@@ -7843,6 +7793,59 @@ io.on("connection", (socket) => {
   });
 });
 
+
+// ============================================================
+//  engine — context object ที่ให้ characters/*.js เรียกกลับเข้ามาใช้ state/ฟังก์ชันร่วมของ server.js
+//  (ตัวแปร gameState/lastAttack ฯลฯ เป็น let ในไฟล์นี้ — ต้องผ่าน getter/setter เพราะ
+//   ส่งค่า primitive ตรงๆ ออกไปจะไม่ live-update เวลาไฟล์นี้ reassign ตัวแปรนั้นทีหลัง)
+// ============================================================
+const engine = {
+  players,
+  CHAR_BY_ID,
+  POSITION_COLORS,
+  ATTACKFX_TIME,
+  get gameState() { return gameState; },
+  setGameState(v) { gameState = v; },
+  get roundNumber() { return roundNumber; },
+  get lastAttack() { return lastAttack; },
+  setLastAttack(v) { lastAttack = v; },
+  log(msg) { lastLog.push(msg); },
+  nextTransformCounter() { return ++transformCounter; },
+  endTurn,
+  alivePlayers,
+  isNightRound,
+  statusAmtOf,
+  applyBuff,
+  applyDebuff,
+  cleanseDebuffs,
+  healHp,
+  healArmor,
+  healOverflow,
+  loseHp,
+  loseArmor,
+  dealDirect,
+  dealMixed,
+  dealArmorOnly,
+  instantDeath,
+  displayImg,
+  passiveSealed,
+  killSealed,
+  hasKillCapability,
+  miyakoKillChance,
+  miyakoSurvivedKillAttempt,
+  appleGuyDodgesKill,
+  satoruOnTargeted,
+  queueCutscene,
+  triggerCutscene,
+  notifyTransform,
+  queueTransformAnnounce,
+  runCutsceneQueue,
+  pausePlayingForCutscene,
+  startPhaseTimer,
+  clearPhaseTimer,
+  broadcastState,
+  checkAllLocked,
+};
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log("🃏 ECHO — Blackjack Skill Battle ทำงานที่พอร์ต " + PORT));
