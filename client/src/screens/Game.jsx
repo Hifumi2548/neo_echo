@@ -333,7 +333,7 @@ function CycleBanner({ c }) {
 const PHASE_NAMES = { PLAYING: "🎴 สุ่มการ์ด", ATTACK: "⚔️ โจมตี" };
 
 // สถานะที่ผูกกับท่าไม้ตายของแต่ละตัวละคร — ใช้เช็คว่ากำลังมีผลอยู่ไหม (กดซ้ำไม่ได้จนกว่าจะหมดเวลา)
-const ULTIMATE_STATUS = { hikaru: "gingastrium", kuwagata: "rachan", banagher: "paradise", temari: "anata", fujimaru: "humanity", gambler: "golden", eva13: "fourth", appleguy: "chill", kotone: "kawaii", shiki: "deatheye", miyako: "miyakoUlt", hakuno: "moonCell" };
+const ULTIMATE_STATUS = { hikaru: "gingastrium", kuwagata: "rachan", banagher: "paradise", temari: "anata", gambler: "golden", eva13: "fourth", appleguy: "chill", kotone: "kawaii", shiki: "deatheye", miyako: "miyakoUlt", hakuno: "moonCell" };
 
 // ---------- Apple guy: ของส่งมอบ 3 ชิ้น (สกิลพื้นฐาน เอาแบบนี้ได้ไหม เลือก -> สกิลรอง เอาไปสิ ส่งให้เป้าหมาย) ----------
 const APPLE_ITEMS = [
@@ -437,8 +437,6 @@ const STATUS_INFO = {
   rachan:    { icon: "🛡️", label: "คิงโอเจอร์", cls: "bg-echo-armor", desc: "สวมเกราะราชัน: พลังโจมตีปกติ +1 คงอยู่ 5 เทิร์น (ได้รับโชคลาภ +2 ตอนใช้)" },
   song:      { icon: "🎵", label: "Song", cls: "bg-echo-magenta", desc: "Song for you: พลังขิงตามชามที่ใช้ (1 ชาม = +1) — มีผลเฉพาะสกิลติดตัวโดนขิง (ขิงแบบไม่สนเกราะ)" },
   anata:     { icon: "🎤", label: "ANATA", cls: "bg-echo-gold text-gray-900", desc: "ANATA WAAAAAAAA: เป้าหมายลับจะถูกบังคับจั่ว 2 ใบหลังเปิดไพ่" },
-  mage:      { icon: "🪄", label: "จอมเวทย์", cls: "bg-echo-cyan text-gray-900", desc: "จอมเวทย์ฝึกหัด: ความเสียหายจากการแพ้/แตกเทิร์นนี้ +1 ต่อสแตค (ฟื้นเลือดคืนเทิร์นหน้า)" },
-  humanity:  { icon: "✨", label: "EFH", cls: "bg-echo-gold text-gray-900", desc: "Everything For Humanity: โจมตี +4 เกราะ +3 และกันดาเมจแพ้/แตก — ผลจบแล้วตัวละครตาย" },
   seal:      { icon: "📜", label: "อมตะ", cls: "bg-echo-hp", desc: "เรจูอาคมบัญชา: เทิร์นนี้ไม่ถูกเลือกโจมตี และไม่รับความเสียหายใดๆ" },
   nodraw:    { icon: "🚫", label: "ห้ามจั่ว", cls: "bg-echo-hp", desc: "จั่วการ์ดเพิ่มไม่ได้ในเทิร์นนี้" },
   noskill:   { icon: "🚫", label: "ห้ามสกิล", cls: "bg-echo-hp", desc: "โดนหอกลองกินัสปัก: ใช้สกิลไม่ได้ในเทิร์นนี้" },
@@ -869,15 +867,6 @@ function CharModal({ ch, me, onClose }) {
   );
 }
 
-// ---------- เรจูอาคมบัญชา (สกิลติดตัวฟุจิมารุ): UI พิเศษแยกจากช่องสกิล ----------
-//  ไม่นับเป็นการใช้สกิล -> ใช้พร้อมสกิลอื่นได้ | 3 ครั้งต่อเกม | รูปเปลี่ยนตามเส้นที่เหลือ (reiju3-0)
-const REIJU_COMMANDS = [
-  { cmd: 1, icon: "🛡️", name: "อมตะ 1 เทิร์น", desc: "เทิร์นนี้ไม่ถูกเลือกโจมตี และไม่รับความเสียหายใดๆ เลย" },
-  { cmd: 2, icon: "🎲", name: "สุ่มฟื้นจนเต็ม", desc: "สุ่มฟื้นพลังชีวิต หรือ เกราะ อย่างใดอย่างหนึ่งจนเต็ม (โอกาส 50/50)" },
-  { cmd: 3, icon: "✨", name: "เติมแต้มสกิลเต็ม", desc: "เติมแต้มสกิลให้เต็ม 6 แต้มทันที" },
-];
-const reijuImg = (n) => `/characters/fujimaru/reiju${Math.max(0, Math.min(3, n ?? 0))}.jpg`;
-
 // เล็น/ไวท์เล็น (patch 2.2 beta): จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (Moonlight/Blood Moon กันตาย — สูงสุด 9/เกม)
 function CatUsesBadge({ me, ch }) {
   if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
@@ -978,54 +967,6 @@ function BankViewModal({ title, items, onClose }) {
             ))}
           </div>
         )}
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-function ReijuButton({ me, usable, onOpen, className = "" }) {
-  return (
-    <button
-      onClick={() => { if (usable) { clickSound(); onOpen(); } }}
-      disabled={!usable}
-      title="เรจูอาคมบัญชา — สั่งใช้ก่อนเปิดการ์ด (ไม่นับเป็นการใช้สกิล)"
-      className={`relative rounded-xl overflow-hidden border-2 border-echo-gold shadow-lg transition ${
-        usable ? "hover:scale-105 ring-2 ring-echo-gold/60" : "opacity-60 grayscale cursor-not-allowed"
-      } ${className}`}
-    >
-      <img src={reijuImg(me.reiju)} alt="" className="absolute inset-0 w-full h-full object-cover" />
-      <span className="absolute bottom-0 inset-x-0 bg-black/75 text-[10px] font-bold text-echo-gold leading-tight py-0.5">
-        📜 อาคม {me.reiju ?? 0}/3
-      </span>
-    </button>
-  );
-}
-
-function ReijuModal({ me, onUse, onClose }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="rounded-xl overflow-hidden w-16 h-16 border-2 border-echo-gold shrink-0">
-            <img src={reijuImg(me.reiju)} alt="" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <div className="text-lg font-black text-echo-gold">ขอสาบานด้วยอาคมบัญชานี้</div>
-            <div className="text-sm opacity-80">เรจูอาคมบัญชาเหลือ {me.reiju ?? 0}/3 — เลือกคำสั่ง</div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          {REIJU_COMMANDS.map((c) => (
-            <button
-              key={c.cmd}
-              onClick={() => { clickSound(); onUse(c.cmd); }}
-              className="text-left rounded-xl bg-white/5 hover:bg-white/15 border border-white/15 px-3 py-2 transition"
-            >
-              <div className="font-bold text-echo-gold">{c.icon} คำสั่งที่ {c.cmd} · {c.name}</div>
-              <div className="text-sm opacity-80">{c.desc}</div>
-            </button>
-          ))}
-        </div>
         <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
       </div>
     </div>
@@ -1646,7 +1587,6 @@ export default function Game({ state, lowQ }) {
   const [tpSel, setTpSel] = useState(false);          // เทเปา: โหมดเลือกเป้าหมาย นายเป็นคนทำตัวเองนะ (เลือกตัวเองไม่ได้)
   const [cycleFx, setCycleFx] = useState(null); // แบนเนอร์สลับกลางวัน/กลางคืน
   const prevCycle = useRef(null);
-  const [reijuOpen, setReijuOpen] = useState(false); // ฟุจิมารุ: เมนูเลือกคำสั่งเรจูอาคมบัญชา
   const [hakunoCmdOpen, setHakunoCmdOpen] = useState(false); // คิชินามิ ฮาคุโนะ: เมนูเลือกคำสั่งอาคมบัญชาระดับ EX+
   const [statusViewId, setStatusViewId] = useState(null); // ดูสถานะผู้เล่นคนอื่น (แตะการ์ดตอนไม่ได้เลือกเป้า)
   const [bagOpen, setBagOpen] = useState(false);     // ร้านค้ามายา (patch 2.2 full): เปิดดูคลังของตัวเอง
@@ -1773,19 +1713,6 @@ export default function Game({ state, lowQ }) {
   const takutoUlt3Locked = isTakuto && !!me?.beatSaved && !takutoApprivoiseOn;
   // ปุ่มท่าไม้ตายที่แสดงอยู่ตอนนี้คือแบบไหน — สลับล็อกให้ตรงกับสกิลที่ ch?.ultimate ส่งมาจาก server
   const takutoUltLockedNow = isTakuto ? (me?.beatSaved ? takutoUlt3Locked : takutoUlt2Locked) : false;
-  // ---------- ฟุจิมารุ ----------
-  const isFuji = ch?.id === "fujimaru";
-  const humanityOn = !!(me && me.statuses?.humanity); // Everything For Humanity กำลังมีผล
-  // จอมเวทย์ฝึกหัด: กดได้ 3 ครั้งต่อเทิร์น (ยกเว้นกฎ 1 สกิลต่อเทิร์น เฉพาะกดซ้ำตัวมันเอง) — ใช้ไม่ได้ระหว่าง EFH
-  const mageRepeat = isFuji && (me?.mageUses || 0) > 0 && (me?.mageUses || 0) < 3;
-  const mageLocked = isFuji && (humanityOn || (me?.mageUses || 0) >= 3);
-  // Mystic Code: ต้องเปิด EFH อยู่ + มีเกราะเหลือ
-  const mysticLocked = isFuji && !(humanityOn && (me?.armor || 0) >= 1);
-  // Everything For Humanity: ต้องมีเรจูอาคมบัญชาครบ 3
-  const humanityLocked = isFuji && (me?.reiju || 0) < 3;
-  // เรจูอาคมบัญชา (สกิลติดตัว): สั่งใช้ก่อนเปิดการ์ด ไม่นับเป็นการใช้สกิล
-  const reijuUsable = !!(isFuji && phase === "PLAYING" && me?.alive && !done && (me?.reiju || 0) > 0);
-  const useReiju = (cmd) => { socket.emit("useReiju", { command: cmd }); setReijuOpen(false); };
   // isHakuno ประกาศด้านล่าง (แถวเดียวกับ isTohno ฯลฯ) — คำนวณ hakunoCmdUsable/useHakunoCmd หลังจากนั้น
   // ---------- โอเบรอน ----------
   const isOberon = ch?.id === "oberon";
@@ -2213,10 +2140,6 @@ export default function Game({ state, lowQ }) {
     const t = setTimeout(() => setCycleFx(null), 3500);
     return () => clearTimeout(t);
   }, [cycleFx, phase]);
-  // ปิดเมนูเรจูอาคมบัญชาอัตโนมัติเมื่อใช้ไม่ได้แล้ว (พ้นช่วงจั่วการ์ด / เส้นหมด)
-  useEffect(() => {
-    if (reijuOpen && !reijuUsable) setReijuOpen(false);
-  }, [reijuOpen, reijuUsable]);
   useEffect(() => {
     if (hakunoCmdOpen && !hakunoCmdUsable) setHakunoCmdOpen(false);
   }, [hakunoCmdOpen, hakunoCmdUsable]);
@@ -2392,7 +2315,6 @@ export default function Game({ state, lowQ }) {
                   <div className="absolute inset-0 rounded-xl border-2 pointer-events-none" style={{ borderColor: me.color }} />
                   <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-black/75 rounded-full px-1.5 leading-tight whitespace-nowrap">ℹ️ ข้อมูล</span>
                 </button>
-                {isFuji && <ReijuButton me={me} usable={reijuUsable} onOpen={() => setReijuOpen(true)} className="w-14 h-16 shrink-0" />}
                 {isHakuno && <HakunoCommandButton me={me} usable={hakunoCmdUsable} onOpen={() => setHakunoCmdOpen(true)} className="w-14 h-16 shrink-0" />}
                 <div className="flex-1 min-w-0 flex items-center overflow-x-auto min-h-[56px]">
                   {revealed ? (
@@ -2432,9 +2354,9 @@ export default function Game({ state, lowQ }) {
 
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || humanityLocked || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2457,11 +2379,8 @@ export default function Game({ state, lowQ }) {
               {tepeuCookLocked && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-gold mt-1">🍳 วันนี้อากาศดีจัง — กำลังทำอาหารอยู่ (เหลือ {me.tepeuCookTurns} เทิร์น)</div>
               )}
-              {me.skillUsed && !mageRepeat && !gambleRepeat && phase === "PLAYING" && !done && (
+              {me.skillUsed && !gambleRepeat && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-gold mt-1">ใช้สกิลได้ 1 อันต่อเทิร์น — เทิร์นนี้ใช้ไปแล้ว</div>
-              )}
-              {mageRepeat && phase === "PLAYING" && !done && (
-                <div className="text-center text-sm font-bold text-echo-cyan mt-1">🪄 จอมเวทย์ฝึกหัด กดได้อีก {3 - (me.mageUses || 0)} ครั้งในเทิร์นนี้</div>
               )}
               {me.skillUsed && gambleRepeat && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-gold mt-1">🎰 เวลาทอง! กดสกิลพื้นฐานต่อได้ (เหลือ {me.gamblerUses} ครั้ง)</div>
@@ -2593,7 +2512,6 @@ export default function Game({ state, lowQ }) {
         )}
 
         {showChar && ch && <CharModal ch={ch} me={me} onClose={() => setShowChar(false)} />}
-        {reijuOpen && me && <ReijuModal me={me} onUse={useReiju} onClose={() => setReijuOpen(false)} />}
         {hakunoCmdOpen && me && <HakunoCommandModal me={me} onUse={useHakunoCmd} onClose={() => setHakunoCmdOpen(false)} />}
         {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
@@ -2859,7 +2777,6 @@ export default function Game({ state, lowQ }) {
                 <TakutoStarBadge me={me} ch={ch} />
                 <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
               </div>
-              {isFuji && <ReijuButton me={me} usable={reijuUsable} onOpen={() => setReijuOpen(true)} className="w-20 h-16 mt-1.5" />}
               {isHakuno && <HakunoCommandButton me={me} usable={hakunoCmdUsable} onOpen={() => setHakunoCmdOpen(true)} className="w-20 h-16 mt-1.5" />}
             </div>
 
@@ -2898,9 +2815,9 @@ export default function Game({ state, lowQ }) {
 
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
-                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !mageRepeat && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || mageLocked || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || mysticLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || humanityLocked || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2914,11 +2831,8 @@ export default function Game({ state, lowQ }) {
                 {rgCharging && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🛡️ ฉันจะไม่ยอมสูญเสียใครไปอีก — จั่ว/ใช้สกิล/โจมตีไม่ได้ระหว่างท่าทำงาน</div>
                 )}
-                {me.skillUsed && !mageRepeat && !gambleRepeat && phase === "PLAYING" && !done && (
+                {me.skillUsed && !gambleRepeat && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-gold mt-1">ใช้สกิลได้ 1 อันต่อเทิร์น — เทิร์นนี้ใช้ไปแล้ว</div>
-                )}
-                {mageRepeat && phase === "PLAYING" && !done && (
-                  <div className="text-center text-xs sm:text-sm font-bold text-echo-cyan mt-1">🪄 จอมเวทย์ฝึกหัด กดได้อีก {3 - (me.mageUses || 0)} ครั้งในเทิร์นนี้</div>
                 )}
                 {me.skillUsed && gambleRepeat && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-gold mt-1">🎰 เวลาทอง! กดสกิลพื้นฐานต่อได้ (เหลือ {me.gamblerUses} ครั้ง)</div>
@@ -3075,8 +2989,7 @@ export default function Game({ state, lowQ }) {
 
       {/* ---------- modal รายละเอียดตัวละคร / ดูสถานะผู้เล่น ---------- */}
       {showChar && ch && <CharModal ch={ch} me={me} onClose={() => setShowChar(false)} />}
-      {reijuOpen && me && <ReijuModal me={me} onUse={useReiju} onClose={() => setReijuOpen(false)} />}
-        {hakunoCmdOpen && me && <HakunoCommandModal me={me} onUse={useHakunoCmd} onClose={() => setHakunoCmdOpen(false)} />}
+      {hakunoCmdOpen && me && <HakunoCommandModal me={me} onUse={useHakunoCmd} onClose={() => setHakunoCmdOpen(false)} />}
       {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
         {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}

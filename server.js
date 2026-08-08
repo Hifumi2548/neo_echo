@@ -126,8 +126,6 @@ const BANAGHER_ULT2_TARGET_DMG = 6; // แสงที่ไม่อยู่�
 const BANAGHER_ULT2_SPLASH_DMG = 3; // แสงที่ไม่อยู่เพียงลำพัง: ตีหมู่ผู้เล่นอื่นที่เหลือ (ยกเว้นริดดี้พันธมิตร)
 const BANAGHER_ULT2_ALLY_COST = 8; // แสงที่ไม่อยู่เพียงลำพัง: หักแต้มสกิลริดดี้พันธมิตรด้วย 8 แต้ม (รวมคอสจริง 16 — ของตัวเอง 8 + พันธมิตร 8)
 const BANAGHER_BASE_IMG = "/characters/banagher/banagher_update/unicorn_new.png"; // ภาพเริ่มเกม (ลงสนามแล้ว) — หน้าเลือกตัวละครยังใช้ภาพเดิม
-const REIJU_USES = 3;   // เรจูอาคมบัญชา ต่อเกม (ฟุจิมารุ)
-const MAGE_USES_PER_TURN = 3; // จอมเวทย์ฝึกหัด กดได้ 3 ครั้งต่อเทิร์น (ฟุจิมารุ)
 const GAMBLER_USES = 3; // วอสก้าหน่อยน้อง ใช้ได้ต่อเกม (แกมเบลอร์)
 const TEMP_HP_TURNS = 2; // เลือดชั่วคราว (แกมเบลอร์) หายเองภายใน 2 เทิร์น
 const EVA_BLAST_DMG = 8; // ระเบิด fourth impact (เอวา 13) ใส่ทุกคนในสนาม (patch 2.2 alpha — เดิม 5)
@@ -149,8 +147,6 @@ const EVA13_FOURTH_ATK = 2;            // Fourth Impact: พลังโจม�
 const EVA13_RSHOPPER_MAX = 3;          // RS-Hopper: ชาร์จสูงสุด (เริ่มเกมเต็ม)
 const EVA13_RSHOPPER_REGEN_TURNS = 3;  // RS-Hopper: ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น
 
-// ร่างสุดท้ายฟุจิมารุ (หลังเปิด Everything For Humanity — คงอยู่จนตาย)
-const FUJIMARU_FINAL_IMG = "/characters/fujimaru/fujimaru_final.jpg";
 
 // ---------- Apple guy (patch 1.8) ----------
 // ของส่งมอบ 3 ชิ้น: สกิลพื้นฐาน "เอาแบบนี้ได้ไหม" เลือก -> สกิลรอง "เอาไปสิ" ส่งให้เป้าหมาย
@@ -530,7 +526,7 @@ const CONTRACT_ARMOR_BONUS = 1; // คู่สัญญา: เพดานเ�
 const FIBER_CAP = 19;          // เสือนอนกิน: คู่สัญญาจั่วไม่แตก แต่แต้มไม่เกิน 19
 // บัฟที่ "กระชากสายแลน" ถอดออกชั่วคราว 1 เทิร์น (คืนให้ตอนจบเทิร์น — เทิร์นถัดไปกลับมามีผลต่อ)
 const UNPLUG_BUFFS = ["upg", "monster", "ginga", "gingastrium", "storium", "absorb", "beam", "paradise", "ohger", "rachan",
-  "song", "golden", "spear", "humanity", "seal", "veil", "chill", "awaken", "vortarmor", "fourth", "fiber", "tiger", "fresh",
+  "song", "golden", "spear", "seal", "veil", "chill", "awaken", "vortarmor", "fourth", "fiber", "tiger", "fresh",
   "fullassault", "bshield", // patch 2.1.2: บานาจ ลิงก์ — Full Assault / Absorb shield
   "phenexReflect", "phenexNtd"]; // patch 2.1.6: ริต้า เบอร์นัล — ฝันไปเถอะ / ฝืนใช้งาน NTD-Sytem
 
@@ -926,7 +922,7 @@ function moonCellActive() {
   return Object.values(players).some((pp) => (pp.statuses && pp.statuses.moonCell) > 0);
 }
 // ท่าไม้ตายที่ยกเลิกย้อนหลังได้ (เจ้าของท่ามาตีชิกิระหว่างถือชาร์จ) — สถานะท่าไม้ตายที่กำลังมีผลอยู่
-const SHIKI_CANCELABLE_ULTS = ["gingastrium", "rachan", "paradise", "humanity", "golden", "fourth", "chill",
+const SHIKI_CANCELABLE_ULTS = ["gingastrium", "rachan", "paradise", "golden", "fourth", "chill",
   "kawaii", "lai", "vortigern", "solarburst", "marssword", "lunabow", "godtree", "deatheye", "wither", "shradecharge",
   "anata",                  // patch 2.0.8: เพิ่ม ANATA WAAAAAAAA (เทมาริ) — ครอบคลุมท่าไม้ตายทุกตัวละครที่เก็บเป็นสถานะ
   "bloodDim", "soulDim",    // patch 2.0.8.1: มิติมายาบรรเลงทั้งสอง (คีตกวี) นับเป็นท่าไม้ตาย — ยกเลิกย้อนหลังได้
@@ -1265,8 +1261,6 @@ const TRANSFORMS = {
   //  rachan: วีดีโอ 11.62 | beat: วีดีโอ 4.70
   rachan:   { img: OHGER_FORM, video: "/characters/kuwagata/kuwagata_final.mp4",   title: "สวมเกราะราชัน",       label: "ปล่อยท่าไม้ตาย",   seconds: 12, music: "final_normal", voice: "normal_k", afterReveal: false }, // patch 2.2.1 alpha: ทำงานทันทีก่อนเปิดไพ่ (ตั้ง p.seen ในจุดใช้สกิลแล้ว ไม่ต้องรอ afterResolve() sweep)
   beat:     { img: OHGER_FORM, video: "/characters/kuwagata/kuwagata_passive.mp4", title: "ประกายเขี้ยวปฏิปักษ์", label: "สกิลติดตัวทำงาน", seconds: 5,  music: "ex_guts",      voice: "ex_k",     afterReveal: false },
-  // humanity: ท่าไม้ตายฟุจิมารุ — วีดีโอ 13 วิ แล้วเพลง fujimaru_final_theme เล่นค้างระหว่างมีผล
-  humanity: { img: FUJIMARU_FINAL_IMG, video: "/characters/fujimaru/fujimaru_final.mp4", title: "EVERYTHING FOR HUMANITY", label: "ปล่อยท่าไม้ตาย", seconds: 13, music: "fujimaru_final", afterReveal: true },
   // monster: เล่นทันทีตอนใช้สกิล (พักช่วงจั่วการ์ดไว้ก่อน) | anataFinal: สกิลติดตัวเทมาริ เล่นก่อนท่าไม้ตายอื่นเสมอ
   // monster (patch 2.1.3): ไม่ใช่การแปลงร่างถาวรอีกต่อไป (เป็นบัฟเกราะ/ฟื้นเลือด) แต่ยังเล่นวีดีโอตอนกดสกิลเหมือนเดิม
   monster:  { img: "/characters/hikaru/black_king.webp", video: "/characters/hikaru/ginga_skill3.mp4", title: "MONSTERLIVE", label: "แปลงร่างไคจู", seconds: 10, music: null, afterReveal: false },
@@ -1521,7 +1515,6 @@ const DEBUFF_KEYS = ["discord", "sleep", "kstun", "stun", "nodraw", "noskill", "
   "aquapoison", "energy", "nohealing", "moonmark", "overwork", "unplug", "weak", "fragile", "spellburden",
   "oblada", "calamity", "hburn", "phenexBanUlt", "nanayaSeal", "miyakoSeal", "armorSeal", "invert", "norecover"];
 // เกราะสูงสุดของผู้เล่น: ปกติ 2 — ระหว่างสวมเกราะราชัน (ท่าไม้ตายคุวากาตะ) เพิ่ม +3 เป็น 5
-// ระหว่าง Everything For Humanity (ฟุจิมารุ) เพิ่ม +3
 // ระหว่างสกิลติดตัว 3 เอวา 13 (เลือด <= 3) เพิ่ม +1
 // ระหว่าง Lie Like Vortigern (โอเบรอน) เป้าหมายได้เพดานเกราะ +1
 // ระหว่างเป็นคู่สัญญาเจ้าแห่งเน็ตบ้าน (สนใจใช้บริการเราไหม) เพิ่ม +3
@@ -1533,7 +1526,6 @@ function maxArmorOf(p) {
     : (p && p.characterId === "eva13") ? 0
     : MAX_ARMOR;
   return armorBase
-    + ((((p.statuses && p.statuses.humanity) || 0) > 0) ? 3 : 0)
     + ((((p.statuses && p.statuses.vortarmor) || 0) > 0) ? 1 : 0)
     + (oguriGoldStacks(p) >= OGURI_GOLD_ARMOR_AT ? 1 : 0) // ยุคทอง (โอกูริ Rework): ครบ 2 แต้มขึ้นไป เพดานเกราะ +1
     + ((p.characterId === "hikaru" && ((p.statuses && p.statuses.monster) || 0) > 0) ? HIKARU_MONSTER_ARMOR_BONUS : 0) // MonsterLive (ฮิคารุ patch 2.1.3): เพดานเกราะ +2
@@ -1765,7 +1757,6 @@ function displayImg(p) {
   if (p.seen && p.seen.beat) return OHGER_FORM;
   // สึงาชิ ทาคุโตะ (patch 2.2.5): สกิลติดตัว 1 กันตายทำงานไปแล้วสักครั้ง — ระหว่างที่ยังอยู่ในร่างฉันคว้ามันได้แล้ว ใช้ภาพ tauburn_un.jpg แทน tauburn.jpg ปกติ
   if (p.characterId === "takuto" && p.beatSaved && (p.statuses.apprivoise || 0) > 0) return TRANSFORMS.takutoAwaken.img;
-  if (p.humanityActivated) return FUJIMARU_FINAL_IMG; // Everything For Humanity: คงร่างจนตาย
   // เอวา 13: Fourth Impact (ท่าไม้ตาย) > สกิลติดตัว 3 (เลือด <= 3)
   if (p.seen && p.seen.fourth && (p.statuses.fourth || 0) > 0) return TRANSFORMS.fourth.img;
   if (p.seen && p.seen.eva3 && eva3Active(p)) return TRANSFORMS.eva3.img;
@@ -1880,7 +1871,7 @@ function activeSkillMusic() {
   }
   if (bestWou) return bestWou;
   let best = null;
-  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "humanity", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible", "apprivoise"]) {
+  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible", "apprivoise"]) {
     const t = TRANSFORMS[key];
     if (!t.music) continue;
     for (const p of alivePlayers()) {
@@ -2157,10 +2148,6 @@ function resetCombat(p) {
   p.tempHpTurns = 0;      // เลือดชั่วคราวหายเองเมื่อครบ 2 เทิร์น
   p.anataTargets = null;  // เป้าหมาย ANATA WAAAAAAAA (ลับจนกว่าจะเปิดไพ่)
   p.nightmareTarget = null; // เป้าหมายฝันร้ายยามค่ำคืน (โอเบรอน — ทำงานหลังเปิดไพ่)
-  p.reiju = REIJU_USES;   // ฟุจิมารุ: เรจูอาคมบัญชา 3 ครั้งต่อเกม
-  p.mageUses = 0;         // จอมเวทย์ฝึกหัด: จำนวนครั้งที่กดในเทิร์นนี้ (สูงสุด 3)
-  p.mageHealNext = 0;     // จอมเวทย์ฝึกหัด: ฟื้นเลือดเทิร์นถัดไปตามจำนวนครั้งที่ใช้
-  p.humanityActivated = false; // Everything For Humanity เปิดแล้ว (ร่างสุดท้ายจนตาย + ตายเมื่อผลจบ)
   p.sunriseDrop = 0; // โอเบรอน: จำนวนเทิร์นที่พลังชีวิตจะลดลงเทิร์นละ 1 อัตโนมัติ (หลังโดนฮีล 5)
   p.sleepFresh = false; // หลับไหล: เทิร์นที่เพิ่งโดนกล่อมยังไม่เริ่มนับ/ยังโจมตีได้
   p.appleItem = "drink"; // Apple guy: ของส่งมอบที่เลือกอยู่ (ค่าเริ่มต้น เครื่องดื่มชูกำลัง)
@@ -2583,8 +2570,6 @@ function buildStateFor(viewerId) {
         contractTurns: p.contractTurns || 0,          // จำนวนเทิร์นที่ใช้บริการมาแล้ว (ครบทุก 3 = ถามต่อสัญญา)
         skillDrain: p.skillDrain || 0,                // ค่าปรับปฏิเสธข้อเสนอ: แต้มจบเทิร์นลด 1 (เทิร์นที่เหลือ)
         chillDodge: p.chillDodge != null ? p.chillDodge : 100, // Apple guy: อัตราหลบปัจจุบัน (%)
-        reiju: p.reiju,       // ฟุจิมารุ: เรจูอาคมบัญชาคงเหลือ (UI พิเศษ reiju0-3.jpg)
-        mageUses: p.mageUses, // จอมเวทย์ฝึกหัด: กดไปแล้วกี่ครั้งในเทิร์นนี้ (สูงสุด 3)
         tonkatsu: p.tonkatsu || 0, // เทมาริ: ชามทงคัสสึสะสม (UI สะสมชาม)
         phenexPain: p.phenexPain || 0, // ริต้า เบอร์นัล: ความเจ็บปวดสะสม (ไม่อยากให้ใครต้องเจ็บปวด — ปลดปล่อยตอนตกรอบจริง)
         tohnoLevel: p.tohnoLevel || 1, // โทโนะ ชิกิ: ระดับมีดพับประจำตระกูลที่เลือกอยู่ (1-5)
@@ -2849,7 +2834,6 @@ function dealRound() {
     if (p.appleAtkBuffs && p.appleAtkBuffs.length) p.appleAtkBuffs = p.appleAtkBuffs.map((n) => n - 1).filter((n) => n > 0);
     // เทเปา (patch 2.2 new): ทำอาหาร/ครุ่นคิด/ฉากหลังไม้ตาย นับถอยหลังที่ endTurn() แทน (ต้องอ่านค่าก่อนลดเพื่อรู้ "เทิร์นสุดท้าย" ให้ตรง)
     p.bardNotesUsed = 0;      // Bard: นับโน้ตใหม่ทุกเทิร์น (จำกัด 2 — มิติวิญญาณไม่จำกัด)
-    p.mageUses = 0;           // จอมเวทย์ฝึกหัด: นับใหม่ทุกเทิร์น (กดได้ 3 ครั้งต่อเทิร์น)
     p.anataTargets = null;
     p.nightmareTarget = null;
     p.hakunoLowDraw = false; // ข้าขอบัญชา (หญิง คิชินามิ ฮาคุโนะ): จำกัดจั่ว 2/3 แต้ม เฉพาะเทิร์นที่ใช้เท่านั้น
@@ -3002,14 +2986,6 @@ function dealRound() {
     if ((p.statuses.godarmor || 0) > 0 && p.armor < maxArmorOf(p)) {
       healArmor(p, 1);
       lastLog.push(`🛡️ ${p.name} คืนร่าง — เกราะฟื้นเพิ่ม +1`);
-    }
-    // จอมเวทย์ฝึกหัด (ฟุจิมารุ): ฟื้นพลังชีวิต 1 หน่วยตามจำนวนครั้งที่ใช้สกิลในเทิร์นก่อน
-    if (p.mageHealNext > 0) {
-      const heal = healHp(p, p.mageHealNext);
-      if (heal > 0) {
-        lastLog.push(`🪄 ${p.name} จอมเวทย์ฝึกหัด — ฟื้นพลังชีวิต +${heal}`);
-      }
-      p.mageHealNext = 0;
     }
     // เสือนอนกิน (เจ้าแห่งเน็ตบ้าน): ฟื้นพลังชีวิต 1 หน่วยในเทิร์นถัดไป (กรณีไม่มีคู่สัญญา)
     if ((p.healNextTurn || 0) > 0) {
@@ -3740,9 +3716,6 @@ function useSkill(id, tier, targets, item) {
 
   const st = skill.effect && !Array.isArray(skill.effect) && skill.effect.type === "status" ? skill.effect.status : null;
 
-  // จอมเวทย์ฝึกหัด (ฟุจิมารุ): กดซ้ำได้ถึง 3 ครั้งต่อเทิร์น — เป็นข้อยกเว้นของกฎ 1 สกิลต่อเทิร์น
-  const isMage = p.characterId === "fujimaru" && tier === "basic";
-  const mageRepeat = isMage && (p.mageUses || 0) > 0 && (p.mageUses || 0) < MAGE_USES_PER_TURN;
   // เวลาทอง (แกมเบลอร์): กดสกิลพื้นฐานซ้ำในเทิร์นเดียวได้ จนกว่าจำนวนใช้/แต้มจะหมด
   const isGamble = isGambler && tier === "basic";
   const gambleRepeat = isGamble && goldenOn;
@@ -3765,15 +3738,7 @@ function useSkill(id, tier, targets, item) {
   // DoomGuy (patch 2.2 full): สกิลติดตัว "ไม่ติดคูลดาวน์การใช้สกิล" — Quick Swap (พื้นฐาน) และ Weapon (รอง)
   //  ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน (Quick Swap เองยังจำกัด 1 ครั้ง/เทิร์นแยกต่างหาก)
   const isDoomguyPick = p.characterId === "doomguy" && (tier === "basic" || tier === "secondary");
-  if (p.skillUsedRound && !mageRepeat && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
-  if (isMage && (p.mageUses || 0) >= MAGE_USES_PER_TURN) return;
-  // จอมเวทย์ฝึกหัด: ระหว่างเปิด Everything For Humanity ใช้ไม่ได้
-  if (isMage && (p.statuses.humanity || 0) > 0) return;
-  // Mystic Code (ฟุจิมารุ): ต้องมีเกราะเหลือ และต้องเปิด Everything For Humanity อยู่เท่านั้น
-  const isMystic = p.characterId === "fujimaru" && tier === "secondary";
-  if (isMystic && ((p.statuses.humanity || 0) <= 0 || p.armor < 1)) return;
-  // Everything For Humanity: ต้องมีเรจูอาคมบัญชาครบ 3 เท่านั้น (ใช้หมดทั้ง 3 ตอนกด)
-  if (st === "humanity" && (p.reiju || 0) < REIJU_USES) return;
+  if (p.skillUsedRound && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
   // MOON*CELL (คิชินามิ ฮาคุโนะ): ต้องมีแต้มคำสาปแห่งดวงจันทร์ครบ 3 เท่านั้น
   if (st === "moonCell" && (p.hakunoMoonPoints || 0) < HAKUNO_MOONCELL_NEED) return;
   // ข้าขอบัญชา (ชาย/หญิง คิชินามิ ฮาคุโนะ): กดซ้ำไม่ได้จนกว่าผลเดิมจะหมด
@@ -4540,22 +4505,6 @@ function useSkill(id, tier, targets, item) {
     lastLog.push(`🥀 ${p.name} ความตายที่โรยรา — ความตายเริ่มโรยราลงบนสนาม 5 เทิร์น! (เส้นชีวิตแปรเป็นดาเมจเสริมการโจมตีปกติ +1 ต่อเส้น — พลังโจมตีรวมสูงสุด ${SHIKI_WITHER_ATK_CAP} · โอกาสสังหารทันที ${Math.round(SHIKI_WITHER_KILL_CHANCE * 100)}% คงที่ · ท่าไม้ตายแจกเส้นชีวิตได้สูงสุด ${SHIKI_WITHER_ADD_MAX} หน่วยต่อคน)`);
   }
 
-  // จอมเวทย์ฝึกหัด (ฟุจิมารุ): สแตคดาเมจแพ้จั่ว/แตก +1 ต่อครั้ง (1 เทิร์น) + ฟื้นเลือดเทิร์นถัดไปตามจำนวนครั้ง
-  if (isMage) {
-    p.mageUses = (p.mageUses || 0) + 1;
-    p.mageHealNext = (p.mageHealNext || 0) + 1;
-    p.statuses.mage = (p.statuses.mage || 0) + 1; // เก็บเป็นจำนวนสแตค (ล้างหมดตอนจบเทิร์น)
-    lastLog.push(`🪄 ${p.name} จอมเวทย์ฝึกหัด x${p.statuses.mage} — ความเสียหายจากการแพ้/แตกเทิร์นนี้ +${p.statuses.mage}`);
-  }
-  // Mystic Code (ฟุจิมารุ): หักเกราะตัวเอง 1 -> ต่ออายุ Everything For Humanity +1 เทิร์น
-  if (isMystic) {
-    p.armor--;
-    p.statuses.humanity = (p.statuses.humanity || 0) + 1;
-    lastLog.push(`🔧 ${p.name} Mystic Code — หักเกราะ 1 ต่ออายุ Everything For Humanity (เหลือ ${p.statuses.humanity} เทิร์น)`);
-  }
-  // Everything For Humanity: ใช้เรจูอาคมบัญชาทั้ง 3 หมดทันทีตอนกด
-  if (st === "humanity") p.reiju = 0;
-
   // ทงคัสสึ 3 มื้อ (เทมาริ patch 2.0.6): นับชามสะสม (สูงสุด 6 ชาม) — เกิน 2 ชาม = เทิร์นถัดไปจั่วเพิ่มไม่ได้
   const isTonkatsu = p.characterId === "temari" && tier === "basic";
   if (isTonkatsu) {
@@ -5123,45 +5072,6 @@ function useSkill(id, tier, targets, item) {
   broadcastState();
   checkAllLocked();
 }
-// ---- เรจูอาคมบัญชา (สกิลติดตัวฟุจิมารุ) ----
-//  สั่งใช้ก่อนเปิดการ์ด ไม่นับเป็นการใช้สกิล (ใช้พร้อมสกิลอื่นได้) — 3 ครั้งต่อเกม
-//  คำสั่ง: 1 อมตะ 1 เทิร์น | 2 สุ่มฟื้นเลือด/เกราะเต็ม (50/50) | 3 เติมแต้มสกิลเต็ม
-function useReiju(id, command) {
-  const p = players[id];
-  if (gameState !== "PLAYING" || !p || !p.alive || p.locked) return;
-  if (p.characterId !== "fujimaru") return;
-  const cmd = Number(command);
-  if (![1, 2, 3].includes(cmd)) return;
-  if ((p.reiju || 0) <= 0) return;
-  p.reiju--;
-
-  let what = "";
-  if (cmd === 1) {
-    p.statuses.seal = 1;
-    what = "อมตะ 1 เทิร์น";
-    lastLog.push(`📜 ${p.name} เรจูอาคมบัญชา — เทิร์นนี้เป็นอมตะ ไม่ถูกเลือกโจมตี ไม่รับความเสียหายใดๆ (เหลือ ${p.reiju})`);
-  } else if (cmd === 2) {
-    if (Math.random() < 0.5) {
-      healHp(p, MAX_HP);
-      what = "ฟื้นพลังชีวิตเต็ม";
-    } else {
-      p.armor = maxArmorOf(p);
-      what = "ฟื้นเกราะเต็ม";
-    }
-    lastLog.push(`📜 ${p.name} เรจูอาคมบัญชา — สุ่มได้ ${what}! (เหลือ ${p.reiju})`);
-  } else {
-    addSkill(p, MAX_SKILL); // เติมให้เต็ม 6 แต้ม (addSkill ตัดเพดานให้เอง)
-    what = "เติมแต้มสกิลเต็ม";
-    lastLog.push(`📜 ${p.name} เรจูอาคมบัญชา — เติมแต้มสกิลเต็ม ${MAX_SKILL} แต้ม (เหลือ ${p.reiju})`);
-  }
-  // เด้งโชว์ทันทีบนกระดานทุกคน (แบบเดียวกับสกิล instant) — รูปตามจำนวนเส้นที่เหลือ
-  io.emit("skillFlash", {
-    name: `ขอสาบานด้วยอาคมบัญชานี้ — ${what}`,
-    img: `/characters/fujimaru/reiju${Math.max(0, Math.min(3, p.reiju))}.jpg`,
-    by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96",
-  });
-  broadcastState();
-}
 // สกิลติดตัว อาคมบัญชาระดับ EX+ (คิชินามิ ฮาคุโนะ patch 2.2.1): เลือกใช้ได้ 3 ครั้งต่อเกม กดได้กี่ครั้งก็ได้ใน 1 เทิร์นจนกว่าจะหมด
 function hakunoCommandSpell(id, command) {
   const p = players[id];
@@ -5553,8 +5463,6 @@ function resolveRound() {
   }
 
   if (best !== worst) {
-    // จอมเวทย์ฝึกหัด (ฟุจิมารุ): ความเสียหายจากการแพ้จั่ว/แตกรุนแรงขึ้น +1 ต่อสแตค (รวมทุกคนที่เปิดไว้)
-    const mageExtra = combatants.reduce((n, q) => n + (q.statuses.mage || 0), 0);
     // การหลับไหลอันไม่สิ้นสุด (สกิลติดตัวโอเบรอน): ผู้แพ้ที่ติดทั้ง "การตื่นขึ้น" และ "ยามฟ้าสาง" เจ็บขึ้น +1
     const oberonHere = combatants.some((q) => q.characterId === "oberon");
     for (const l of combatants.filter((p) => val(p) === worst && p.id !== roundWinnerId)) {
@@ -5565,13 +5473,6 @@ function resolveRound() {
         addSkill(l, 1);
         firePassive(l, "lose");
         lastLog.push(`📜 ${l.name} อาคมบัญชาคุ้มครอง — ไม่รับความเสียหายจากการแพ้`);
-        continue;
-      }
-      if ((l.statuses.humanity || 0) > 0) {
-        // Everything For Humanity: ความเสียหายจากการแพ้จั่ว/แตก ทำอะไรไม่ได้
-        addSkill(l, 1);
-        firePassive(l, "lose");
-        lastLog.push(`✨ ${l.name} Everything For Humanity — ความเสียหายจากการแพ้ทำอะไรไม่ได้`);
         continue;
       }
       if (l.beatSaved) {
@@ -5611,7 +5512,7 @@ function resolveRound() {
         l.statuses.awaken--;
         if (l.statuses.awaken <= 0) delete l.statuses.awaken;
       }
-      let lossDmg = 1 + mageExtra + dawnExtra; // จอมเวทย์ฝึกหัด: แพ้จั่ว/แตกเจ็บขึ้นตามสแตค
+      let lossDmg = 1 + dawnExtra;
       // เต็มอิ่ม (Breakfast โอกูริ patch 2.0.8.1): ดาเมจที่ได้รับ -1 (รวมดาเมจแพ้จั่ว/แตก)
       if ((l.statuses.fullbelly || 0) > 0 && lossDmg > 0) {
         lossDmg = Math.max(0, lossDmg - 1);
@@ -5628,7 +5529,7 @@ function resolveRound() {
       maybeBeatSave(l);
       addSkill(l, 1); // โดนความเสียหายเพราะแต้มห่างจาก 21 มากที่สุด +1
       firePassive(l, "lose");
-      lastLog.push(`${l.name} แต้มน้อยสุด รับความเสียหาย -${lossDmg}${mageExtra > 0 ? ` (จอมเวทย์ฝึกหัด +${mageExtra})` : ""}${dawnExtra > 0 ? " (การหลับไหลอันไม่สิ้นสุด +1)" : ""}`);
+      lastLog.push(`${l.name} แต้มน้อยสุด รับความเสียหาย -${lossDmg}${dawnExtra > 0 ? " (การหลับไหลอันไม่สิ้นสุด +1)" : ""}`);
     }
   }
   for (const p of combatants) if (!p.result) p.result = "safe";
@@ -5796,13 +5697,6 @@ function afterResolve() {
         p.seen[key] = true;
         p.transformAt = ++transformCounter;
         // สวมเกราะราชัน: เพิ่มแค่เพดานเกราะ +3 (ไม่ฟื้นเกราะให้ — เกราะที่มีคงเดิม รอฟื้นฟูเองต้นรอบ)
-        // Everything For Humanity (ฟุจิมารุ): หักเลือดเหลือ 1 + ความจุเกราะ +3 พร้อมฟื้นเกราะ +3
-        //  ร่างสุดท้ายคงอยู่จนตาย — เมื่อผลจบลงแล้วเกมยังไม่จบ ตัวละครตายทันที (เช็คใน endTurn)
-        if (key === "humanity") {
-          p.humanityActivated = true;
-          p.hp = 1;
-          healArmor(p, 3);
-        }
         // Sekai ichi kawaii watashi (โคโตเนะ patch 2.2.2): ตีหมู่ทุกคน (ยกเว้นตัวเอง) ดาเมจ 3 หน่วย + สตั้น 2 เทิร์น
         //  ไม่ใช้ coin แล้ว (เดิมต้องมี 3 coin + หักตอนกด)
         if (key === "kawaii") {
@@ -6105,7 +5999,6 @@ function doAttack(byId, targetId) {
       const ultImg = (TRANSFORMS[ultKey] && TRANSFORMS[ultKey].img)
         || (isBardDim ? TRANSFORMS.bardDim.img : ultKey === "ashen" ? TRANSFORMS.oguriAshen.img : displayImg(attacker));
       delete attacker.statuses[ultKey];
-      if (ultKey === "humanity") attacker.humanityActivated = false; // ยกเลิกแล้วไม่ต้องจ่ายราคาชีวิต
       if (ultKey === "wither") clearWitherLines();                   // ลบเส้นชีวิตที่ท่าแจกไว้ออกด้วย
       if (ultKey === "anata") { attacker.anataTargets = null; anataMusicSeq = 0; } // ANATA WAAAAAAAA (patch 2.0.8)
       if (ultKey === "riddheguard") { const rb = riddheAllied(attacker); if (rb) delete rb.statuses.riddheward; } // ริดดี้ ท่า 2: ถอดเกราะฝั่งบานาจด้วย
@@ -6368,8 +6261,6 @@ function doAttack(byId, targetId) {
   // Ohger Finish: ต้องมีทั้งสวมเกราะราชัน + ประกายเขี้ยวปฏิปักษ์ (เช็คตอนกดสกิล) = +1
   const ohger = (attacker.statuses.ohger || 0) > 0;
   const ohgerBonus = ohger ? 1 : 0;
-  // Everything For Humanity (ฟุจิมารุ): พลังโจมตี +4
-  const humanityAtk = (attacker.statuses.humanity || 0) > 0;
   // หอกลองกินัส (เอวา 13): พลังโจมตี +1 (1 เทิร์น) + เป้าหมายจั่วไม่ได้เทิร์นถัดมา
   const spearAtk = (attacker.statuses.spear || 0) > 0;
   // กำไรเท่าตัวโว้ย (แกมเบลอร์): +โจมตีสะสม และทะลุเกราะ 1 ครั้ง — หมดไปเมื่อได้ตี
@@ -6475,7 +6366,7 @@ function doAttack(byId, targetId) {
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
   // patch 2.2.4: เอาโบนัสจากกันตาย (สกิลติดตัว 1) ออก — เหลือเฉพาะช่วงฉันคว้ามันได้แล้ว (Apprivoise!) ทำงานอยู่
   const takutoAtk = attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (humanityAtk ? 4 : 0) + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -6644,7 +6535,6 @@ function doAttack(byId, targetId) {
         const ultName = shikiUltNameOf(target, purgeKey);
         delete target.statuses[purgeKey];
         if (target.statusAmt) delete target.statusAmt[purgeKey];
-        if (purgeKey === "humanity") target.humanityActivated = false; // ยกเลิกแล้วไม่ต้องจ่ายราคาชีวิต
         if (purgeKey === "wither") clearWitherLines();
         if (purgeKey === "anata") { target.anataTargets = null; anataMusicSeq = 0; }
         if (purgeKey === "riddheguard") { const rb = riddheAllied(target); if (rb) delete rb.statuses.riddheward; }
@@ -7075,7 +6965,6 @@ function doAttack(byId, targetId) {
   if (fourthAtk) addFx({ name: `Fourth Impact +${fourthAtk}`, img: TRANSFORMS.fourth.img, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (ginga) addFx(skillByStatus(attacker, "ginga"), "atk");
   if (gingastriumAtk) addFx({ name: `Ginga Strium${lastStanding ? " +1 (คู่ต่อสู้คนเดียว)" : ""}`, img: HIKARU_STRIUM_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
-  if (humanityAtk) addFx(skillByStatus(attacker, "humanity"), "atk");
   if (spearAtk) addFx(skillByStatus(attacker, "spear"), "atk");
   if (veilAtk) addFx({ name: "ม่านแห่งราตรี +1", img: "/characters/oberon/oberon_skill1.jpg", by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (empowerAtk) addFx({ name: "Rejuvenation — เสริมพลัง +1", img: BARD_CRIMSON_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
@@ -7274,7 +7163,6 @@ function endTurn() {
       // ปีกแห่งสุริยัน (อควาเรียน): ระหว่างท่าไม้ตายไปยังพฤกษาแห่งชีวิตทำงาน ร่างไม่มีวันหมด
       //  (คงอยู่จนกว่าผลท่าไม้ตายจะจบลงหรือตาย — ค่อยกลับมานับเทิร์นต่อ)
       if (k === "godwing" && (p.statuses.godtree || 0) > 0) continue;
-      if (k === "mage") { delete p.statuses.mage; continue; } // จอมเวทย์ฝึกหัด: เก็บเป็นสแตค อยู่แค่ 1 เทิร์น
       // หลับไหล: เทิร์นที่เพิ่งโดนกล่อม ยังไม่เริ่มนับ (เริ่มหลับจริงเทิร์นถัดไป ครบตามจำนวนยามฟ้าสาง)
       if (k === "sleep" && p.sleepFresh) { p.sleepFresh = false; continue; }
       p.statuses[k]--;
@@ -7414,14 +7302,6 @@ function endTurn() {
   // นายเป็นคนทำตัวเองนะ (เทเปา): ฉากหลัง/เพลงจบตอนไม้ตายทำงาน นับถอยหลังลง
   for (const p of Object.values(players)) {
     if ((p.tepeuEyeTurns || 0) > 0) p.tepeuEyeTurns--;
-  }
-
-  // Everything For Humanity (ฟุจิมารุ): ผลจบลงแล้วเกมยังไม่จบ -> จ่ายราคา ตัวละครตายลง
-  for (const p of Object.values(players)) {
-    if (p.alive && p.humanityActivated && !(p.statuses.humanity > 0)) {
-      p.hp = 0;
-      lastLog.push(`💫 ${p.name} ผลของ Everything For Humanity จบลง — ร่างกายรับไม่ไหว...`);
-    }
   }
 
   for (const p of Object.values(players)) {
@@ -7669,7 +7549,6 @@ io.on("connection", (socket) => {
       takutoComboReady: false, takutoUlt2VideoPending: false, takutoAwakenAt: 0,
       tonkatsu: 0, songAtk: 0, noDrawNext: 0, anataTargets: null, nightmareTarget: null,
       gamblerUses: GAMBLER_USES, profit: 0, tempHp: 0, tempHpTurns: 0, noSkillNext: 0,
-      reiju: REIJU_USES, mageUses: 0, mageHealNext: 0, humanityActivated: false,
       sunriseDrop: 0, sleepFresh: false,
       appleItem: "drink", appleAtkBuffs: [], chillDodge: 100, appleGiveUses: APPLE_GIVE_USES,
       tepeuCookTurns: 0, tepeuPonderTurns: 0, tepeuEyeTurns: 0, tepeuLoseStreak: 0, tepeuKillTargetId: null,
@@ -7719,7 +7598,6 @@ io.on("connection", (socket) => {
   socket.on("lwSelectBank", ({ index } = {}) => lwSelectBank(socket.id, index)); // ไวท์เล็น: เลือกของจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
   socket.on("lwCardBurn", ({ indices } = {}) => lwCardBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด (เลือกหลายชิ้น ยืนยันครั้งเดียว)
   socket.on("lwAtkBurn", ({ indices } = {}) => lwAtkBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 2 — สละของในคลังแลกพลังโจมตี (เลือกหลายชิ้น ยืนยันครั้งเดียว)
-  socket.on("useReiju", ({ command } = {}) => useReiju(socket.id, command));
   socket.on("hakunoCommandSpell", ({ command } = {}) => hakunoCommandSpell(socket.id, command)); // คิชินามิ ฮาคุโนะ: อาคมบัญชาระดับ EX+
   socket.on("locaAnswer", ({ accept } = {}) => answerLoca(socket.id, !!accept)); // ซาโตรุ: ตอบข้อเสนอผลโลกากากา
   socket.on("riddheAlly", ({ targetId } = {}) => riddheChooseAlly(socket.id, targetId)); // ริดดี้: เลือกยื่นข้อเสนอพันธมิตร/เดินเดี่ยว

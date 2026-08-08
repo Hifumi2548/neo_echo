@@ -39,7 +39,6 @@ const FILES = {
   normal_k: "/characters/kuwagata/normal_k.mp3",         // เสียงพากย์หลังวีดีโอสวมเกราะราชัน
   ex_k: "/characters/kuwagata/ex_k.mp3",                 // เสียงพากย์หลังวีดีโอ Beat Mode
   temari_final_theme: "/characters/temari/temari_final_theme.mp3", // เพลง ANATA WAAAAAAAA (เล่นถึงตอนเปิดไพ่)
-  fujimaru_final: "/characters/fujimaru/fujimaru_final_theme.mp3", // เพลงระหว่าง Everything For Humanity (ฟุจิมารุ)
   gambler: "/characters/gambler/gambler_theme.mp3",  // เพลงระหว่างบัฟเวลาทอง 777 (แกมเบลอร์)
   eva13: "/characters/eva13/eva13_theme.mp3",        // เพลงระหว่าง Fourth Impact (เอวา 13)
   oberon: "/characters/oberon/orberon theme.mp3",    // เพลงประจำตัวโอเบรอน (ระหว่าง Lie Like Vortigern)
