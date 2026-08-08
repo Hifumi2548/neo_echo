@@ -130,8 +130,6 @@ const GAMBLER_USES = 3; // วอสก้าหน่อยน้อง ใช�
 const TEMP_HP_TURNS = 2; // เลือดชั่วคราว (แกมเบลอร์) หายเองภายใน 2 เทิร์น
 const EVA_BLAST_DMG = 8; // ระเบิด fourth impact (เอวา 13) ใส่ทุกคนในสนาม (patch 2.2 alpha — เดิม 5)
 // ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
-const KUWAGATA_PUDDING_FULL_AT = 3;    // Rainbow Pudding: กินครบทุกๆ 3 ครั้ง = อิ่ม
-const KUWAGATA_PUDDING_NODRAW_TURNS = 2; // อิ่ม: จั่วการ์ดเพิ่มไม่ได้ 2 เทิร์น
 const KUWAGATA_OHGER_DECAY_TURNS = 3;  // Ohger Finish: โจมตีโดนเป้าหมาย -> ติดผุพัง 3 เทิร์น
 const KUWAGATA_RACHAN_TURNS = 5;       // สวมเกราะราชัน: คงอยู่ 5 เทิร์น (เดิมถาวร)
 const KUWAGATA_RACHAN_ATK = 1;         // สวมเกราะราชัน (คิงโอเจอร์): พลังโจมตีปกติ +1
@@ -1345,7 +1343,6 @@ function songActive(p) {
   return !!p && ((p.statuses && p.statuses.song) || 0) > 0;
 }
 // ---------- เทมาริ (patch 2.0.6) ----------
-const TEMARI_TONKATSU_MAX = 4;   // ชามทงคัสสึสะสมได้สูงสุด (patch 2.0.6.1 — ปรับจาก 6 เหลือ 4)
 const TEMARI_ANATA_DRAWS = 3;    // ANATA WAAAAAAAA: บังคับจั่วเพิ่ม 3 ใบ (เพิ่มจาก 2)
 // สถานะผิดปกติที่ Song for you ล้างออกได้ทั้งหมด (patch 2.0.8: เพิ่มดีบัฟพื้นฐานใหม่
 //  และแยก ยามฟ้าสาง/เส้นชีวิต ออกไปลดทีละ 1 แทน — ดูใน st === "song")
@@ -3408,17 +3405,11 @@ function useSkill(id, tier, targets, item) {
   // Ohger Finish (patch 2.2 alpha): ใช้ได้โดยไม่มีเงื่อนไขแล้ว — กดซ้ำไม่ได้จนกว่าจะได้โจมตี
   if (st === "ohger" && (p.statuses.ohger || 0) > 0) return;
 
-  // ANATA WAAAAAAAA (เทมาริ): ต้องเลือกเป้าหมาย 1 คนก่อนใช้
+  // ANATA WAAAAAAAA (เทมาริ): ต้องเลือกเป้าหมาย 1 คนก่อนใช้ (characters/temari.js)
   let anataTargets = null;
   if (st === "anata") {
-    const avail = alivePlayers().filter((o) => o.id !== p.id);
-    const need = Math.min(1, avail.length);
-    if (need === 0) return;
-    const tgs = Array.isArray(targets)
-      ? [...new Set(targets)].filter((tid) => avail.some((o) => o.id === tid))
-      : [];
-    if (tgs.length !== need) return;
-    anataTargets = tgs;
+    anataTargets = CHAR_HOOKS.temari.prepareAnataTargets(engine, p, targets);
+    if (!anataTargets) return;
   }
 
   p.skillPoints -= cost;
@@ -3444,15 +3435,8 @@ function useSkill(id, tier, targets, item) {
     }
   }
 
-  // Rainbow Pudding (คุวากาตะ patch 2.2 alpha): กินครบทุกๆ 3 ครั้ง = อิ่ม จั่วการ์ดเพิ่มไม่ได้ 2 เทิร์น
-  if (isPudding) {
-    p.puddingCount = (p.puddingCount || 0) + 1;
-    if (p.puddingCount % KUWAGATA_PUDDING_FULL_AT === 0) {
-      p.statuses.nodraw = Math.max(p.statuses.nodraw || 0, KUWAGATA_PUDDING_NODRAW_TURNS);
-      p.noDrawNext = Math.max(p.noDrawNext || 0, KUWAGATA_PUDDING_NODRAW_TURNS);
-      lastLog.push(`🍮 ${p.name} กิน Rainbow Pudding ครบ ${p.puddingCount} ชิ้น — อิ่ม! จั่วการ์ดเพิ่มไม่ได้ ${KUWAGATA_PUDDING_NODRAW_TURNS} เทิร์น`);
-    }
-  }
+  // Rainbow Pudding (คุวากาตะ patch 2.2 alpha): characters/kuwagata.js
+  if (isPudding) CHAR_HOOKS.kuwagata.applyBasicPudding(p, engine.log);
 
   // ---------- Gambler the gambling: สกิลเสี่ยงโชค (จัดการใน engine โดยตรง) ----------
   let flashSuffix = ""; // ต่อท้ายชื่อสกิลบนป้ายเด้ง เพื่อบอกผลเสี่ยงโชคให้ทุกคนเห็น
@@ -3518,21 +3502,10 @@ function useSkill(id, tier, targets, item) {
       }
     }
   }
-  // ---------- เอวา 13: หอกแห่งแคสเซียส — หักเกราะตัวเอง 1 ฟื้นเลือด 1 ----------
-  if (isCassius) {
-    lastLog.push(`🗡️ ${p.name} หอกแห่งแคสเซียส — การโจมตีปกติครั้งถัดไปจะฟื้นพลังชีวิตตามความเสียหายที่ทำได้`);
-  }
-  // ---------- โอเบรอน: ม่านแห่งราตรี — บัฟหมู่ก่อนเปิดการ์ด ----------
-  if (isVeil) {
-    for (const o of alivePlayers()) {
-      o.statuses.veil = Math.max(o.statuses.veil || 0, 2); // พลังโจมตี +1 คงอยู่ 2 เทิร์น (รวมตัวเอง)
-      healHp(o, 1);                                        // ฟื้นพลังชีวิตทุกคน +1 (รวมตัวเอง)
-      healArmor(o, 1);      // ฟื้นเกราะทุกคน +1 (รวมตัวเอง)
-      // ยามฟ้าสาง +2 ถาวร (สะสมสูงสุด 3) — คนที่กำลังหลับไหลจะไม่รับเพิ่ม (ผลก่อนหน้ายังไม่หมด)
-      if (o.id !== p.id && !((o.statuses.sleep || 0) > 0)) o.statuses.dawn = Math.min(3, (o.statuses.dawn || 0) + 2);
-    }
-    lastLog.push(`🌙 ${p.name} ม่านแห่งราตรี — ทุกคนพลังโจมตี +1 (2 เทิร์น) ฟื้นเลือด/เกราะ +1 และติดยามฟ้าสาง +2 (ยกเว้นผู้ใช้/คนหลับ)`);
-  }
+  // ---------- เอวา 13: หอกแห่งแคสเซียส (characters/eva13.js) ----------
+  if (isCassius) CHAR_HOOKS.eva13.applyBasicCassius(p, engine.log);
+  // ---------- โอเบรอน: ม่านแห่งราตรี (characters/oberon.js) ----------
+  if (isVeil) CHAR_HOOKS.oberon.applyBasicVeil(engine, p);
   // ---------- โอเบรอน: รุ่งอรุณแห่งวันใหม่ — ฮีล 5 แลกกับเสียเลือด 1/เทิร์น 2 เทิร์น (ไม่สนเกราะ) ----------
   if (isSunrise && sunriseTarget && satoruOnTargeted(sunriseTarget, p, `สกิล ${skill.name} `).negated) {
     flashSuffix = ` — ถูกลบล้าง`;
@@ -3948,12 +3921,8 @@ function useSkill(id, tier, targets, item) {
     lastLog.push(`🥀 ${p.name} ความตายที่โรยรา — ความตายเริ่มโรยราลงบนสนาม 5 เทิร์น! (เส้นชีวิตแปรเป็นดาเมจเสริมการโจมตีปกติ +1 ต่อเส้น — พลังโจมตีรวมสูงสุด ${SHIKI_WITHER_ATK_CAP} · โอกาสสังหารทันที ${Math.round(SHIKI_WITHER_KILL_CHANCE * 100)}% คงที่ · ท่าไม้ตายแจกเส้นชีวิตได้สูงสุด ${SHIKI_WITHER_ADD_MAX} หน่วยต่อคน)`);
   }
 
-  // ทงคัสสึ 3 มื้อ (เทมาริ patch 2.0.6): นับชามสะสม (สูงสุด 6 ชาม) — เกิน 2 ชาม = เทิร์นถัดไปจั่วเพิ่มไม่ได้
-  const isTonkatsu = p.characterId === "temari" && tier === "basic";
-  if (isTonkatsu) {
-    p.tonkatsu = Math.min(TEMARI_TONKATSU_MAX, (p.tonkatsu || 0) + 1);
-    if (p.tonkatsu > 2) p.noDrawNext = Math.max(p.noDrawNext || 0, 1);
-  }
+  // ทงคัสสึ 3 มื้อ (เทมาริ patch 2.0.6): นับชามสะสม (characters/temari.js)
+  if (p.characterId === "temari" && tier === "basic") CHAR_HOOKS.temari.applyBasicTonkatsu(p);
   applyEffect(p, skill.effect);
 
   // ---------- บานาจ ลิงก์ (patch 2.1.2) ----------
@@ -4210,11 +4179,10 @@ function useSkill(id, tier, targets, item) {
     lastLog.push(`🎵 ${p.name} Song for you — ใช้ทงคัสสึ ${bowls} ชาม: พลังขิง +${atk} (ล้างชามทั้งหมด)${cleansed.length ? ` และล้างสถานะผิดปกติ ${cleansed.length} อย่าง` : ""}`);
   }
 
-  // ANATA WAAAAAAAA: เก็บเป้าหมายไว้เป็นความลับ + เปิดเพลงจนกว่าทุกคนจะเปิดไพ่
-  //  (ซาโตรุ patch 2.0.8.2: เป้าหมายเป็นซาโตรุ = ลบล้างการบังคับจั่วได้)
+  // ANATA WAAAAAAAA (characters/temari.js): เก็บเป้าหมายไว้เป็นความลับ + เปิดเพลงจนกว่าทุกคนจะเปิดไพ่
   if (st === "anata") {
-    p.anataTargets = (anataTargets || []).filter((tid) => !satoruOnTargeted(players[tid], p, `สกิล ${skill.name} `).negated);
-    anataMusicSeq = ++transformCounter;
+    p.anataTargets = CHAR_HOOKS.temari.applyUltimateEffect(engine, p, anataTargets, skill.name);
+    anataMusicSeq = engine.nextTransformCounter();
   }
 
   // MonsterLive (ฮิคารุ patch 2.1.3): เพิ่มเพดานเกราะ +2 (มีผลทันทีจาก maxArmorOf) และฟื้นเกราะทันที +2 — เล่นวีดีโอทันทีก่อนเปิดไพ่
@@ -5997,13 +5965,8 @@ function doAttack(byId, targetId) {
       lastLog.push(`🍽️ ${attacker.name} การโจมตีปกติ — ${target.name} ติดเส้นชีวิต +1 (สะสม ${target.statuses.deathline}/${TEPEU_DEATHLINE_CAP})`);
     }
   }
-  // หอกแห่งแคสเซียส (เอวา 13 patch 2.2 alpha): การโจมตีปกติฟื้นเลือดตามความเสียหายที่ทำได้ — ใช้แล้วหมดไป
-  const cassiusAtk = attacker.characterId === "eva13" && (attacker.statuses.cassius || 0) > 0;
-  if (cassiusAtk) {
-    delete attacker.statuses.cassius;
-    const heal = healHp(attacker, dmg);
-    if (heal > 0) lastLog.push(`🗡️ ${attacker.name} หอกแห่งแคสเซียส — ฟื้นพลังชีวิตตามความเสียหายที่ทำได้ +${heal}`);
-  }
+  // หอกแห่งแคสเซียส (เอวา 13 patch 2.2 alpha, characters/eva13.js): การโจมตีปกติฟื้นเลือดตามความเสียหายที่ทำได้ — ใช้แล้วหมดไป
+  CHAR_HOOKS.eva13.onAttackConsumeCassius(engine, attacker, dmg);
   // ย๊ากก! (อาริมะ มิยาโกะ patch 2.2.1 alpha): พลังโจมตี +1 ต่อการโจมตี — ถ้าใช้ร่วมกับเพลงหมัดอาริมะ
   //  นับทั้งคอมโบเป็นการโจมตีครั้งเดียว จึงยังไม่ลบตรงนี้ (ให้บวก +1 ทุกหมัดในคอมโบ) — ลบจริงตอนคอมโบจบใน postAttackFollowup()
   // ---------- DoomGuy (patch 2.2 full) ----------

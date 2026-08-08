@@ -8,9 +8,17 @@
 // ============================================================
 
 const tohno = require("./tohno");
+const temari = require("./temari");
+const kuwagata = require("./kuwagata");
+const eva13 = require("./eva13");
+const oberon = require("./oberon");
 
 const CHARACTER_MODULES = [
   tohno,
+  temari,
+  kuwagata,
+  eva13,
+  oberon,
 ];
 
 const CHAR_HOOKS = {};
