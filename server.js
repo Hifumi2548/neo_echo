@@ -2866,19 +2866,11 @@ function dealRound() {
     }
   }
 
-  // สลับช่วงเวลากลางวัน/กลางคืน (ทุก 3 เทิร์น): โอเบรอนสลับร่างอัตโนมัติ
+  // สลับช่วงเวลากลางวัน/กลางคืน (ทุก 3 เทิร์น): โอเบรอนสลับร่างอัตโนมัติ (characters/oberon.js)
   const night = isNightRound(roundNumber);
-  if (!night && oberonDevour) {
-    oberonDevour = 0; // ราตรีกลืนกิน หายไปเมื่อหมดกลางคืน
-    lastLog.push("🌄 ราตรีกลืนกินจางหายไปพร้อมแสงแรกของวัน");
-  }
+  CHAR_HOOKS.oberon.onDayNightTransition(engine, night, roundNumber, prevNight);
   if (roundNumber > 1 && night !== prevNight) {
     lastLog.push(night ? "🌙 ราตรีมาเยือน — เกราะจะฟื้นทุกเทิร์น" : "☀️ ฟ้าสางแล้ว — จบเทิร์นได้แต้มสกิลเพิ่ม +1");
-    for (const p of alivePlayers()) {
-      if (p.characterId !== "oberon") continue;
-      if (night) triggerCutscene(p, "oberonNight"); // ครั้งแรกเล่นวีดีโอ morning_tonight.mp4 / ครั้งถัดไปแจ้งเตือนเล็กๆ
-      else notifyTransform(p, "oberonDay");         // กลับร่างกลางวัน = แจ้งปกติ ไม่มีวีดีโอ
-    }
     // เสียงไพเราะที่กึกก้อง (ชเรด เอลัน): เข้ากลางคืนพร้อมท่วงทำนองครบ 5 -> เล่นวีดีโอเปิดตัว
     if (night) {
       for (const p of alivePlayers()) {
@@ -3175,24 +3167,18 @@ function useSkill(id, tier, targets, item) {
   if (p.characterId === "miyako" && tier === "basic" && (p.statuses.miyakoHeal || 0) > 0) return;
   // เพลงหมัด อาริมะ (อาริมะ มิยาโกะ): กดซ้ำไม่ได้จนกว่าจะได้โจมตี
   if (p.characterId === "miyako" && tier === "secondary" && (p.statuses.miyakoCombo || 0) > 0) return;
-  // รุ่งอรุณแห่งวันใหม่ (โอเบรอน สกิลรองกลางวัน): เลือกเป้าหมาย 1 คน (ตัวเองได้) — ไม่มีคูลดาวน์
+  // รุ่งอรุณแห่งวันใหม่ / ฝันร้ายยามค่ำคืน (โอเบรอน สกิลรอง, characters/oberon.js)
   const isSunrise = p.characterId === "oberon" && tier === "secondary" && !isNightRound(roundNumber);
   let sunriseTarget = null;
   if (isSunrise) {
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive) return;
-    sunriseTarget = t;
+    sunriseTarget = CHAR_HOOKS.oberon.prepareSunriseTarget(engine, targets);
+    if (!sunriseTarget) return;
   }
-  // ฝันร้ายยามค่ำคืน (โอเบรอน สกิลรองกลางคืน): เลือกเป้าหมาย 1 คน (คนอื่นเท่านั้น)
-  //  ทำงานหลังเปิดการ์ด — ความเสียหาย 1 หน่วย × จำนวนการหลับไหลที่เหลือของเป้าหมาย
   const isNightmare = p.characterId === "oberon" && tier === "secondary" && isNightRound(roundNumber);
   let nightmareTarget = null;
   if (isNightmare) {
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    nightmareTarget = t.id;
+    nightmareTarget = CHAR_HOOKS.oberon.prepareNightmareTarget(engine, p, targets);
+    if (!nightmareTarget) return;
   }
   // เอาไปสิ (Apple guy สกิลรอง): เลือกผู้เล่น 1 คน (คนอื่นเท่านั้น) มอบของที่เลือกไว้ทันทีก่อนเปิดการ์ด
   //  ใช้ได้จำนวนจำกัด 1 ครั้ง (เติมได้จากสกิลติดตัวเมื่อหลบสำเร็จ — สะสมไม่ได้) (patch 1.9.1)
@@ -3437,23 +3423,14 @@ function useSkill(id, tier, targets, item) {
   if (isCassius) CHAR_HOOKS.eva13.applyBasicCassius(p, engine.log);
   // ---------- โอเบรอน: ม่านแห่งราตรี (characters/oberon.js) ----------
   if (isVeil) CHAR_HOOKS.oberon.applyBasicVeil(engine, p);
-  // ---------- โอเบรอน: รุ่งอรุณแห่งวันใหม่ — ฮีล 5 แลกกับเสียเลือด 1/เทิร์น 2 เทิร์น (ไม่สนเกราะ) ----------
-  if (isSunrise && sunriseTarget && satoruOnTargeted(sunriseTarget, p, `สกิล ${skill.name} `).negated) {
-    flashSuffix = ` — ถูกลบล้าง`;
-  } else if (isSunrise && sunriseTarget) {
-    const t = sunriseTarget;
-    healHp(t, 5);
-    t.sunriseDrop = 2; // หลังจากนั้นลดลงรวม 2 หน่วย — หักเทิร์นละ 1 แบบไม่สนเกราะ (ไม่ถึงตาย ค้างที่ 1)
-    // ยามฟ้าสาง +1 — ไม่ติดถ้าใช้กับตัวเอง หรือเป้าหมายกำลังหลับไหล (ผลก่อนหน้ายังไม่หมด)
-    if (t.id !== p.id && !((t.statuses.sleep || 0) > 0)) t.statuses.dawn = Math.min(3, (t.statuses.dawn || 0) + 1);
-    flashSuffix = ` — ใส่ ${t.name}`;
-    lastLog.push(`🌄 ${p.name} รุ่งอรุณแห่งวันใหม่ — ฟื้นพลังชีวิต ${t.name} +5 (2 เทิร์นถัดมาเสียเลือดเทิร์นละ 1 ไม่สนเกราะ)${t.id !== p.id && !(t.statuses.sleep > 0) ? " และติดยามฟ้าสาง +1" : ""}`);
+  // ---------- โอเบรอน: รุ่งอรุณแห่งวันใหม่ / ฝันร้ายยามค่ำคืน (characters/oberon.js) ----------
+  if (isSunrise && sunriseTarget) {
+    const r = CHAR_HOOKS.oberon.applySunriseEffect(engine, p, sunriseTarget, skill.name);
+    if (r) flashSuffix = r;
   }
-  // ---------- โอเบรอน: ฝันร้ายยามค่ำคืน — เก็บเป้าหมายไว้ ทำงานหลังเปิดการ์ด ----------
   if (isNightmare) {
-    const nt = players[nightmareTarget];
-    if (satoruOnTargeted(nt, p, `สกิล ${skill.name} `).negated) flashSuffix = " — ถูกลบล้าง";
-    else p.nightmareTarget = nightmareTarget;
+    const r = CHAR_HOOKS.oberon.applyNightmareEffect(engine, p, nightmareTarget, skill.name);
+    if (r) flashSuffix = r;
   }
   // ---------- โทโนะ ชิกิ: มีดพับประจำตระกูล — เลือกระดับสกิลติดตัว 1-5 (กดเปลี่ยนกี่ครั้งก็ได้) (characters/tohno.js) ----------
   if (isTohnoPick) {
@@ -4828,28 +4805,8 @@ function resolveRound() {
 // เปิดร่างท่าไม้ตาย (หลังเปิดไพ่) -> cutscene ก่อนสรุปผล (สรุปผลไว้ท้ายสุดเสมอ)
 //  หมายเหตุ: สกิลทั่วไปไม่มีแบนเนอร์ก่อนสรุปผลแล้ว — instant เด้งตอนใช้ / หลังเปิดไพ่ไปโชว์ตอนโจมตี
 function afterResolve() {
-  // ฝันร้ายยามค่ำคืน (โอเบรอน patch 1.8): ทำงานหลังเปิดการ์ด — เป้าหมายเดี่ยว
-  //  สร้างความเสียหาย 1 หน่วยแก่เป้าหมายที่เลือก — หากเป้าหมายกำลังหลับไหล พลังโจมตี +2
-  //  (ผู้ใช้ไพ่แตก = สกิลไม่ทำงาน)
-  for (const p of alivePlayers()) {
-    if (!((p.statuses.nightmare || 0) > 0) || !p.nightmareTarget) continue;
-    const t = players[p.nightmareTarget];
-    p.nightmareTarget = null;
-    if (bustedOf(p)) {
-      lastLog.push(`💥 ${p.name} ไพ่แตก! ฝันร้ายยามค่ำคืนใช้งานไม่ได้ — แต้มสกิลเสียฟรี`);
-      continue;
-    }
-    if (!t || !t.alive) continue;
-    const sleeping = (t.statuses.sleep || 0) > 0;
-    const dmg = 1 + (sleeping ? 2 : 0);
-    dealMixed(t, dmg);
-    maybeBeatSave(t);
-    maybeBeatMode(t);
-    maybeEva3(t);
-    maybeWakeKotone(t);
-    t.wasAttacked = true;
-    lastLog.push(`🌘 ฝันร้ายยามค่ำคืน! ${p.name} เล่นงาน ${t.name} -${dmg}${sleeping ? " (เป้าหมายหลับไหล +2)" : ""}`);
-  }
+  // ฝันร้ายยามค่ำคืน (โอเบรอน, characters/oberon.js): ทำงานหลังเปิดการ์ด — เป้าหมายเดี่ยว
+  CHAR_HOOKS.oberon.resolveNightmareEffects(engine);
   // ---------- เทเปา (ชิกิ): นายเป็นคนทำตัวเองนะ — ผลสังหาร/พลาดทำงานหลังเปิดไพ่ทุกคน (ไพ่แตก = สกิลไม่ทำงาน) ----------
   //  หลบหลีกของ Apple guy (ระหว่างชิวๆครับน้องๆ) รอดพ้นความสามารถสังหารทันทีนี้ได้เหมือนกัน
   for (const p of alivePlayers()) {
@@ -4937,44 +4894,9 @@ function afterResolve() {
             }
           }
         }
-        // Lai Rhyme Goodfellow (โอเบรอน กลางวัน): โจมตีทุกคนไม่สนเกราะ 1 หน่วย
-        //  + มอบ "การตื่นขึ้น" (ฟื้น 1/เทิร์น 1 เทิร์น) + ติด "ยามฟ้าสาง" +1 (คนหลับไม่ติดเพิ่ม)
-        if (key === "lai") {
-          for (const o of alivePlayers()) {
-            if (o.id === p.id) continue;
-            dealDirect(o, 1);
-            maybeBeatSave(o);
-            maybeWakeKotone(o);
-            o.statuses.awaken = Math.max(o.statuses.awaken || 0, 2); // +1 ชดเชยการลดสถานะตอนจบเทิร์น
-            if (!((o.statuses.sleep || 0) > 0)) o.statuses.dawn = Math.min(3, (o.statuses.dawn || 0) + 1);
-            o.wasAttacked = true;
-          }
-          lastLog.push(`🌞 Lai Rhyme Goodfellow! ${p.name} โจมตีทุกคน -1 (ไม่สนเกราะ) มอบสถานะ "การตื่นขึ้น" และยามฟ้าสาง +1`);
-        }
-        // Lie Like Vortigern (โอเบรอน กลางคืน): เกราะหมู่ +1 (ยกเว้นตัวเอง) แล้วกล่อมคนติดยามฟ้าสางให้หลับไหล
-        if (key === "vortigern") {
-          for (const o of alivePlayers()) {
-            if (o.id === p.id) continue;
-            o.statuses.vortarmor = 3; // เพดานเกราะ +1 คงอยู่ 3 เทิร์น (patch 2.0.8.1: นับเทิร์นปัจจุบันเป็นเทิร์นแรก)
-            healArmor(o, 1);
-            const dawn = Math.min(3, o.statuses.dawn || 0); // ยามฟ้าสางสะสมได้ไม่เกิน 3 -> หลับสูงสุด 3 เทิร์น
-            if (dawn > 0 && resistActive(o)) {
-              lastLog.push(`🛡️ ${o.name} ต้านสถานะผิดปกติ — ไม่หลับไหลจากคำลวงของราชาภูติ`);
-            } else if (dawn > 0) {
-              // เก็บจำนวนเทิร์นหลับตามจริง — sleepFresh กันการนับถอยหลังในเทิร์นที่เพิ่งโดนกล่อม
-              // (เริ่มหลับจริงเทิร์นถัดไป และป้ายสถานะโชว์เลขตรงกับจำนวนเทิร์นที่หลับ)
-              o.statuses.sleep = dawn;
-              o.sleepFresh = true;
-              lastLog.push(`💤 ${o.name} ต้องคำลวงของราชาภูติ — หลับไหล ${dawn} เทิร์น!`);
-            }
-          }
-          for (const o of Object.values(players)) delete o.statuses.dawn; // ล้างยามฟ้าสางให้ทุกคน
-          // ราตรีกลืนกิน: ฉากหลังกลางคืนกลายเป็นวีดีโอ + เพลงประจำตัวโอเบรอน จนกว่าจะหมดกลางคืน
-          oberonDevour = ++transformCounter;
-          // สนามของโอเบรอน: รีเซ็ตเวลากลางคืนให้เหลืออีก 3 เทิร์นนับจากเทิร์นถัดไป
-          nightResetPending = true;
-          lastLog.push(`🌑 Lie Like Vortigern! ${p.name} มอบเกราะ +1 ให้ทุกคน (3 เทิร์น) — ราตรีกลืนกิน และรีเซ็ตกลางคืนเหลืออีก 3 เทิร์น`);
-        }
+        // Lai Rhyme Goodfellow / Lie Like Vortigern (โอเบรอน, characters/oberon.js)
+        if (key === "lai") CHAR_HOOKS.oberon.applyLaiEffect(engine, p);
+        if (key === "vortigern") CHAR_HOOKS.oberon.applyVortigernEffect(engine, p);
         // Vortigern (patch 1.7.6): ข้ามวีดีโอประจำท่าไม้ตาย — เล่นราตรีกลืนกิน (oberon_changefill.mp4) ทันที
         //  จบแล้วฉากหลังกลางคืนกลายเป็น oberon_background.mp4 + เพลงประจำตัว (ผ่าน oberonDevour)
         if (key === "vortigern") {
@@ -6762,6 +6684,9 @@ const engine = {
   get roundNumber() { return roundNumber; },
   get lastAttack() { return lastAttack; },
   setLastAttack(v) { lastAttack = v; },
+  get oberonDevour() { return oberonDevour; },
+  setOberonDevour(v) { oberonDevour = v; },
+  setNightResetPending(v) { nightResetPending = v; },
   log(msg) { lastLog.push(msg); },
   nextTransformCounter() { return ++transformCounter; },
   endTurn,
@@ -6784,6 +6709,11 @@ const engine = {
   passiveSealed,
   killSealed,
   resistActive,
+  maybeWakeKotone,
+  maybeBeatSave,
+  maybeBeatMode,
+  maybeEva3,
+  bustedOf,
   hasKillCapability,
   miyakoKillChance,
   miyakoSurvivedKillAttempt,
