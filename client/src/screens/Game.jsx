@@ -867,16 +867,6 @@ function CharModal({ ch, me, onClose }) {
   );
 }
 
-// เล็น/ไวท์เล็น (patch 2.2 beta): จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (Moonlight/Blood Moon กันตาย — สูงสุด 9/เกม)
-function CatUsesBadge({ me, ch }) {
-  if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
-  const isBlack = ch.id === "len";
-  return (
-    <span className="text-xs font-bold bg-black/55 rounded-full px-2 py-0.5 whitespace-nowrap" title={`${isBlack ? "แมวดำ" : "แมวขาว"} (Moonlight/Blood Moon) — จำนวนครั้งที่ยังกลายร่างกันตายได้`}>
-      {isBlack ? "🐈‍⬛" : "🐈"} {isBlack ? "แมวดำ" : "แมวขาว"} {me.catUses ?? 9}/9
-    </span>
-  );
-}
 // DoomGuy (patch 2.2 full): แจ้งเตือนชาร์จ Crucible สะสมได้เท่าไหร่แล้ว (ครบ 5 ปลดล็อกท่าไม้ตาย)
 function DoomChargeBadge({ me, ch }) {
   if (!ch || ch.id !== "doomguy") return null;
@@ -901,78 +891,6 @@ function TakutoStarBadge({ me, ch }) {
     </span>
   );
 }
-// เล็น/ไวท์เล็น (patch 2.2 beta): ปุ่มเปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด ไม่ผูกกับสกิลรอง/ท่าไม้ตาย)
-function BankViewButton({ me, ch, onOpen }) {
-  if (!ch || (ch.id !== "len" && ch.id !== "lenwhite")) return null;
-  const isLen = ch.id === "len";
-  const bank = isLen ? (me.lenBank || []) : (me.lenwhiteBank || []);
-  const max = isLen ? 3 : 6;
-  return (
-    <button
-      onClick={() => { clickSound(); onOpen(); }}
-      className="text-xs font-bold bg-black/55 hover:bg-black/75 transition rounded-full px-2 py-0.5 whitespace-nowrap border border-white/20"
-      title="เปิดดูคลังสกิลที่เก็บไว้"
-    >
-      📦 คลัง {bank.length}/{max}
-    </button>
-  );
-}
-// ไวท์เล็น: ท่าไม้ตาย Arc Drive finish — เลือกโหมดก่อนว่าจะแปลงเป็นแต้มการ์ด (ฟรี) หรือสละทิ้งเพื่อพลังโจมตี (เสียแต้ม)
-function LwArcModeModal({ cost, onCard, onAtk, onClose }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">Arc Drive finish — เลือกโหมด</div>
-        <div className="text-sm opacity-80 mb-3">ทั้งสองแบบไม่มีการนำสกิลที่คัดลอกมาใช้งานจริง — ใช้เป็นทรัพยากรเท่านั้น</div>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => { clickSound(); onCard(); }}
-            className="text-left rounded-xl border border-white/15 bg-white/5 hover:bg-echo-gold/20 hover:border-echo-gold transition px-3 py-2"
-          >
-            <div className="font-bold text-echo-gold">🃏 แปลงเป็นแต้มการ์ด</div>
-            <div className="text-sm opacity-80">ฟรี ไม่เสียแต้มสกิล — เลือกได้หลายชิ้นพร้อมกัน</div>
-          </button>
-          <button
-            onClick={() => { clickSound(); onAtk(); }}
-            className="text-left rounded-xl border border-white/15 bg-white/5 hover:bg-echo-gold/20 hover:border-echo-gold transition px-3 py-2"
-          >
-            <div className="font-bold text-echo-gold">🔥 สละทิ้งเพื่อพลังโจมตี</div>
-            <div className="text-sm opacity-80">จ่าย {cost} แต้ม/ครั้ง — เลือกทีละ 1 ชิ้น สละครบทุกๆ 2 ชิ้น พลังโจมตี +1 (หมดอายุเมื่อกลางวัน/กลางคืนสิ้นสุด)</div>
-          </button>
-        </div>
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-// เล็น/ไวท์เล็น: หน้าต่างดูคลังสกิลที่เก็บไว้ (แบบดูอย่างเดียว — ไม่ใช้เพื่อกดใช้งาน)
-function BankViewModal({ title, items, onClose }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">{title}</div>
-        {items.length === 0 ? (
-          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
-        ) : (
-          <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto mt-2">
-            {items.map((it, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl border px-3 py-2 bg-white/5 border-white/15">
-                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
-                <div>
-                  <div className="font-bold text-echo-gold">{it.skillName}</div>
-                  <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
-                  {it.hasEffect === false && <div className="text-xs text-echo-hp font-bold mt-0.5">⚠️ ท่านี้ไม่มีผลตอนสวมร่างใช้จริง — เผาเป็นดาเมจได้อย่างเดียว</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-
 // ---------- อาคมบัญชาระดับ EX+ (สกิลติดตัวคิชินามิ ฮาคุโนะ patch 2.2.1): UI พิเศษแยกจากช่องสกิล ----------
 //  ไม่นับเป็นการใช้สกิล -> ใช้พร้อมสกิลอื่นได้ | 3 ครั้งต่อเกม กดได้กี่ครั้งก็ได้ใน 1 เทิร์น | รูปเปลี่ยนตามจำนวนที่เหลือ
 const HAKUNO_COMMANDS = [
@@ -1126,152 +1044,6 @@ function AquaLeaderModal({ me, onPick, onClose }) {
           ))}
         </div>
         <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-
-// ---------- เล็น / ไวท์เล็น (patch 2.2 beta): เมนูเลือกท่า/สกิลในคลัง ----------
-//  ใช้ร่วมกัน 4 กรณี: เผาท่าเป็นดาเมจ (ฝันดีนะคะ) / เลือกจะสลับออก (คลังเต็ม) / เลือกสวมร่างตอนกลางคืน / เลือกของมาใช้จริง (ไวท์เล็น)
-function BankPickModal({ title, desc, items, onPick, onClose }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">{title}</div>
-        {desc && <div className="text-sm opacity-80 mb-3">{desc}</div>}
-        {items.length === 0 ? (
-          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
-        ) : (
-          <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
-            {items.map((it, i) => (
-              <button
-                key={i}
-                onClick={() => { clickSound(); onPick(i); }}
-                className="text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition bg-white/5 hover:bg-white/15 border-white/15"
-              >
-                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
-                <div>
-                  <div className="font-bold text-echo-gold">{it.skillName}</div>
-                  <div className="text-sm opacity-80">ราคาต้นฉบับ {it.cost} แต้ม</div>
-                  {it.hasEffect === false && <div className="text-xs text-echo-hp font-bold mt-0.5">⚠️ ไม่มีผลตอนสวมร่างใช้จริง</div>}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-// ไวท์เล็น: เลือกเป้าหมายก่อน แล้วโชว์สกิลพื้นฐาน/สกิลรองจริงของเป้าหมายคนนั้นให้เลือกขโมย (เห็นหน้าตาก่อนตัดสินใจ — ไม่ใช่เลือกแบบสุ่มเดา)
-function LwStealChoiceModal({ target, onPick, onClose }) {
-  const basic = target?.character?.basic;
-  const secondary = target?.character?.secondary;
-  const Tile = ({ label, skill, tier }) => (
-    <button
-      onClick={() => { if (skill) { clickSound(); onPick(tier); } }}
-      disabled={!skill}
-      className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
-        skill ? "bg-white/5 hover:bg-white/15 border-white/15" : "bg-white/5 border-white/10 opacity-50 cursor-not-allowed"
-      }`}
-    >
-      {skill?.img && <img src={skill.img} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
-      <div>
-        <div className="text-xs opacity-70">{label}</div>
-        <div className="font-bold text-echo-gold">{skill?.name || "—"}</div>
-        {skill && <div className="text-sm opacity-80">ราคาต้นฉบับ {skill.cost} แต้ม</div>}
-      </div>
-    </button>
-  );
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">🤍 ฉันขอรับไปนะคะ — จะขโมยสกิลไหนของ {target?.name}?</div>
-        <div className="flex flex-col gap-2 mt-2">
-          <Tile label="สกิลพื้นฐาน" skill={basic} tier="basic" />
-          <Tile label="สกิลรอง" skill={secondary} tier="secondary" />
-        </div>
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ยกเลิก</Button>
-      </div>
-    </div>
-  );
-}
-// ไวท์เล็น: แปลงของในคลังเป็นแต้มการ์ด — การกระทำฟรี ไม่เสียแต้มสกิล เลือกได้หลายชิ้นพร้อมกัน
-function LwCardBurnModal({ items, cost, onConfirm, onClose }) {
-  const [sel, setSel] = useState([]);
-  const toggle = (i) => { clickSound(); setSel((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i])); };
-  const total = sel.reduce((sum, i) => sum + (items[i]?.cost || 0), 0);
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">🃏 แปลงของในคลังเป็นแต้มการ์ด</div>
-        <div className="text-sm opacity-80 mb-3">เลือกได้หลายชิ้นพร้อมกัน — จ่าย {cost} แต้ม/ครั้งที่ยืนยัน (ไม่ว่าจะเลือกกี่ชิ้น) — บวกแต้มการ์ดทันทีไม่มีเพดาน เกิน 21 บัสต์ทันที!</div>
-        {items.length === 0 ? (
-          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
-        ) : (
-          <div className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto">
-            {items.map((it, i) => (
-              <button
-                key={i}
-                onClick={() => toggle(i)}
-                className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
-                  sel.includes(i) ? "bg-echo-gold/20 border-echo-gold" : "bg-white/5 hover:bg-white/15 border-white/15"
-                }`}
-              >
-                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
-                <div className="flex-1">
-                  <div className="font-bold text-echo-gold">{it.skillName}{sel.includes(i) ? " ✓" : ""}</div>
-                  <div className="text-sm opacity-80">แต้มการ์ด +{it.cost}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center justify-between mt-3">
-          <span className="font-bold">รวม +{total} แต้มการ์ด</span>
-          <Button disabled={!sel.length} onClick={() => { clickSound(); onConfirm(sel); }}>ยืนยัน ({sel.length}) — จ่าย {cost}</Button>
-        </div>
-        <Button className="mt-2 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-// ไวท์เล็น: Arc Drive finish โหมด 2 — เลือกของจากคลังหลายชิ้นพร้อมกันมาสละทิ้งแลกพลังโจมตี (ครบทุกๆ 2 ชิ้น +1 หน่วย)
-function LwAtkBurnModal({ items, cost, currentBurns, onConfirm, onClose }) {
-  const [sel, setSel] = useState([]);
-  const toggle = (i) => { clickSound(); setSel((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i])); };
-  const stackGain = Math.floor((currentBurns + sel.length) / 2) - Math.floor(currentBurns / 2);
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">🔥 สละของในคลังแลกพลังโจมตี</div>
-        <div className="text-sm opacity-80 mb-3">เลือกได้หลายชิ้นพร้อมกัน — จ่าย {cost} แต้ม/ครั้งที่ยืนยัน (ไม่ว่าจะเลือกกี่ชิ้น) — สละครบทุกๆ 2 ชิ้น พลังโจมตี +1 (หมดอายุเมื่อกลางวัน/กลางคืนสิ้นสุด) — สละแล้วหายถาวร</div>
-        {items.length === 0 ? (
-          <div className="text-sm opacity-70 py-3 text-center">คลังว่างเปล่า</div>
-        ) : (
-          <div className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto">
-            {items.map((it, i) => (
-              <button
-                key={i}
-                onClick={() => toggle(i)}
-                className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
-                  sel.includes(i) ? "bg-echo-gold/20 border-echo-gold" : "bg-white/5 hover:bg-white/15 border-white/15"
-                }`}
-              >
-                {it.skillImg && <img src={it.skillImg} alt="" className="w-16 h-12 object-cover rounded-lg shrink-0" />}
-                <div className="flex-1">
-                  <div className="font-bold text-echo-gold">{it.skillName}{sel.includes(i) ? " ✓" : ""}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center justify-between mt-3">
-          <span className="font-bold">{stackGain > 0 ? `พลังโจมตี +${stackGain}` : `สะสม ${(currentBurns + sel.length) % 2}/2`}</span>
-          <Button disabled={!sel.length} onClick={() => { clickSound(); onConfirm(sel); }}>ยืนยัน ({sel.length}) — จ่าย {cost}</Button>
-        </div>
-        <Button className="mt-2 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
       </div>
     </div>
   );
@@ -1560,20 +1332,6 @@ export default function Game({ state, lowQ }) {
   const [appleOpen, setAppleOpen] = useState(false); // Apple guy: เมนูเลือกของส่งมอบ (สกิลพื้นฐาน)
   const [tohnoOpen, setTohnoOpen] = useState(false); // โทโนะ ชิกิ: เมนูเลือกระดับมีดพับประจำตระกูล (สกิลพื้นฐาน)
   const [aquaOpen, setAquaOpen] = useState(false);   // อควาเรียน: เมนูเลือกผู้นำ (สกิลพื้นฐาน)
-  // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
-  const [lenCopySel, setLenCopySel] = useState(false); // เล็น: โหมดเลือกเป้าหมายคัดลอกท่าไม้ตาย (กลางวัน)
-  const [lenSwapIdx, setLenSwapIdx] = useState(null);  // เล็น: index ในคลังที่จะถูกสลับออก (คลังเต็มแล้ว)
-  const [lenSwapOpen, setLenSwapOpen] = useState(false); // เล็น: เมนูเลือกอันที่จะสลับออก (คลังเต็ม — ก่อนเลือกเป้าหมาย)
-  const [lenBankOpen, setLenBankOpen] = useState(false); // เล็น: เมนูเลือกท่าในคลังมาเผาเป็นดาเมจ (ฝันดีนะคะ)
-  const [lenNightOpen, setLenNightOpen] = useState(false); // เล็น: เมนูเลือกท่าจากคลังมาสวมร่าง (กลางคืน — ก่อนกดยืนยัน)
-  const [lwStealSel, setLwStealSel] = useState(false); // ไวท์เล็น: โหมดเลือกเป้าหมายขโมยสกิล (กลางวัน — เลือกเป้าหมายก่อน)
-  const [lwChoiceTargetId, setLwChoiceTargetId] = useState(null); // ไวท์เล็น: เป้าหมายที่เลือกแล้ว รอเลือกว่าจะขโมยสกิลพื้นฐาน/สกิลรอง
-  const [lwChoiceOpen, setLwChoiceOpen] = useState(false); // ไวท์เล็น: เมนูเลือกสกิลพื้นฐาน/สกิลรองของเป้าหมาย (เห็นหน้าตาสกิลจริงก่อนตัดสินใจ)
-  const [lwBankOpen, setLwBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของในคลังมาใช้จริง (กลางคืน)
-  const [bankViewOpen, setBankViewOpen] = useState(false); // เล็น/ไวท์เล็น: เปิดดูคลังสกิลที่เก็บไว้ (ดูได้ตลอด)
-  const [lwArcModeOpen, setLwArcModeOpen] = useState(false); // ไวท์เล็น: เมนูเลือกโหมด Arc Drive finish (แต้มการ์ด / พลังโจมตี)
-  const [lwArcBankOpen, setLwArcBankOpen] = useState(false); // ไวท์เล็น: เมนูเลือกของจากคลังมาสละทิ้งเพื่อ Arc Drive finish
-  const [lwCardBurnOpen, setLwCardBurnOpen] = useState(false); // ไวท์เล็น: เมนูแปลงของในคลังเป็นแต้มการ์ด (ฟรี เลือกได้หลายชิ้น)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
@@ -1658,13 +1416,6 @@ export default function Game({ state, lowQ }) {
   const aquaUltLocked = ch?.id === "aquarion" && !me?.fused;
   // MonsterLive (ฮิคารุ patch 2.1.3): ระหว่างมีผล ใช้สกิลรอง Ultlive Ultraman Ginga ไม่ได้
   const monsterMe = !!(me && ch?.id === "hikaru" && me.statuses?.monster);
-  // เล็น/ไวท์เล็น (patch 2.2 beta): กลางคืน + คลังมีของ + ยังไม่ได้เลือก — ขั้น "เลือกจากคลัง" ไม่เสียแต้ม ต้องกดเปิดได้เสมอ
-  const lenSelectMode = !!(me && ch?.id === "len" && nightNow && me.lenLoadedIndex == null && (me.lenBank || []).length > 0);
-  const lwSelectMode = !!(me && ch?.id === "lenwhite" && nightNow && me.lwLoadedIndex == null && (me.lenwhiteBank || []).length > 0);
-  // ไวท์เล็น: Arc Drive finish กดใช้ซ้ำได้หลายครั้งต่อเทิร์น — ไม่ติดล็อกจาก me.skillUsed เหมือนสกิลอื่น (server ก็ไม่นับเป็นการใช้สกิลของเทิร์นเช่นกัน)
-  const lwArcRepeatable = ch?.id === "lenwhite";
-  // ไวท์เล็น: ปุ่มท่าไม้ตายแค่เปิดเมนูเลือกโหมด (ไม่เสียแต้มที่ขั้นนี้) — แต้มจริงถูกเช็ค/หักตอนยืนยันในแต่ละโหมดแยกกันฝั่ง server
-  const lwArcSelectMode = ch?.id === "lenwhite";
   // Ginga Strium (ฮิคารุ patch 2.1.3): ต้องอยู่ในร่าง Ginga (สกิลรอง 1) และเป็นตอนกลางวันเท่านั้นถึงใช้ได้
   const hikaruUltLocked = ch?.id === "hikaru" && !((me?.statuses?.ginga || 0) > 0 && !nightNow);
   // Ohger Finish (คุวากาตะ patch 2.2 alpha): ใช้ได้โดยไม่มีเงื่อนไขแล้ว — กดซ้ำไม่ได้จนกว่าจะได้โจมตี
@@ -1832,30 +1583,6 @@ export default function Game({ state, lowQ }) {
     }
     // บานาจ ลิงก์ (patch 2.1.2): สกิลพื้นฐาน Absorb shield เข้าโหมดเลือกเป้าหมาย (เลือกตัวเองได้)
     if (tier === "basic" && ch?.id === "banagher") { setBgSel(true); setSkillOpen(false); return; }
-    // ---------- เล็น (patch 2.2 beta) ----------
-    if (tier === "basic" && ch?.id === "len") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
-    if (tier === "secondary" && ch?.id === "len") { setLenBankOpen(true); setSkillOpen(false); return; }
-    if (tier === "ultimate" && ch?.id === "len") {
-      if (nightNow) {
-        if (me?.lenLoadedIndex == null) { setLenNightOpen(true); setSkillOpen(false); return; }
-        socket.emit("useSkill", { tier }); setSkillOpen(false); return;
-      }
-      if ((me?.lenBank || []).length >= 3) { setLenSwapOpen(true); setSkillOpen(false); return; }
-      setLenCopySel(true); setSkillOpen(false); return;
-    }
-    // ---------- ไวท์เล็น (patch 2.2 beta) ----------
-    if (tier === "basic" && ch?.id === "lenwhite") { socket.emit("useSkill", { tier }); setSkillOpen(false); return; }
-    if (tier === "secondary" && ch?.id === "lenwhite") {
-      if (nightNow) {
-        if (me?.lwLoadedIndex == null) { setLwBankOpen(true); setSkillOpen(false); return; }
-        socket.emit("useSkill", { tier }); setSkillOpen(false); return;
-      }
-      // เลือกเป้าหมายก่อน แล้วค่อยให้ดูว่าจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมายคนนั้น (เห็นหน้าตาสกิลจริงก่อนตัดสินใจ)
-      setLwStealSel(true); setSkillOpen(false); return;
-    }
-    if (tier === "ultimate" && ch?.id === "lenwhite") {
-      setLwArcModeOpen(true); setSkillOpen(false); return;
-    }
     // ซาโตรุ อาเคฟุ: สกิลพื้นฐาน/สกิลรอง เข้าโหมดเลือกเป้าหมาย — ท่าไม้ตายทำงานอัตโนมัติ กดเองไม่ได้
     if (tier === "basic" && ch?.id === "satoru") { setSaObSel(true); setSkillOpen(false); return; }
     if (tier === "secondary" && ch?.id === "satoru") { setSaLocaSel(true); setSkillOpen(false); return; }
@@ -1957,63 +1684,6 @@ export default function Game({ state, lowQ }) {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
     setNightSel(false);
   };
-  // ---------- เล็น (patch 2.2 beta) ----------
-  // เลือกเป้าหมายคัดลอกท่าไม้ตาย (ผลึกฝันบอกเหตุ กลางวัน) -> ส่งไป server ทันที (แนบ item = index ที่จะสลับออก ถ้าคลังเต็ม)
-  const pickLenCopy = (id) => {
-    const payload = { tier: "ultimate", targets: [id] };
-    if (lenSwapIdx != null) payload.item = lenSwapIdx;
-    socket.emit("useSkill", payload);
-    setLenCopySel(false);
-    setLenSwapIdx(null);
-  };
-  // เลือกอันที่จะสลับออก (คลังเต็ม 3/3) -> เข้าโหมดเลือกเป้าหมายต่อ
-  const pickLenSwap = (idx) => {
-    setLenSwapIdx(idx);
-    setLenSwapOpen(false);
-    setLenCopySel(true);
-  };
-  // เลือกท่าในคลังมาเผาเป็นดาเมจ (ฝันดีนะคะ) -> ส่งไป server ทันที
-  const pickLenDrain = (idx) => {
-    socket.emit("useSkill", { tier: "secondary", item: idx });
-    setLenBankOpen(false);
-  };
-  // เลือกท่าจากคลังมาสวมร่างรอไว้ (ผลึกฝันบอกเหตุ กลางคืน — ยังไม่เสียแต้ม รอกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยัน)
-  const pickLenLoad = (idx) => {
-    socket.emit("lenSelectBank", { index: idx });
-    setLenNightOpen(false);
-  };
-  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
-  // เลือกจะขโมยสกิลพื้นฐาน/สกิลรอง (ฉันขอรับไปนะคะ กลางวัน) -> เข้าโหมดเลือกเป้าหมายต่อ
-  // เลือกเป้าหมายขโมยสกิลแล้ว -> เปิดเมนูให้ดูว่าจะขโมยสกิลพื้นฐานหรือสกิลรองของเป้าหมายคนนั้น
-  const pickLwSteal = (id) => {
-    setLwChoiceTargetId(id);
-    setLwStealSel(false);
-    setLwChoiceOpen(true);
-  };
-  // เลือกแล้วว่าจะขโมยสกิลพื้นฐาน/สกิลรอง -> ส่งไป server ทันที
-  const pickLwChoice = (tier) => {
-    if (lwChoiceTargetId) socket.emit("useSkill", { tier: "secondary", targets: [lwChoiceTargetId], item: tier });
-    setLwChoiceOpen(false);
-    setLwChoiceTargetId(null);
-  };
-  // เลือกของในคลังมาเตรียมใช้จริง (ฉันขอรับไปนะคะ กลางคืน — ยังไม่เสียแต้ม รอกดปุ่มสกิลรองอีกครั้งเพื่อยืนยัน)
-  const pickLwUse = (idx) => {
-    socket.emit("lwSelectBank", { index: idx });
-    setLwBankOpen(false);
-  };
-  // เลือกโหมด Arc Drive finish: แต้มการ์ด หรือ พลังโจมตี (ทั้งคู่จ่ายแต้มตอนยืนยัน — ดู lwCardBurn/lwAtkBurn ฝั่ง server)
-  const pickLwArcModeCard = () => { setLwArcModeOpen(false); setLwCardBurnOpen(true); };
-  const pickLwArcModeAtk = () => { setLwArcModeOpen(false); setLwArcBankOpen(true); };
-  // ยืนยันแปลงของในคลังหลายชิ้นเป็นแต้มการ์ด (จ่ายแต้มตอนยืนยัน) -> ส่งไป server ทันที
-  const pickLwCardBurn = (indices) => {
-    socket.emit("lwCardBurn", { indices });
-    setLwCardBurnOpen(false);
-  };
-  // ยืนยันสละของในคลังหลายชิ้นแลกพลังโจมตี (จ่ายแต้มตอนยืนยัน) -> ส่งไป server ทันที
-  const pickLwAtkBurn = (indices) => {
-    socket.emit("lwAtkBurn", { indices });
-    setLwArcBankOpen(false);
-  };
   // เลือกเป้าหมาย Sekai ichi kawaii watashi (โคโตเนะ patch 2.1.3) -> ส่งไป server ทันที
   const pickKawaii = (id) => {
     socket.emit("useSkill", { tier: "ultimate", targets: [id] });
@@ -2047,37 +1717,6 @@ export default function Game({ state, lowQ }) {
   useEffect(() => {
     if (bgSel && (phase !== "PLAYING" || me?.skillUsed || done)) setBgSel(false);
   }, [bgSel, phase, me?.skillUsed, done]);
-  useEffect(() => {
-    if (lenCopySel && (phase !== "PLAYING" || me?.skillUsed || done)) { setLenCopySel(false); setLenSwapIdx(null); }
-  }, [lenCopySel, phase, me?.skillUsed, done]);
-  useEffect(() => {
-    if (lwStealSel && (phase !== "PLAYING" || me?.skillUsed || done)) setLwStealSel(false);
-  }, [lwStealSel, phase, me?.skillUsed, done]);
-  useEffect(() => {
-    if (lenBankOpen && (phase !== "PLAYING" || done)) setLenBankOpen(false);
-  }, [lenBankOpen, phase, done]);
-  useEffect(() => {
-    if (lenNightOpen && (phase !== "PLAYING" || done)) setLenNightOpen(false);
-  }, [lenNightOpen, phase, done]);
-  useEffect(() => {
-    if (lenSwapOpen && (phase !== "PLAYING" || done)) setLenSwapOpen(false);
-  }, [lenSwapOpen, phase, done]);
-  useEffect(() => {
-    if (lwChoiceOpen && (phase !== "PLAYING" || me?.skillUsed || done)) { setLwChoiceOpen(false); setLwChoiceTargetId(null); }
-  }, [lwChoiceOpen, phase, me?.skillUsed, done]);
-  useEffect(() => {
-    // Arc Drive finish กดซ้ำได้หลายครั้งต่อเทิร์น — ไม่ปิดเมนูตาม me?.skillUsed เหมือนสกิลอื่น
-    if (lwArcModeOpen && (phase !== "PLAYING" || done)) setLwArcModeOpen(false);
-  }, [lwArcModeOpen, phase, done]);
-  useEffect(() => {
-    if (lwArcBankOpen && (phase !== "PLAYING" || done)) setLwArcBankOpen(false);
-  }, [lwArcBankOpen, phase, done]);
-  useEffect(() => {
-    if (lwCardBurnOpen && (phase !== "PLAYING" || done)) setLwCardBurnOpen(false);
-  }, [lwCardBurnOpen, phase, done]);
-  useEffect(() => {
-    if (lwBankOpen && (phase !== "PLAYING" || done)) setLwBankOpen(false);
-  }, [lwBankOpen, phase, done]);
   useEffect(() => {
     if (nightSel && (phase !== "PLAYING" || me?.skillUsed || done)) setNightSel(false);
   }, [nightSel, phase, me?.skillUsed, done]);
@@ -2179,9 +1818,9 @@ export default function Game({ state, lowQ }) {
               key={p.id}
               p={p}
               phase={phase}
-              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel || tpSel) && p.alive}
+              targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || tpSel) && p.alive}
               picked={!!anataSel && anataSel.includes(p.id)}
-              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : tpSel ? pickTp(id) : socket.emit("attack", { targetId: id }))}
+              onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : tpSel ? pickTp(id) : socket.emit("attack", { targetId: id }))}
               onInspect={setStatusViewId}
             />
           ))}
@@ -2209,18 +1848,6 @@ export default function Game({ state, lowQ }) {
             <span className="text-lg font-black text-echo-gold animate-pulse">🛡️ แตะเลือกเป้าหมาย Absorb shield</span>
             <button onClick={() => { clickSound(); pickBg(me.id); }} className="ml-3 text-sm font-bold bg-echo-gold text-gray-900 rounded-full px-3 py-1">เลือกตัวเอง</button>
             <button onClick={() => { clickSound(); setBgSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-          </div>
-        )}
-        {lenCopySel && (
-          <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">🔮 แตะเลือกเป้าหมายคัดลอกท่าไม้ตาย</span>
-            <button onClick={() => { clickSound(); setLenCopySel(false); setLenSwapIdx(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-          </div>
-        )}
-        {lwStealSel && (
-          <div className="shrink-0 text-center mt-1.5 text-hard">
-            <span className="text-lg font-black text-echo-gold animate-pulse">🤍 แตะเลือกเป้าหมายขโมยสกิล</span>
-            <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
           </div>
         )}
         {nightSel && (
@@ -2338,10 +1965,8 @@ export default function Game({ state, lowQ }) {
               <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-2">
                 <LifeBar p={me} />
                 <StatusChips p={me} left />
-                <CatUsesBadge me={me} ch={ch} />
                 <DoomChargeBadge me={me} ch={ch} />
                 <TakutoStarBadge me={me} ch={ch} />
-                <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
                 <span className="ml-auto flex items-center gap-1.5">
                   <span className="flex gap-1 p-1 rounded-lg bg-black/25">
                     {Array.from({ length: me.maxSkill }, (_, i) => (
@@ -2355,8 +1980,8 @@ export default function Game({ state, lowQ }) {
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2516,49 +2141,6 @@ export default function Game({ state, lowQ }) {
         {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
         {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
-        {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
-        {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
-        {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
-        {lwChoiceOpen && (
-          <LwStealChoiceModal
-            target={others.find((o) => o.id === lwChoiceTargetId)}
-            onPick={pickLwChoice}
-            onClose={() => { setLwChoiceOpen(false); setLwChoiceTargetId(null); }}
-          />
-        )}
-        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
-        {lwArcModeOpen && me && (
-          <LwArcModeModal
-            cost={ch?.ultimate?.cost}
-            onCard={pickLwArcModeCard}
-            onAtk={pickLwArcModeAtk}
-            onClose={() => setLwArcModeOpen(false)}
-          />
-        )}
-        {lwArcBankOpen && me && (
-          <LwAtkBurnModal
-            items={me.lenwhiteBank || []}
-            cost={ch?.ultimate?.cost}
-            currentBurns={me.arcAtkBurns || 0}
-            onConfirm={pickLwAtkBurn}
-            onClose={() => setLwArcBankOpen(false)}
-          />
-        )}
-        {lwCardBurnOpen && me && (
-          <LwCardBurnModal
-            items={me.lenwhiteBank || []}
-            cost={ch?.ultimate?.cost}
-            onConfirm={pickLwCardBurn}
-            onClose={() => setLwCardBurnOpen(false)}
-          />
-        )}
-        {bankViewOpen && me && (
-          <BankViewModal
-            title={ch?.id === "len" ? "🔮 คลังท่าไม้ตายของเล็น" : "🤍 คลังสกิลของไวท์เล็น"}
-            items={ch?.id === "len" ? (me.lenBank || []) : (me.lenwhiteBank || [])}
-            onClose={() => setBankViewOpen(false)}
-          />
-        )}
         {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
@@ -2611,9 +2193,9 @@ export default function Game({ state, lowQ }) {
           p={p}
           phase={phase}
           slot={slots[i] || [50, 50]}
-          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || lenCopySel || lwStealSel || tpSel) && p.alive}
+          targetable={((iAmAttacker && !p.statuses?.seal) || !!anataSel || dawnSel || nightSel || appleSel || bbSel || shSel || skSel || doomSel || saObSel || saLocaSel || bgSel || kawaiiSel || !!bardPending || nanayaSel || tpSel) && p.alive}
           picked={!!anataSel && anataSel.includes(p.id)}
-          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : lenCopySel ? pickLenCopy(id) : lwStealSel ? pickLwSteal(id) : tpSel ? pickTp(id) : socket.emit("attack", { targetId: id }))}
+          onAttack={(id) => (anataSel ? pickAnata(id) : dawnSel ? pickDawn(id) : nightSel ? pickNight(id) : appleSel ? pickGive(id) : bbSel ? pickBb(id) : shSel ? pickSh(id) : skSel ? pickSk(id) : doomSel ? pickDoom(id) : saObSel ? pickSaOb(id) : saLocaSel ? pickSaLoca(id) : bgSel ? pickBg(id) : kawaiiSel ? pickKawaii(id) : bardPending ? pickBard(id) : nanayaSel ? pickNanaya(id) : tpSel ? pickTp(id) : socket.emit("attack", { targetId: id }))}
           onInspect={setStatusViewId}
         />
       ))}
@@ -2641,22 +2223,6 @@ export default function Game({ state, lowQ }) {
           <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🛡️ คลิกเลือกเป้าหมาย Absorb shield</span>
           <button onClick={() => { clickSound(); pickBg(me.id); }} className="ml-3 text-sm font-bold bg-echo-gold text-gray-900 rounded-full px-3 py-1">เลือกตัวเอง</button>
           <button onClick={() => { clickSound(); setBgSel(false); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-        </div>
-      )}
-
-      {/* เล็น (patch 2.2 beta): โหมดเลือกเป้าหมายคัดลอกท่าไม้ตาย (ผลึกฝันบอกเหตุ กลางวัน) */}
-      {lenCopySel && (
-        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
-          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🔮 คลิกเลือกเป้าหมายคัดลอกท่าไม้ตาย</span>
-          <button onClick={() => { clickSound(); setLenCopySel(false); setLenSwapIdx(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
-        </div>
-      )}
-
-      {/* ไวท์เล็น (patch 2.2 beta): โหมดเลือกเป้าหมายขโมยสกิล (ฉันขอรับไปนะคะ กลางวัน) */}
-      {lwStealSel && (
-        <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-40 text-center text-hard whitespace-nowrap">
-          <span className="text-xl font-black text-echo-gold animate-pulse bg-black/60 rounded-full px-5 py-1.5">🤍 คลิกเลือกเป้าหมายขโมยสกิล</span>
-          <button onClick={() => { clickSound(); setLwStealSel(false); setLwStealTier(null); }} className="ml-2 text-sm font-bold bg-black/60 rounded-full px-3 py-1 border border-white/30">ยกเลิก</button>
         </div>
       )}
 
@@ -2772,10 +2338,8 @@ export default function Game({ state, lowQ }) {
               <div className="font-bold text-base mt-1 leading-tight">{me.character.name}</div>
               <button onClick={() => { clickSound(); setShowChar(true); }} className="text-xs underline opacity-80">รายละเอียดตัวละคร</button>
               <div className="mt-1 flex flex-col items-center gap-1">
-                <CatUsesBadge me={me} ch={ch} />
                 <DoomChargeBadge me={me} ch={ch} />
                 <TakutoStarBadge me={me} ch={ch} />
-                <BankViewButton me={me} ch={ch} onOpen={() => setBankViewOpen(true)} />
               </div>
               {isHakuno && <HakunoCommandButton me={me} usable={hakunoCmdUsable} onOpen={() => setHakunoCmdOpen(true)} className="w-20 h-16 mt-1.5" />}
             </div>
@@ -2816,8 +2380,8 @@ export default function Game({ state, lowQ }) {
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
                   <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
-                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={lwSelectMode ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked)} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={lwSelectMode ? 0 : isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={lenSelectMode ? false : aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || (me.skillUsed && !lwArcRepeatable) || ultimateActive || monsterMe || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={(lenSelectMode || lwArcSelectMode) ? 0 : undefined} />}
+                  <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || monsterMe || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2993,49 +2557,6 @@ export default function Game({ state, lowQ }) {
       {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
         {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
-        {lenBankOpen && me && <BankPickModal title="🌙 ฝันดีนะคะ — เลือกท่าที่จะเผา" desc="แปลงเป็นดาเมจใส่เจ้าของท่าทันที (ครึ่งราคาแต้ม ปัดลง) และห้ามเจ้าของท่าใช้ท่าไม้ตาย 3 เทิร์น" items={me.lenBank || []} onPick={pickLenDrain} onClose={() => setLenBankOpen(false)} />}
-        {lenSwapOpen && me && <BankPickModal title="🔮 คลังเต็มแล้ว — เลือกอันที่จะสลับออก" items={me.lenBank || []} onPick={pickLenSwap} onClose={() => setLenSwapOpen(false)} />}
-        {lenNightOpen && me && <BankPickModal title="🔮 ผลึกฝันบอกเหตุ — เลือกท่าที่จะสวมร่าง" desc="เลือกแล้วกดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง (จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ)" items={me.lenBank || []} onPick={pickLenLoad} onClose={() => setLenNightOpen(false)} />}
-        {lwChoiceOpen && (
-          <LwStealChoiceModal
-            target={others.find((o) => o.id === lwChoiceTargetId)}
-            onPick={pickLwChoice}
-            onClose={() => { setLwChoiceOpen(false); setLwChoiceTargetId(null); }}
-          />
-        )}
-        {lwBankOpen && me && <BankPickModal title="🤍 ฉันขอรับไปนะคะ — เลือกของที่จะใช้จริง" desc="เลือกแล้วกดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง (ไม่สนเงื่อนไขต้นฉบับ — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับของสกิลนั้น)" items={me.lenwhiteBank || []} onPick={pickLwUse} onClose={() => setLwBankOpen(false)} />}
-        {lwArcModeOpen && me && (
-          <LwArcModeModal
-            cost={ch?.ultimate?.cost}
-            onCard={pickLwArcModeCard}
-            onAtk={pickLwArcModeAtk}
-            onClose={() => setLwArcModeOpen(false)}
-          />
-        )}
-        {lwArcBankOpen && me && (
-          <LwAtkBurnModal
-            items={me.lenwhiteBank || []}
-            cost={ch?.ultimate?.cost}
-            currentBurns={me.arcAtkBurns || 0}
-            onConfirm={pickLwAtkBurn}
-            onClose={() => setLwArcBankOpen(false)}
-          />
-        )}
-        {lwCardBurnOpen && me && (
-          <LwCardBurnModal
-            items={me.lenwhiteBank || []}
-            cost={ch?.ultimate?.cost}
-            onConfirm={pickLwCardBurn}
-            onClose={() => setLwCardBurnOpen(false)}
-          />
-        )}
-        {bankViewOpen && me && (
-          <BankViewModal
-            title={ch?.id === "len" ? "🔮 คลังท่าไม้ตายของเล็น" : "🤍 คลังสกิลของไวท์เล็น"}
-            items={ch?.id === "len" ? (me.lenBank || []) : (me.lenwhiteBank || [])}
-            onClose={() => setBankViewOpen(false)}
-          />
-        )}
       {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}

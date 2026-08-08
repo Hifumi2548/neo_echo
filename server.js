@@ -216,106 +216,6 @@ function maybeWakeKotone(t) {
   return;
 }
 
-// ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
-const LEN_SLEEP_TURNS = 5;        // ขอพักสักหน่อยนะคะ / เหนื่อยแล้ว ไม่เอาแล้ว: หลับพักฟื้น 5 เทิร์นเต็มช่วงกลางวัน
-const LEN_SLEEP_ARMOR_BONUS = 3;  // หลับพักฟื้น: เพิ่มเกราะ+ฟื้นเกราะทันที
-const LEN_BANK_MAX = 3;           // เล็น: คลังท่าไม้ตายที่คัดลอกมา สูงสุด 3 อัน (ห้ามซ้ำ)
-const LENWHITE_BANK_MAX = 6;      // ไวท์เล็น: คลังสกิลที่ขโมยมา สูงสุด 6 ชิ้น
-const LEN_NORECOVER_TURNS = 3;    // ฝันดีนะคะ: เจ้าของท่าที่โดนเผาติดสถานะ "ไร้ทางเยียวยา" 3 เทิร์น
-const LENWHITE_DECAY_TURNS = 3;   // ฉันขอรับไปนะคะ: เป้าหมายที่ถูกขโมยติด "ผุพัง" 3 เทิร์น (เกราะไม่ฟื้น)
-const LENWHITE_ARC_COST = 4;      // Arc Drive finish: ต้นทุนต่อการใช้งาน 1 ครั้ง (กดซ้ำได้หลายครั้งต่อเทิร์น)
-const LENWHITE_ARC_ATK_PER_BURNS = 2; // Arc Drive finish (โหมดพลังโจมตี): เผาครบทุกๆ 2 ชิ้น พลังโจมตี +1 (คงอยู่จนกว่ากลางวันจะมาถึง)
-const CAT_MAX_USES = 9;           // Moonlight / Blood Moon: กันตายกลายเป็นแมว สูงสุด 9 ครั้ง/เกม
-const CAT_DAY_RESTORE = 2;        // Moonlight / Blood Moon: ฟื้นจำนวนครั้งใช้งานแมว +2 ทุกครั้งที่เข้าสู่กลางวัน
-const LEN_NIGHT_SKILL_BONUS = 1;  // Moonlight / Blood Moon: กลางคืนแต้มสกิลเพิ่มขึ้นเทิร์นละ +1 หน่วยเพิ่มเติม
-const LENWHITE_STEAL_CATCOST_EVERY = 2; // ฉันขอรับไปนะคะ: ขโมยครบทุกๆ 2 ครั้ง เสีย "แมวขาว" ไป 1 หน่วย
-// ตัวตนของเล็น/ไวท์เล็น (patch 2.2 beta: เลิกสลับ characterId ตอนใช้ท่าที่คัดลอกมาแล้ว — ฟังก์ชันนี้จึงเท่ากับ p.characterId เสมอ
-//  แต่ยังคงไว้เป็นจุดเรียกเดียวที่ชัดเจนสำหรับโค้ดที่ต้องการ "ตัวตนของเล็น/ไวท์เล็น" — กันสับสนว่าทำไมถึงไม่ใช้ p.characterId ตรงๆ)
-function lenTrueId(p) {
-  return p && p.characterId;
-}
-function catEligible(p) {
-  const id = lenTrueId(p);
-  return (id === "len" || id === "lenwhite") && isNightRound(roundNumber);
-}
-// หาว่า "ตอนนี้" เป้าหมายจะได้สกิลไหนถ้ากด tier นี้ (สลับตามร่าง/สถานะปัจจุบัน) — ใช้ตอนคัดลอก/ขโมยเท่านั้น (read-only)
-function currentSkillOf(target, tier) {
-  const ch = CHAR_BY_ID[target.characterId];
-  if (!ch) return null;
-  let key = tier;
-  if (ch.id === "shrade_elan") {
-    if (tier === "basic" && target.shradeForm) key = "basic2";
-    if (tier === "secondary" && target.shradeForm) key = "secondary2";
-    if (tier === "ultimate") key = target.shradeForm ? "ultimate2" : "ultimate";
-  } else if (ch.id === "shiki" && tier === "ultimate") {
-    key = (target.shikiUlt === "wither") ? "ultimate2" : "ultimate";
-  } else if (ch.id === "riddhe" && tier === "ultimate") {
-    key = riddheAllied(target) ? "ultimate2" : "ultimate";
-  } else if (ch.id === "banagher") {
-    const transformed = (target.statuses.paradise || 0) > 0;
-    if (tier === "secondary") key = transformed ? "secondary2" : "secondary";
-    if (tier === "ultimate") key = (transformed && riddheAllied(target)) ? "ultimate2" : "ultimate";
-  } else if (ch.id === "phenex") {
-    const ntdOn = (target.statuses.phenexNtd || 0) > 0 || target.phenexNtdPermanent;
-    if (tier === "secondary") key = ntdOn ? "secondary2" : "secondary";
-    if (tier === "ultimate") key = target.phenexReborn ? "ultimate2" : "ultimate";
-  } else if (ch.id === "hakuno" && tier === "secondary") {
-    key = target.hakunoGender === "female" ? "secondary2" : "secondary";
-  } else if (ch.id === "hikaru") {
-    if (tier === "basic") key = ((target.statuses.ginga || 0) > 0 || (target.statuses.gingastrium || 0) > 0) ? "basic2" : "basic";
-    if (tier === "secondary") key = (target.statuses.gingastrium || 0) > 0 ? "secondary2" : "secondary";
-  } else if (ch.id === "oguri") {
-    if (tier === "ultimate") key = oguriAshenReady(target) ? "ultimate2" : "ultimate";
-  } else if (ch.id === "aquarion") {
-    if (tier === "secondary") key = target.fused ? "secondaryRevert" : "secondary";
-    else if (tier === "ultimate") {
-      // อควาเรียนไม่มี ch.ultimate ตรงๆ (มีแต่ 4 ท่าตามร่าง) — ยังไม่รวมร่างก็ยังคัดลอกได้ (เอาไว้เผาสกิลรองของเล็น)
-      //  โดยอิงจากผู้นำที่เลือกอยู่ตอนนี้ ไม่ต้องรอให้รวมร่างจริงก่อน
-      key = (target.statuses.godwing || 0) > 0 ? "ultimateGodwing"
-        : target.leader === "sirius" ? "ultimateMars"
-        : target.leader === "rena" ? "ultimateLuna"
-        : "ultimateSolar";
-    }
-  } else if (ch.id === "bard" && tier === "ultimate") {
-    return null; // Bard ไม่มีท่าไม้ตายจริง (ช่องประพันธ์เพลง) — คัดลอกไม่ได้
-  }
-  if (tier === "ultimate" && ch.ultimateNight && isNightRound(roundNumber)) key = "ultimateNight";
-  if (tier === "secondary" && ch.secondaryNight && isNightRound(roundNumber)) key = "secondaryNight";
-  if (tier === "basic" && ch.basicNight && isNightRound(roundNumber)) key = "basicNight";
-  const skill = key ? ch[key] : null;
-  return skill ? { skillKey: key, skill, sourceCharId: ch.id, sourceName: ch.name } : null;
-}
-// เล็น/ไวท์เล็น: ใช้ของที่ขโมย/คัดลอกมาแบบ "สวมร่าง" ชั่วคราว — ไม่สนเงื่อนไขปลดล็อกของท่าต้นฉบับ
-//  (แต้มถูกหักไปแล้วก่อนเรียกฟังก์ชันนี้ — เท่าราคาต้นฉบับ) สวมร่างเจ้าของท่าแค่รอบนี้เท่านั้น
-//  (revert อัตโนมัติต้นรอบถัดไปใน dealRound — ระหว่างสวมร่าง lenTrueId() ยังจำร่างจริงไว้ให้ Moonlight/Blood Moon ทำงานต่อได้)
-//  ขอบเขต: ใช้ effect ที่ประกาศไว้ (heal/armor/points/shield/status ฯลฯ) ทันที + ให้ตรรกะเฉพาะตัวละครที่ผูกกับ characterId
-//  ที่ทำงานภายในรอบนี้ (เช่นตอนโจมตี) ทำงานให้ครบ — ผลที่ยืดเกิน 1 รอบจะกลับมาเป็นร่างเล็น/ไวท์เล็นตามปกติในรอบถัดไป
-function castBorrowedSkill(p, entry) {
-  if (!entry) return;
-  const srcCh = CHAR_BY_ID[entry.sourceCharId];
-  const skill = srcCh && srcCh[entry.skillKey];
-  if (!skill) return;
-  // (patch 2.2 beta แก้บั๊ก) เดิมสลับ p.characterId ชั่วคราวเพื่อให้โบนัสที่ผูกกับ characterId ของเจ้าของท่า
-  //  ทำงานด้วย แต่ผลข้างเคียงคือ "สกิลติดตัว" (passive) ของเจ้าของท่าติดมาด้วยทั้งที่ไม่ควร (เช่น Oberon's
-  //  ATK=0 เสมอ, Eva13's กันดาเมจแตก/จั่ว ฯลฯ ทำงานกับเล็น/ไวท์เล็นไปด้วยทั้งที่ไม่ได้ตั้งใจ) — และเสี่ยงหลุด
-  //  ไปโผล่เป็นชื่อ/ภาพเจ้าของท่าได้ถ้ามีจุดใดอ้าง p.characterId ตรงๆ โดยไม่ผ่าน lenTrueId — เอาออกแล้ว
-  //  ตอนนี้ใช้แค่ effect ที่ประกาศไว้ (heal/armor/points/shield/status ฯลฯ) เท่านั้น ไม่สวมร่างจริงอีกต่อไป
-  applyEffect(p, skill.effect);
-  // เล่นวีดีโอ/ประกาศแปลงร่างเหมือนเจ้าของท่าเดิม — ถ้า effect เป็นสถานะที่มีคัตซีนคู่กันอยู่ใน TRANSFORMS
-  //  (ครั้งแรกของเล็น/ไวท์เล็นกับสถานะนี้ = วีดีโอเต็ม เหมือนเจ้าของท่าตอนกดครั้งแรก — ครั้งถัดไปแค่แจ้งเตือน)
-  const statusKey = skill.effect && !Array.isArray(skill.effect) && skill.effect.type === "status" ? skill.effect.status : null;
-  if (statusKey && TRANSFORMS[statusKey]) {
-    p.transformAt = ++transformCounter;
-    triggerCutscene(p, statusKey);
-    // สำคัญ: ต้องตั้ง p.seen[key] = true ทันที เหมือนที่โค้ดต้นฉบับของแต่ละตัวละครทำตอนเปิดท่า
-    //  ไม่งั้น voidUltimateOnBust() จะเข้าใจผิดว่า "ยังไม่เคยเห็นผลท่านี้เลย" แล้วลบสถานะทิ้งทันทีที่เล็น/ไวท์เล็น
-    //  ไพ่แตกในเทิร์นถัดๆ ไป (บั๊ก: ท่าที่คัดลอกมาปิดหายไปเร็วกว่าปกติ)
-    p.seen = p.seen || {};
-    p.seen[statusKey] = true;
-  }
-  lastLog.push(`👻 ${p.name} สวมร่าง ${srcCh.name} ใช้ "${skill.name}"!`);
-}
-
 // แสงจันทร์ส่องวิญญาณ ร่างสปาด้า (ชเรด patch พิเศษ): เป้าหมายที่ถูกส่องแล้วไพ่แตกในเทิร์นนี้
 //  -> รับความเสียหาย 1 หน่วยทันที (ครั้งเดียว — ผลหมดตอนจบเทิร์น)
 function maybeMoonBurst(p) {
@@ -1712,11 +1612,6 @@ function positionUsedByOther(pos, sid) {
 // รูปที่แสดง: Beat Mode (ถาวรจนตาย) > ร่างสุดท้ายฟุจิมารุ (จนตาย) > Paradise (เหนือกว่าสกิลติดตัว NT-D)
 //  > NT-D คงอยู่จนแก้แค้น > ไคจู Black King > Ginga > สวมเกราะราชัน
 function displayImg(p) {
-  // เล็น/ไวท์เล็น (patch 2.2 beta): ร่างแมว (Moonlight/Blood Moon) แสดงเหนือกว่าทุกอย่าง
-  if (p.catForm) {
-    const trueCh = CHAR_BY_ID[lenTrueId(p)];
-    if (trueCh && trueCh.catImg) return trueCh.catImg;
-  }
   // โอเบรอน: ร่างสลับตามช่วงเวลากลางวัน/กลางคืนเสมอ
   if (p.characterId === "oberon") return isNightRound(roundNumber) ? OBERON_NIGHT_IMG : OBERON_MORNING_IMG;
   // ชเรด เอลัน: รวมร่างทำนองเพลงแล้ว = ร่างอควาเรียน สปาด้า ถาวร
@@ -1895,26 +1790,7 @@ function loseHp(p) {
     }
     return;
   }
-  // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): ร่างแมว — อมตะ ตายไม่ได้เลย (กลางคืนเท่านั้น)
-  //  ถูกทำให้ตายซ้ำระหว่างเป็นแมวก็ยังกันตายได้อีกถ้าเหลือจำนวนครั้งใช้งาน (หักทุกครั้งที่ตาย ไม่ใช่แค่ครั้งแรก)
-  //  catSaveRound กันหักซ้ำถ้าโดนดาเมจหลายแต้มในการโจมตีเดียวกัน (loseHp ถูกเรียกทีละ 1 แต้มต่อครั้ง)
-  if (p.catForm && p.catSaveRound === roundNumber) return;
-  if (p.hp <= 1 && catEligible(p) && (p.catUses || 0) > 0) {
-    p.catUses--;
-    p.catForm = true;
-    p.catSaveRound = roundNumber;
-    p.hp = 1;
-    p.armor = Math.max(p.armor, 1);
-    lastLog.push(`🐈‍⬛ ${p.name} กลายร่างเป็นแมว — อมตะจนกว่าจะถึงกลางวัน (เหลือใช้ได้อีก ${p.catUses} ครั้ง)`);
-    return;
-  }
-  if (p.catForm) p.catForm = false; // แมวหมดจำนวนครั้งใช้งานแล้ว — ตายได้ตามปกติ (ออกจากร่างแมว)
   p.hp--; p.dmgHp++;
-  // ขอพักสักหน่อยนะคะ / เหนื่อยแล้ว ไม่เอาแล้ว (เล็น/ไวท์เล็น patch 2.2 beta): โดนตีจนเสียเลือดจริง — หลับพักฟื้นถูกขัดจังหวะทันที
-  if ((p.statuses.lensleep || 0) > 0) {
-    delete p.statuses.lensleep;
-    lastLog.push(`⏰ ${p.name} ถูกโจมตีจนเสียเลือดจริง — ขอพักสักหน่อยนะคะ ถูกขัดจังหวะ ตื่นขึ้นมา!`);
-  }
   // ไม่อยากให้ใครต้องเจ็บปวด (ท่าไม้ตาย 2 ริต้า เบอร์นัล patch 2.1.6): ระหว่างล่อเป้า สะสม "ความเจ็บปวด" +1 ทุกๆ 1 หน่วยเลือดจริงที่เสียไป
   if (p.characterId === "phenex" && (p.statuses.phenexTaunt || 0) > 0) p.phenexPain = (p.phenexPain || 0) + 1;
   if (!linkMirror) {
@@ -2169,16 +2045,6 @@ function resetCombat(p) {
   p.skillDrainPending = 0;  // ค่าปรับเริ่มนับเทิร์นถัดไป (ย้ายเข้า skillDrain ตอนเริ่มเทิร์นใหม่)
   p.healNextTurn = 0;       // เสือนอนกิน: ฟื้นเลือด 1 หน่วยในเทิร์นถัดไป (กรณีไม่มีคู่สัญญา)
   p.unplugHold = null;      // กระชากสายแลน: บัฟที่ถูกถอดชั่วคราว (คืนให้ตอนจบเทิร์น)
-  // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
-  p.lenBank = [];           // เล็น: คลังท่าไม้ตายที่คัดลอกมา (สูงสุด 3 — ใช้ร่วมกับสกิลรอง)
-  p.lenLoadedIndex = null;  // เล็น: index ในคลังที่เลือกไว้ตอนกลางคืน (รอกดยืนยันใช้จริง)
-  p.lenwhiteBank = [];      // ไวท์เล็น: คลังสกิลที่ขโมยมา (สูงสุด 6)
-  p.lwLoadedIndex = null;   // ไวท์เล็น: index ในคลังที่เลือกไว้ตอนกลางคืน (รอกดยืนยันใช้จริง)
-  p.catForm = false;        // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (อมตะ — Moonlight/Blood Moon)
-  p.catUses = CAT_MAX_USES; // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้ (สูงสุด 9/เกม)
-  p.catSaveRound = 0;       // เล็น/ไวท์เล็น: รอบล่าสุดที่กันตายทำงาน (กันหักแมวซ้ำถ้าโดนดาเมจหลายแต้มในการโจมตีเดียวกัน)
-  p.lwStealCount = 0;       // ไวท์เล็น: จำนวนครั้งที่ขโมยสกิลสะสม (ขโมยครบทุกๆ 2 ครั้ง เสียแมวขาว 1 หน่วย)
-  p.arcAtkBurns = 0;        // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish โหมด 2 (ครบทุกๆ 2 ชิ้น +1 ATK — รีเซ็ตทุกครั้งที่เปลี่ยนช่วงกลางวัน/กลางคืน)
   // ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
   p.leader = "apollo";      // ผู้นำที่เลือกไว้ (apollo/sirius/rena) — กำหนดร่างที่จะรวมร่างด้วย
   p.fused = false;          // กำลังรวมร่างหุ่นศักดิ์สิทธิ์อยู่ไหม
@@ -2404,9 +2270,7 @@ function buildStateFor(viewerId) {
       const promoShow = (p.statuses.promo || 0) > 0;
       // นายยังมีอนาคตอีกยาวไกล (ริดดี้ patch 2.0.9): คู่พันธมิตรเห็นแต้มการ์ดของกันและกันได้ตลอด
       const allyShow = !!(viewer && viewer.alive && p.alive && p.allyId === viewer.id && viewer.allyId === p.id);
-      // เล็น/ไวท์เล็น (patch 2.2 beta): ระหว่าง "สวมร่าง" ท่าที่ขโมยมา — โชว์ชื่อ/ภาพ/สกิลของตัวเองเสมอ
-      //  (characterId ที่สลับไว้มีผลแค่ตรรกะภายในเอนจิน เช่น โบนัสพลังโจมตีตอนโจมตี — ไม่ใช่สิ่งที่ส่งให้ client แสดง)
-      const ch = CHAR_BY_ID[lenTrueId(p)] || {};
+      const ch = CHAR_BY_ID[p.characterId] || {};
       const pub = (s) => (s ? { name: s.name, desc: s.desc, cost: s.cost, img: s.img, ammo: s.ammo } : null);
       // สกิลพื้นฐานสลับกลางคืน (โคโตเนะ) + Apple guy: ปกสกิลพื้นฐานเปลี่ยนตามของส่งมอบที่เลือกอยู่
       let basicPub = pub(nightNow && ch.basicNight ? ch.basicNight : ch.basic);
@@ -2475,16 +2339,6 @@ function buildStateFor(viewerId) {
         secondaryPub = pub(ntdOn ? ch.secondary2 : ch.secondary);
         ultimatePub = pub(p.phenexReborn ? ch.ultimate2 : ch.ultimate);
       }
-      // เล็น/ไวท์เล็น (patch 2.2 beta): เลือกท่า/ของจากคลังไว้แล้ว (กลางคืน รอกดยืนยันใช้จริง)
-      //  — ปุ่มสกิลโชว์รูป/แต้มของท่านั้นแทนท่าเริ่มต้น ให้เห็นชัดว่ากำลังจะใช้อะไร ราคาเท่าไหร่
-      if (ch.id === "len" && p.lenLoadedIndex != null && Array.isArray(p.lenBank) && p.lenBank[p.lenLoadedIndex]) {
-        const e = p.lenBank[p.lenLoadedIndex];
-        ultimatePub = { name: e.skillName, desc: `เตรียมสวมร่างใช้ท่านี้จริง — กดอีกครั้งเพื่อยืนยัน (จ่ายเพิ่ม ${e.cost} แต้ม)`, cost: e.cost, img: e.skillImg };
-      }
-      if (ch.id === "lenwhite" && p.lwLoadedIndex != null && Array.isArray(p.lenwhiteBank) && p.lenwhiteBank[p.lwLoadedIndex]) {
-        const e = p.lenwhiteBank[p.lwLoadedIndex];
-        secondaryPub = { name: e.skillName, desc: `เตรียมใช้ของชิ้นนี้จริง — กดอีกครั้งเพื่อยืนยัน (จ่ายเพิ่ม ${e.cost} แต้ม)`, cost: e.cost, img: e.skillImg };
-      }
       // DoomGuy (patch 2.2 full): สกิลรอง "Weapon" โชว์ชื่อ/ราคา/ภาพตามอาวุธที่ถืออยู่จริง
       if (ch.id === "doomguy") {
         const w = DOOM_WEAPONS[p.doomWeapon] || DOOM_WEAPONS.shotgun;
@@ -2542,14 +2396,6 @@ function buildStateFor(viewerId) {
         tepeuCookTurns: p.tepeuCookTurns || 0,     // เทเปา: วันนี้อากาศดีจัง — เทิร์นที่เหลือก่อนได้ "มื้อที่สุข" (0 = กดใช้ได้)
         tepeuPonderTurns: p.tepeuPonderTurns || 0, // เทเปา: เป็นแบบนี้นี่เอง — ครุ่นคิดเหลือกี่เทิร์น (0 = กดใช้ได้/จั่วไพ่ได้)
         coins: p.coins || 0,               // โคโตเนะ: coin ในกระปุกออมสิน (สูงสุด 6)
-        // ---------- เล็น / ไวท์เล็น (patch 2.2 beta) ----------
-        lenBank: (p.lenBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // เล็น: คลังท่าไม้ตายที่คัดลอกมา
-        lenLoadedIndex: p.lenLoadedIndex != null ? p.lenLoadedIndex : null, // เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
-        lenwhiteBank: (p.lenwhiteBank || []).map((e) => ({ skillName: e.skillName, skillImg: e.skillImg, cost: e.cost, sourceOwnerId: e.sourceOwnerId, hasEffect: e.hasEffect !== false })), // ไวท์เล็น: คลังสกิลที่ขโมยมา
-        lwLoadedIndex: p.lwLoadedIndex != null ? p.lwLoadedIndex : null, // ไวท์เล็น: index ในคลังที่เลือกไว้รอกดยืนยันใช้จริง (กลางคืน)
-        arcAtkBurns: p.arcAtkBurns || 0, // ไวท์เล็น: จำนวนของที่สละทิ้งผ่าน Arc Drive finish โหมด 2 (สะสม +1 ATK ทุกๆ 2 ชิ้น)
-        catForm: !!p.catForm,   // เล็น/ไวท์เล็น: กำลังอยู่ในร่างแมว (Moonlight/Blood Moon)
-        catUses: p.catUses != null ? p.catUses : CAT_MAX_USES, // เล็น/ไวท์เล็น: จำนวนครั้งที่ยังกลายร่างเป็นแมวได้
         leader: p.leader || "apollo",      // อควาเรียน: ผู้นำที่เลือกอยู่ (apollo/sirius/rena)
         fused: !!p.fused,                  // อควาเรียน: กำลังรวมร่างหุ่นศักดิ์สิทธิ์อยู่ไหม
         shradeForm: !!p.shradeForm,        // ชเรด เอลัน: รวมร่างทำนองเพลงแล้ว (อควาเรียน สปาด้า — ถาวร)
@@ -3146,19 +2992,6 @@ function dealRound() {
       healArmor(p, 2);
       lastLog.push(`🌳 ${p.name} ไปยังพฤกษาแห่งชีวิต — ทุกคนเจ็บ -1 (ไม่สนเกราะ) ตัวเองเสียเลือด -1 (ไม่สนเกราะ) เกราะฟื้น +2`);
     }
-
-    // ---------- เล็น / ไวท์เล็น (patch 2.2 beta): ขอพักสักหน่อยนะคะ / เหนื่อยแล้ว ไม่เอาแล้ว ----------
-    //  หลับพักฟื้น 5 เทิร์น — ฟื้นเลือด +1 ทุกเทิร์น จั่ว/ตี/ใช้สกิลไม่ได้เลย
-    //  หยุดกลางคันเมื่อโดนตีเข้าเลือดจริง (ดูใน loseHp) หรือเข้าสู่กลางคืน (ดูจุดสลับกลางวัน/กลางคืนด้านล่าง)
-    if ((p.statuses.lensleep || 0) > 0) {
-      p.locked = true;
-      const heal = healHp(p, 1);
-      lastLog.push(`💤 ${p.name} หลับพักฟื้นอยู่ (เหลืออีก ${p.statuses.lensleep} เทิร์น)${heal > 0 ? ` — ฟื้นพลังชีวิต +${heal}` : ""}`);
-    }
-    // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): กลางคืนแต้มสกิลเพิ่มขึ้นเทิร์นละ +1 หน่วยเพิ่มเติม
-    if (isNightRound(roundNumber) && (lenTrueId(p) === "len" || lenTrueId(p) === "lenwhite")) {
-      addSkill(p, LEN_NIGHT_SKILL_BONUS);
-    }
     // ---------- ฟุจิตะ โคโตเนะ (patch 2.1.3) ----------
     // Sleeping time: หลับนิ่ง 2 เทิร์นตายตัว (ไม่ผูกกับความยาวกลางคืนอีกต่อไป — นับถอยหลังตามปกติ)
     //  ตื่นเองเมื่อครบเวลา (นับถอยหลังหมดใน endTurn) จะได้รับ [เช้าที่สดใส] 3 เทิร์น
@@ -3282,40 +3115,6 @@ function dealRound() {
         lastLog.push(`🎻 ${p.name} เสียงไพเราะที่กึกก้อง — ราตรีปลดล็อกท่าไม้ตาย รวมร่างทำนองเพลง`);
       }
     }
-    // เล็น / ไวท์เล็น (patch 2.2 beta): ขอพักสักหน่อยนะคะ/เหนื่อยแล้วไม่เอาแล้ว หยุดกลางคันเมื่อเข้าสู่กลางคืน
-    //  Moonlight/Blood Moon: ร่างแมวหมดฤทธิ์ทันทีที่เข้ากลางวัน (กลับมาตายได้ตามปกติ)
-    if (night) {
-      for (const p of alivePlayers()) {
-        if ((p.statuses.lensleep || 0) > 0) {
-          delete p.statuses.lensleep;
-          p.locked = false;
-          lastLog.push(`🌙 ${p.name} ราตรีมาเยือน — ขอพักสักหน่อยนะคะ ถูกขัดจังหวะ ตื่นขึ้นมา`);
-        }
-        // Arc Drive finish (ไวท์เล็น patch 2.2 beta): พลังโจมตีสะสมหมดอายุทุกครั้งที่เปลี่ยนช่วงเวลา (วัน↔คืน)
-        if (p.characterId === "lenwhite" && (p.arcAtkBurns || 0) > 0) {
-          p.arcAtkBurns = 0;
-          lastLog.push(`🌙 ${p.name} Arc Drive finish — พลังโจมตีที่สะสมไว้หมดอายุลงเมื่อกลางคืนมาถึง`);
-        }
-      }
-    } else {
-      for (const p of alivePlayers()) {
-        if (p.catForm) {
-          p.catForm = false;
-          lastLog.push(`☀️ ${p.name} ฟ้าสางแล้ว — ร่างแมวหมดฤทธิ์ กลับมาเป็นปกติ`);
-        }
-        // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): เข้าสู่กลางวัน — ฟื้นจำนวนครั้งใช้งานแมว +2
-        if (lenTrueId(p) === "len" || lenTrueId(p) === "lenwhite") {
-          const before = p.catUses || 0;
-          p.catUses = Math.min(CAT_MAX_USES, before + CAT_DAY_RESTORE);
-          if (p.catUses > before) lastLog.push(`☀️ ${p.name} ฟื้นจำนวนครั้งใช้งานแมว +${p.catUses - before} (${p.catUses}/${CAT_MAX_USES})`);
-        }
-        // Arc Drive finish (ไวท์เล็น patch 2.2 beta): พลังโจมตีสะสมหมดอายุทุกครั้งที่เปลี่ยนช่วงเวลา (วัน↔คืน)
-        if (p.characterId === "lenwhite" && (p.arcAtkBurns || 0) > 0) {
-          p.arcAtkBurns = 0;
-          lastLog.push(`☀️ ${p.name} Arc Drive finish — พลังโจมตีที่สะสมไว้หมดอายุลงเมื่อกลางวันมาถึง`);
-        }
-      }
-    }
     // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด — กลางคืนมาเยือนแล้วผลสิ้นสุดลง
     if (night) {
       for (const p of alivePlayers()) {
@@ -3337,7 +3136,6 @@ function dealRound() {
 function hit(id) {
   const p = players[id];
   if (gameState !== "PLAYING" || !p || !p.alive || p.locked) return;
-  if (p.catForm) return; // Moonlight/Blood Moon (เล็น/ไวท์เล็น): ร่างแมว — จั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.nodraw || 0) > 0) return; // อิ่มทงคัสสึเกิน: เทิร์นนี้จั่วเพิ่มไม่ได้
   if (shradeCharging(p)) return; // แด่เพื่อนรักของฉัน: ระหว่างชาร์จจั่วการ์ดเพิ่มไม่ได้
   if ((p.statuses.riddheguard || 0) > 0) return; // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): จั่วการ์ดเพิ่มไม่ได้
@@ -3400,79 +3198,6 @@ function nanayaToggleEye(id) {
   });
   broadcastState();
 }
-// เล็น (patch 2.2 beta): กลางคืน — เลือกท่าจากคลังมา "สวมร่าง" รอไว้ (ไม่เสียแต้ม) กดปุ่มท่าไม้ตายอีกครั้งเพื่อยืนยันใช้จริง
-function lenSelectBank(id, index) {
-  const p = players[id];
-  if (!p || !p.alive || p.characterId !== "len" || gameState !== "PLAYING" || p.locked || p.catForm) return;
-  if (!isNightRound(roundNumber)) return;
-  const idx = Number(index);
-  if (!(Array.isArray(p.lenBank) && idx >= 0 && idx < p.lenBank.length)) return;
-  p.lenLoadedIndex = idx;
-  const entry = p.lenBank[idx];
-  io.emit("skillFlash", { name: `เตรียมสวมร่าง — ${entry.skillName}`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
-  broadcastState();
-}
-// ไวท์เล็น (patch 2.2 beta): กลางคืน — เลือกของในคลังมาเตรียมใช้จริง (ไม่เสียแต้ม) กดปุ่มสกิลรองอีกครั้งเพื่อยืนยันใช้จริง
-function lwSelectBank(id, index) {
-  const p = players[id];
-  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return;
-  if (!isNightRound(roundNumber)) return;
-  const idx = Number(index);
-  if (!(Array.isArray(p.lenwhiteBank) && idx >= 0 && idx < p.lenwhiteBank.length)) return;
-  p.lwLoadedIndex = idx;
-  const entry = p.lenwhiteBank[idx];
-  io.emit("skillFlash", { name: `เตรียมใช้ — ${entry.skillName}`, img: entry.skillImg, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
-  broadcastState();
-}
-// ไวท์เล็น (patch 2.2 beta): ตรวจสอบ+หักแต้มสกิลร่วมของ Arc Drive finish ทั้ง 2 โหมด (จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง ไม่ว่าจะเลือกกี่ชิ้นในครั้งนั้น)
-//  คืน { p, bank, idxList } ถ้าใช้ได้ (และหักแต้มไปแล้ว) หรือ null ถ้าใช้ไม่ได้ — เรียกจาก lwCardBurn/lwAtkBurn เท่านั้น
-function lwArcCheckAndPay(id, indices) {
-  const p = players[id];
-  if (!p || !p.alive || p.characterId !== "lenwhite" || gameState !== "PLAYING" || p.locked || p.catForm) return null;
-  if (p.skillPoints < LENWHITE_ARC_COST) return null;
-  const bank = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank : [];
-  const idxList = Array.isArray(indices)
-    ? [...new Set(indices.map((n) => Number(n)))].filter((n) => Number.isInteger(n) && n >= 0 && n < bank.length)
-    : [];
-  if (!idxList.length) return null;
-  p.skillPoints -= LENWHITE_ARC_COST;
-  return { p, bank, idxList };
-}
-// ไวท์เล็น (patch 2.2 beta): Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด เลือกได้หลายชิ้นพร้อมกัน ยืนยันครั้งเดียว
-//  แต้มการ์ดที่ได้ = ผลรวมราคาต้นฉบับของทุกชิ้นที่เลือก บวกทันทีไม่มีเพดาน (เกิน 21 บัสต์ทันที) — จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง
-function lwCardBurn(id, indices) {
-  const paid = lwArcCheckAndPay(id, indices);
-  if (!paid) return;
-  const { p, bank, idxList } = paid;
-  idxList.sort((a, b) => b - a); // ลบจากดัชนีสูงไปต่ำ กัน index เลื่อนระหว่างลบ
-  const burned = idxList.map((i) => bank[i]);
-  let total = 0;
-  for (const i of idxList) { total += bank[i].cost; bank.splice(i, 1); }
-  p.cardBonus = (p.cardBonus || 0) + total;
-  p.busted = bustedOf(p);
-  lastLog.push(`🃏 ${p.name} Arc Drive finish — แปลงของในคลัง ${burned.length} ชิ้นเป็นแต้มการ์ด +${total} (คลังเหลือ ${bank.length})${p.busted ? " — ไพ่แตก!" : ""}`);
-  if (p.busted) { voidUltimateOnBust(p); maybeMoonBurst(p); }
-  broadcastState();
-  checkAllLocked();
-}
-// ไวท์เล็น (patch 2.2 beta): Arc Drive finish โหมด 2 — สละของในคลังแลกพลังโจมตี เลือกได้หลายชิ้นพร้อมกัน ยืนยันครั้งเดียว
-//  สละครบทุกๆ 2 ชิ้น พลังโจมตี +1 หน่วย (สะสมไม่จำกัด แต่หมดอายุทุกครั้งที่เปลี่ยนช่วงกลางวัน/กลางคืน — ดู dealRound) — จ่าย LENWHITE_ARC_COST ต่อการยืนยัน 1 ครั้ง
-function lwAtkBurn(id, indices) {
-  const paid = lwArcCheckAndPay(id, indices);
-  if (!paid) return;
-  const { p, bank, idxList } = paid;
-  idxList.sort((a, b) => b - a);
-  const burned = idxList.map((i) => bank[i]);
-  for (const i of idxList) bank.splice(i, 1);
-  const before = p.arcAtkBurns || 0;
-  p.arcAtkBurns = before + burned.length;
-  const stackBefore = Math.floor(before / LENWHITE_ARC_ATK_PER_BURNS);
-  const stackNow = Math.floor(p.arcAtkBurns / LENWHITE_ARC_ATK_PER_BURNS);
-  const gained = stackNow - stackBefore;
-  lastLog.push(`🔥 ${p.name} Arc Drive finish — สละของในคลัง ${burned.length} ชิ้นเพื่อพลังโจมตี (${p.arcAtkBurns % LENWHITE_ARC_ATK_PER_BURNS || (burned.length ? LENWHITE_ARC_ATK_PER_BURNS : 0)}/${LENWHITE_ARC_ATK_PER_BURNS}${gained > 0 ? ` — พลังโจมตี +${gained}! (รวม +${stackNow})` : ""}) (คลังเหลือ ${bank.length})`);
-  broadcastState();
-  checkAllLocked();
-}
 function useSkill(id, tier, targets, item) {
   const p = players[id];
   if (!p || !p.alive) return;
@@ -3492,7 +3217,6 @@ function useSkill(id, tier, targets, item) {
   if ((p.statuses.riddheguard || 0) > 0) return; // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): ระหว่างทำงานกดสกิลไม่ได้
   if ((p.statuses.phenexTaunt || 0) > 0) return; // ไม่อยากให้ใครต้องเจ็บปวด (ริต้า เบอร์นัล): ระหว่างล่อเป้ากดสกิลไม่ได้เลย
   if (tier === "ultimate" && (p.statuses.phenexBanUlt || 0) > 0) return; // อย่าอยู่เลย แกน่ะ! (ริต้า เบอร์นัล): ถูกแบนท่าไม้ตายชั่วคราว
-  if (p.catForm) return; // Moonlight/Blood Moon (เล็น/ไวท์เล็น): ร่างแมว — ใช้สกิลไม่ได้เลย (โจมตีได้ตามปกติ)
   // ---------- Bard : คีตกวี — เติมโน้ตประพันธ์เพลง (ช่องที่ 3 ไม่ใช่สกิล กดใช้ไม่ได้) ----------
   if (p.characterId === "bard") {
     if (tier === "ultimate") return; // ช่องประพันธ์เพลง — ไม่ใช่ปุ่มสกิล
@@ -3603,69 +3327,6 @@ function useSkill(id, tier, targets, item) {
   if (tier === "basic" && ch.basicNight && isNightRound(roundNumber)) skill = ch.basicNight;
   if ((p.statuses.noskill || 0) > 0) return; // โดนหอกลองกินัสปัก: เทิร์นนี้ใช้สกิลไม่ได้
 
-  // ---------- เล็น (patch 2.2 beta) ----------
-  //  (ประกาศไว้ก่อนคำนวณ cost — สกิลรอง/ท่าไม้ตายกลางคืนต้องใช้ lenCastEntry/lwUseEntry ทับ cost ตั้งแต่ก่อนเช็คแต้มพอไหม)
-  const isLen = p.characterId === "len";
-  const lenNight = isNightRound(roundNumber);
-  const isLenSleep = isLen && tier === "basic";
-  if (isLenSleep && lenNight) return; // ขอพักสักหน่อยนะคะ: ใช้ได้แค่ตอนกลางวัน
-  if (isLenSleep && (p.statuses.lensleep || 0) > 0) return; // หลับอยู่แล้ว กดซ้ำไม่ได้
-  const isLenDrain = isLen && tier === "secondary";
-  let lenDrainIdx = -1, lenDrainEntry = null;
-  if (isLenDrain) {
-    lenDrainIdx = Number(item);
-    lenDrainEntry = Array.isArray(p.lenBank) ? p.lenBank[lenDrainIdx] : null;
-    if (!lenDrainEntry) return; // ต้องเลือกท่าในคลังที่มีจริง
-  }
-  const isLenUlt = isLen && tier === "ultimate";
-  let lenCopyFound = null, lenCopyTarget = null, lenCastEntry = null;
-  if (isLenUlt && !lenNight) {
-    // กลางวัน: เลือกเป้าหมาย 1 คน คัดลอกท่าไม้ตายเก็บคลัง (สูงสุด 3 ห้ามซ้ำ — เต็มแล้วต้องระบุ item = index ที่จะสลับ)
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    const found = currentSkillOf(t, "ultimate");
-    if (!found) return;
-    p.lenBank = p.lenBank || [];
-    if (p.lenBank.some((e) => e.sourceCharId === found.sourceCharId && e.skillKey === found.skillKey)) return; // ห้ามซ้ำ
-    if (p.lenBank.length >= LEN_BANK_MAX) {
-      const swapIdx = Number(item);
-      if (!(swapIdx >= 0 && swapIdx < p.lenBank.length)) return; // คลังเต็ม ต้องเลือกอันที่จะสลับออก
-    }
-    lenCopyFound = found; lenCopyTarget = t;
-  } else if (isLenUlt && lenNight) {
-    // กลางคืน: ต้องเลือกท่าจากคลังไว้ก่อน (ผ่าน event lenSelectBank) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
-    if (p.lenLoadedIndex == null) return;
-    lenCastEntry = Array.isArray(p.lenBank) ? p.lenBank[p.lenLoadedIndex] : null;
-    if (!lenCastEntry) { p.lenLoadedIndex = null; return; }
-  }
-  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
-  const isLW = p.characterId === "lenwhite";
-  const lwNight = isNightRound(roundNumber);
-  const isLWSleep = isLW && tier === "basic";
-  if (isLWSleep && lwNight) return;
-  if (isLWSleep && (p.statuses.lensleep || 0) > 0) return;
-  const isLWSteal = isLW && tier === "secondary";
-  let lwStealTarget = null, lwStealFound = null, lwUseEntry = null;
-  if (isLWSteal && !lwNight) {
-    if (item !== "basic" && item !== "secondary") return; // ต้องเลือกว่าจะขโมยสกิลพื้นฐานหรือสกิลรอง
-    const tgs = Array.isArray(targets) ? [...new Set(targets)] : [];
-    const t = tgs.length === 1 ? players[tgs[0]] : null;
-    if (!t || !t.alive || t.id === p.id) return;
-    const found = currentSkillOf(t, item);
-    if (!found) return;
-    p.lenwhiteBank = p.lenwhiteBank || [];
-    if (p.lenwhiteBank.length >= LENWHITE_BANK_MAX) return; // คลังเต็ม
-    lwStealTarget = t; lwStealFound = found;
-  } else if (isLWSteal && lwNight) {
-    // ต้องเลือกของจากคลังไว้ก่อน (ผ่าน event lwSelectBank) แล้วกดปุ่มนี้อีกครั้งเพื่อยืนยันใช้จริง
-    if (p.lwLoadedIndex == null) return;
-    lwUseEntry = Array.isArray(p.lenwhiteBank) ? p.lenwhiteBank[p.lwLoadedIndex] : null;
-    if (!lwUseEntry) { p.lwLoadedIndex = null; return; }
-  }
-  // Arc Drive finish (ไวท์เล็น patch 2.2 beta): ย้ายไปเป็น event แยก lwCardBurn/lwAtkBurn ทั้งคู่ — ไม่ผ่าน useSkill()/tier="ultimate" อีกต่อไป
-  //  (แต่ละโหมดเช็คแต้ม/หักแต้มของตัวเองตรงๆ ไม่ใช้ระบบ cost ของ useSkill()) ดู lwCardBurn/lwAtkBurn ด้านล่าง
-
   // เวลาทอง (แกมเบลอร์): แต้มที่ใช้ของสกิลพื้นฐาน/สกิลรองลดครึ่งหนึ่ง
   const isGambler = p.characterId === "gambler";
   const goldenOn = (p.statuses.golden || 0) > 0;
@@ -3709,9 +3370,6 @@ function useSkill(id, tier, targets, item) {
   // พรแห่งการจั่ว (patch 2.0.8): ใช้สกิลไม่เสียแต้ม 1 ครั้ง — ใช้กับสกิลที่มีค่าใช้จ่ายเท่านั้น
   const blessFree = cost > 0 && (p.statuses.freecast || 0) > 0;
   if (blessFree) cost = 0;
-  // เล็น/ไวท์เล็น (patch 2.2 beta): ใช้งานท่าที่คัดลอก/ขโมยมาจริง — จ่ายแต้มเพิ่มเท่าราคาต้นฉบับ (แทนราคาคัดลอก/ขโมย)
-  if (isLenUlt && lenNight && lenCastEntry) cost = lenCastEntry.cost;
-  if (isLWSteal && lwNight && lwUseEntry) cost = lwUseEntry.cost;
   if (p.skillPoints < cost) return;
 
   const st = skill.effect && !Array.isArray(skill.effect) && skill.effect.type === "status" ? skill.effect.status : null;
@@ -4513,105 +4171,6 @@ function useSkill(id, tier, targets, item) {
   }
   applyEffect(p, skill.effect);
 
-  // ---------- เล็น (patch 2.2 beta) ----------
-  if (isLenSleep) {
-    p.statuses.lensleep = LEN_SLEEP_TURNS;
-    healArmor(p, LEN_SLEEP_ARMOR_BONUS);
-    lastLog.push(`💤 ${p.name} ขอพักสักหน่อยนะคะ — หลับพักฟื้น ${LEN_SLEEP_TURNS} เทิร์น (ฟื้นเลือด +1 ทุกเทิร์น จั่ว/ตี/ใช้สกิลไม่ได้เลย)`);
-  }
-  if (isLenDrain && lenDrainEntry) {
-    p.lenBank.splice(lenDrainIdx, 1);
-    const owner = players[lenDrainEntry.sourceOwnerId];
-    if (owner && owner.alive) {
-      const dmg = Math.floor(lenDrainEntry.cost / 2);
-      dealMixed(owner, dmg);
-      owner.statuses.norecover = Math.max(owner.statuses.norecover || 0, LEN_NORECOVER_TURNS);
-      owner.wasAttacked = true;
-      lastLog.push(`🌙 ${p.name} ฝันดีนะคะ — เผา "${lenDrainEntry.skillName}" ใส่ ${owner.name} -${dmg} (ติดไร้ทางเยียวยา ${LEN_NORECOVER_TURNS} เทิร์น)`);
-      maybeBeatSave(owner);
-      maybeBeatMode(owner);
-      maybeEva3(owner);
-      if (owner.alive && owner.hp <= 0) { instantDeath(owner); if (!owner.alive) lastLog.push(`💀 ${owner.name} เลือดจริงหมด ตกรอบ!`); }
-    } else {
-      lastLog.push(`🌙 ${p.name} ฝันดีนะคะ — เผา "${lenDrainEntry.skillName}" ทิ้ง (หาเจ้าของท่าไม่เจอแล้ว)`);
-    }
-  }
-  if (isLenUlt && !lenNight && lenCopyFound && lenCopyTarget) {
-    p.lenBank = p.lenBank || [];
-    const entry = {
-      sourceCharId: lenCopyFound.sourceCharId, sourceOwnerId: lenCopyTarget.id, skillKey: lenCopyFound.skillKey,
-      skillName: lenCopyFound.skill.name, skillImg: lenCopyFound.skill.img, cost: lenCopyFound.skill.cost,
-      hasEffect: !!lenCopyFound.skill.effect, // ท่าที่ effect เป็น null (จัดการใน engine ของเจ้าของท่าโดยตรง) — สวมร่างใช้จริงจะไม่มีผล เผาเป็นดาเมจได้อย่างเดียว
-    };
-    const swapIdx = p.lenBank.length >= LEN_BANK_MAX ? Number(item) : -1;
-    if (swapIdx >= 0 && swapIdx < p.lenBank.length) p.lenBank.splice(swapIdx, 1, entry);
-    else p.lenBank.push(entry);
-    p.catUses = Math.max(0, (p.catUses || 0) - 1); // คัดลอกท่าไม้ตายแต่ละครั้งเสีย "แมวดำ" ไป 1 หน่วยด้วย
-    lastLog.push(`🔮 ${p.name} ผลึกฝันบอกเหตุ — คัดลอกท่าไม้ตาย "${lenCopyFound.skill.name}" ของ ${lenCopyTarget.name} เก็บเข้าคลัง (${p.lenBank.length}/${LEN_BANK_MAX}) — แมวดำเหลือ ${p.catUses}/${CAT_MAX_USES}`);
-    // แบนเนอร์ใหญ่กลางจอ 5 วิ — ให้ทุกคนเห็นว่าเล็นเริ่มคัดลอกแล้ว
-    {
-      const lenCh = CHAR_BY_ID.len;
-      const voiceKeys = lenCh.voiceKeys || [];
-      cutsceneQueue.push({
-        seconds: 5,
-        info: {
-          playerId: p.id, name: p.name,
-          img: lenCh.modelImg, color: POSITION_COLORS[p.position] || "#9B4F96",
-          video: null, title: "ผลึกฝันบอกเหตุ", label: "คัดลอกพลัง!",
-          voice: voiceKeys.length ? voiceKeys[Math.floor(Math.random() * voiceKeys.length)] : null,
-          kind: "lenCopy", announce: true,
-        },
-      });
-    }
-  }
-  if (isLenUlt && lenNight && lenCastEntry) {
-    p.lenBank.splice(p.lenLoadedIndex, 1);
-    p.lenLoadedIndex = null;
-    p.catUses = Math.max(0, (p.catUses || 0) - 1); // แมวดำเหลือจำนวนครั้งใช้งานลด 1 (ใช้ได้อยู่แม้เหลือ 0)
-    castBorrowedSkill(p, lenCastEntry);
-  }
-  // ---------- ไวท์เล็น (patch 2.2 beta) ----------
-  if (isLWSleep) {
-    p.statuses.lensleep = LEN_SLEEP_TURNS;
-    healArmor(p, LEN_SLEEP_ARMOR_BONUS);
-    lastLog.push(`💤 ${p.name} เหนื่อยแล้ว ไม่เอาแล้ว — หลับพักฟื้น ${LEN_SLEEP_TURNS} เทิร์น (ฟื้นเลือด +1 ทุกเทิร์น จั่ว/ตี/ใช้สกิลไม่ได้เลย)`);
-  }
-  if (isLWSteal && !lwNight && lwStealFound && lwStealTarget) {
-    p.lenwhiteBank = p.lenwhiteBank || [];
-    p.lenwhiteBank.push({
-      sourceCharId: lwStealFound.sourceCharId, sourceOwnerId: lwStealTarget.id, skillKey: lwStealFound.skillKey,
-      skillName: lwStealFound.skill.name, skillImg: lwStealFound.skill.img, cost: lwStealFound.skill.cost,
-      hasEffect: !!lwStealFound.skill.effect, // ท่าที่ effect เป็น null (จัดการใน engine ของเจ้าของท่าโดยตรง) — ใช้จริงจะไม่มีผล
-    });
-    lwStealTarget.statuses.decay = Math.max(lwStealTarget.statuses.decay || 0, LENWHITE_DECAY_TURNS);
-    p.lwStealCount = (p.lwStealCount || 0) + 1;
-    let catCostMsg = "";
-    if (p.lwStealCount % LENWHITE_STEAL_CATCOST_EVERY === 0) {
-      p.catUses = Math.max(0, (p.catUses || 0) - 1); // ขโมยครบทุกๆ 2 ครั้ง เสีย "แมวขาว" ไป 1 หน่วย
-      catCostMsg = ` — แมวขาวเหลือ ${p.catUses}/${CAT_MAX_USES}`;
-    }
-    lastLog.push(`🤍 ${p.name} ฉันขอรับไปนะคะ — คัดลอก "${lwStealFound.skill.name}" ของ ${lwStealTarget.name} เก็บเข้าคลัง (${p.lenwhiteBank.length}/${LENWHITE_BANK_MAX}) — ${lwStealTarget.name} ติดผุพัง ${LENWHITE_DECAY_TURNS} เทิร์น (เกราะไม่ฟื้น)${catCostMsg}`);
-    // แบนเนอร์ใหญ่กลางจอ 5 วิ — ให้ทุกคนเห็นว่าไวท์เล็นเริ่มคัดลอกแล้ว (สุ่มเสียงพากย์ 1 ใน 3)
-    {
-      const lwCh = CHAR_BY_ID.lenwhite;
-      const voiceKeys = lwCh.voiceKeys || [];
-      cutsceneQueue.push({
-        seconds: 5,
-        info: {
-          playerId: p.id, name: p.name,
-          img: lwCh.modelImg, color: POSITION_COLORS[p.position] || "#9B4F96",
-          video: null, title: "ฉันขอรับไปนะคะ", label: "คัดลอกพลัง!",
-          voice: voiceKeys.length ? voiceKeys[Math.floor(Math.random() * voiceKeys.length)] : null,
-          kind: "lenwhiteCopy", announce: true,
-        },
-      });
-    }
-  }
-  if (isLWSteal && lwNight && lwUseEntry) {
-    p.lenwhiteBank.splice(p.lwLoadedIndex, 1);
-    p.lwLoadedIndex = null;
-    castBorrowedSkill(p, lwUseEntry);
-  }
   // ---------- บานาจ ลิงก์ (patch 2.1.2) ----------
   // Absorb shield: มอบโล่ + ผูกเจ้าของสกิลไว้ (โล่แตกระหว่างมีผล -> ฟื้นเลือดให้เจ้าของสกิลตามที่เสีย)
   if (isBanagherShield && banagherShieldTarget) {
@@ -6349,10 +5908,6 @@ function doAttack(byId, targetId) {
   const rachanAtk = (attacker.statuses.rachan || 0) > 0 ? KUWAGATA_RACHAN_ATK : 0;
   // Fourth Impact (เอวา 13 patch 2.2 alpha): พลังโจมตีปกติ +2 ระหว่างร่าง
   const fourthAtk = (attacker.statuses.fourth || 0) > 0 ? EVA13_FOURTH_ATK : 0;
-  // Moonlight / Blood Moon (เล็น/ไวท์เล็น patch 2.2 beta): กลางคืนพลังโจมตี +1 ถาวร
-  const lenNightAtk = ((attacker.characterId === "len" || attacker.characterId === "lenwhite") && isNightRound(roundNumber)) ? 1 : 0;
-  // Arc Drive finish (ไวท์เล็น patch 2.2 beta): โหมดสะสมพลังโจมตี — เผาครบทุกๆ 2 ชิ้น +1 (สะสมได้เรื่อยๆ จนกว่ากลางวันจะมาถึง)
-  const arcdriveAtk = attacker.characterId === "lenwhite" ? Math.floor((attacker.arcAtkBurns || 0) / LENWHITE_ARC_ATK_PER_BURNS) : 0;
   // ---------- คิชินามิ ฮาคุโนะ (patch 2.2.1) ----------
   const hakunoMoonOn = attacker.characterId === "hakuno" && (attacker.statuses.moonCell || 0) > 0;
   const hakunoMaleAtk = (attacker.characterId === "hakuno" && attacker.hakunoGender === "male" && !hakunoMoonOn) ? HAKUNO_MALE_ATK_BONUS : 0; // ร่างชาย: พลังโจมตีถาวร +1 (ระงับระหว่าง MOON*CELL)
@@ -6366,7 +5921,7 @@ function doAttack(byId, targetId) {
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
   // patch 2.2.4: เอาโบนัสจากกันตาย (สกิลติดตัว 1) ออก — เหลือเฉพาะช่วงฉันคว้ามันได้แล้ว (Apprivoise!) ทำงานอยู่
   const takutoAtk = attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + lenNightAtk + arcdriveAtk + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
@@ -7594,10 +7149,6 @@ io.on("connection", (socket) => {
   socket.on("useSkill", ({ tier, targets, item } = {}) => useSkill(socket.id, tier, targets, item));
   socket.on("buyShopItem", ({ itemId } = {}) => buyShopItem(socket.id, itemId));
   socket.on("useInventoryItem", ({ uid } = {}) => useInventoryItem(socket.id, uid));
-  socket.on("lenSelectBank", ({ index } = {}) => lenSelectBank(socket.id, index)); // เล็น: เลือกท่าจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
-  socket.on("lwSelectBank", ({ index } = {}) => lwSelectBank(socket.id, index)); // ไวท์เล็น: เลือกของจากคลังตอนกลางคืน (ก่อนกดยืนยันใช้จริง)
-  socket.on("lwCardBurn", ({ indices } = {}) => lwCardBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 1 — แปลงของในคลังเป็นแต้มการ์ด (เลือกหลายชิ้น ยืนยันครั้งเดียว)
-  socket.on("lwAtkBurn", ({ indices } = {}) => lwAtkBurn(socket.id, indices)); // ไวท์เล็น: Arc Drive finish โหมด 2 — สละของในคลังแลกพลังโจมตี (เลือกหลายชิ้น ยืนยันครั้งเดียว)
   socket.on("hakunoCommandSpell", ({ command } = {}) => hakunoCommandSpell(socket.id, command)); // คิชินามิ ฮาคุโนะ: อาคมบัญชาระดับ EX+
   socket.on("locaAnswer", ({ accept } = {}) => answerLoca(socket.id, !!accept)); // ซาโตรุ: ตอบข้อเสนอผลโลกากากา
   socket.on("riddheAlly", ({ targetId } = {}) => riddheChooseAlly(socket.id, targetId)); // ริดดี้: เลือกยื่นข้อเสนอพันธมิตร/เดินเดี่ยว

@@ -45,10 +45,6 @@ const FILES = {
   auqarion: "/characters/auqarion/auqarion_theme.mp3", // เพลงประจำตัวอควาเรียน (ระหว่างไปยังพฤกษาแห่งชีวิต)
   oguri: "/characters/oguri/oguri_theme.mp3",          // เพลงประจำตัวโอกูริ แคป (เริ่มตอนเข้าร่าง Zone — เล่นค้างระหว่างอยู่ร่าง)
   wonderofu: "/characters/satoru/wonderofu_theme.mp3", // เพลง Wonder of U (ซาโตรุ — เล่นค้างตราบใดที่มีคนติด Calamity)
-  lenVoice: "/characters/len/len_voice.m4a", // เสียงพากย์ตอนเล็นเริ่มคัดลอกท่าไม้ตาย
-  lenwhiteVoice1: "/characters/lenwhite/lenwhite_voice1.m4a", // เสียงพากย์สุ่มตอนไวท์เล็นเริ่มคัดลอกสกิล
-  lenwhiteVoice2: "/characters/lenwhite/lenwhite_voice2.m4a",
-  lenwhiteVoice3: "/characters/lenwhite/lenwhite_voice3.m4a",
   doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)
   takuto: "/characters/takuto/takuto_theme.mp3", // เพลงประจำตัวหลังฉันคว้ามันได้แล้ว (สึงาชิ ทาคุโตะ)
   takuto2: "/characters/takuto/upadate/takuto_theme2.m4a", // เพลงประจำตัวหลังสกิลติดตัว 1 กันตายทำงาน (สึงาชิ ทาคุโตะ patch 2.2.4)
