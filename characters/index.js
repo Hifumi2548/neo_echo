@@ -12,6 +12,7 @@ const temari = require("./temari");
 const kuwagata = require("./kuwagata");
 const eva13 = require("./eva13");
 const oberon = require("./oberon");
+const takuto = require("./takuto");
 
 const CHARACTER_MODULES = [
   tohno,
@@ -19,6 +20,7 @@ const CHARACTER_MODULES = [
   kuwagata,
   eva13,
   oberon,
+  takuto,
 ];
 
 const CHAR_HOOKS = {};

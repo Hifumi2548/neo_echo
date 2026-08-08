@@ -89,9 +89,6 @@ const TAKUTO_HEAL_BASIC = 1;          // ฉันได้ยินเสีย
 const TAKUTO_STAR_NEED = 5;           // ดวงดาวสะสมครบ 5 -> ฉันคว้ามันได้แล้ว (Apprivoise!) ทันที
 const TAKUTO_APPRIVOISE_TURNS = 10;   // ฉันคว้ามันได้แล้ว: คงอยู่ 10 เทิร์น หมดแล้วกลับเป็นทาคุโตะปกติ ต้องเก็บดวงดาวใหม่ (patch 2.2.3 — เดิมถาวร)
 const TAKUTO_ATK_BONUS = 1;           // ฉันคว้ามันได้แล้ว: พลังโจมตีถาวร +1 หน่วย (patch 2.2.4: สกิลติดตัว 1 ไม่ให้โบนัสนี้แล้ว)
-const TAKUTO_FORTUNE_GRANT = 2;       // สกิลติดตัว 1: กันตายทำงานเมื่อไหร่ มอบโชคลาภ 2 หน่วยให้ตัวเองตอนนั้นเลย
-const TAKUTO_BEATSAVE_HEAL = 2;       // สกิลติดตัว 1 (patch 2.2.4): กันตายทำงาน -> ฟื้นพลังชีวิต +2 เพิ่มเติม
-const TAKUTO_BEATSAVE_ARMOR = 2;      // สกิลติดตัว 1 (patch 2.2.4): กันตายทำงาน -> ฟื้นเกราะ +2 เพิ่มเติม
 const TAKUTO_ULT_CARD_SCORE = 19;     // ท่าไม้ตายที่ 1: แต้มการ์ดของตัวเองพุ่งเป็น 19 ทันที
 const TAKUTO_THIRD_ATK_CHANCE = 0.5;  // ท่าไม้ตายที่ 1 (พิชิตแสงดาว): หลังคอมโบ Saphir+Emeraude มีโอกาส 50% ได้โจมตีต่อครั้งที่ 3
 const TAKUTO_ULT2_DMG = 6;            // ท่าไม้ตายที่ 2 ร่วมเดินทางไปกับฉันเถอะ (patch 2.2.5): ระเบิดใส่ทุกคนรวมตัวเอง 6 หน่วย
@@ -130,20 +127,10 @@ const GAMBLER_USES = 3; // วอสก้าหน่อยน้อง ใช�
 const TEMP_HP_TURNS = 2; // เลือดชั่วคราว (แกมเบลอร์) หายเองภายใน 2 เทิร์น
 const EVA_BLAST_DMG = 8; // ระเบิด fourth impact (เอวา 13) ใส่ทุกคนในสนาม (patch 2.2 alpha — เดิม 5)
 // ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
-const KUWAGATA_OHGER_DECAY_TURNS = 3;  // Ohger Finish: โจมตีโดนเป้าหมาย -> ติดผุพัง 3 เทิร์น
-const KUWAGATA_RACHAN_TURNS = 5;       // สวมเกราะราชัน: คงอยู่ 5 เทิร์น (เดิมถาวร)
-const KUWAGATA_RACHAN_ATK = 1;         // สวมเกราะราชัน (คิงโอเจอร์): พลังโจมตีปกติ +1
-const KUWAGATA_RACHAN_FORTUNE = 2;     // สวมเกราะราชัน: มอบโชคลาภ 2 หน่วย
-const KUWAGATA_BEAT_FORTUNE = 3;       // Beat Mode กันตายทำงาน: มอบโชคลาภ 3 หน่วย
+const KUWAGATA_RACHAN_ATK = 1;         // สวมเกราะราชัน (คิงโอเจอร์): พลังโจมตีปกติ +1 (ใช้ในสูตรดาเมจรวม doAttack — ยังอยู่ server.js)
 // ---------- เอวานเกเลี่ยน หมายเลข 13 (patch 2.2 alpha) ----------
-const EVA13_HP_THRESHOLD = 4;          // อย่าให้ฉันทำแบบนี้เลย / RS-Hopper: เกณฑ์พลังชีวิต (เดิม 3)
-const EVA13_ARMOR_HEAL = 2;            // อย่าให้ฉันทำแบบนี้เลย: ฟื้นเกราะทันที (เดิม 1)
-const EVA13_SPEAR_CHANCE = 0.5;        // หอกลองกินัส: โอกาสล็อกสกิลเป้าหมาย (คงที่ 50/50 เสมอ)
-const EVA13_SPEAR_LOCK_TURNS = 2;      // หอกลองกินัส: ล็อกสกิลเป้าหมาย 2 เทิร์น (เดิม 1)
-const EVA13_FOURTH_TURNS = 5;          // Fourth Impact: คงอยู่ 5 เทิร์น (เดิม 3)
-const EVA13_FOURTH_ATK = 2;            // Fourth Impact: พลังโจมตีปกติ +2 (ใหม่)
-const EVA13_RSHOPPER_MAX = 3;          // RS-Hopper: ชาร์จสูงสุด (เริ่มเกมเต็ม)
-const EVA13_RSHOPPER_REGEN_TURNS = 3;  // RS-Hopper: ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น
+const EVA13_FOURTH_ATK = 2;            // Fourth Impact: พลังโจมตีปกติ +2 (ใช้ในสูตรดาเมจรวม doAttack — ยังอยู่ server.js)
+const EVA13_RSHOPPER_MAX = 3;          // RS-Hopper: ชาร์จสูงสุด (ใช้ตอน resetCombat/join init — ยังอยู่ server.js)
 
 
 // ---------- Apple guy (patch 1.8) ----------
@@ -1374,53 +1361,22 @@ function maxArmorOf(p) {
 function sealActive(p) {
   return !!p && ((p.statuses && p.statuses.seal) || 0) > 0;
 }
-// Beat Mode (คุวากาตะ): พลังชีวิต < 3 = อยู่ในประกายเขี้ยวปฏิปักษ์ (สกิลติดตัว — ปิดใช้งานได้ด้วย "อันนี้ของนายรึเปล่า" นานายะ ชิกิ)
+// Beat Mode (universal dispatcher — เรียกกลับเข้า characters/<id>.js ของแต่ละตัวละครที่มีกลไกนี้)
+//  ตอนนี้มี kuwagata (ประกายเขี้ยวปฏิปักษ์) และ takuto (ฉันยัง...มองเห็นอยู่!!!) — ดู characters/kuwagata.js, characters/takuto.js
 function beatActive(p) {
-  return !!p && p.alive && p.characterId === "kuwagata" && p.hp < 3 && !passiveSealed(p);
+  const mod = CHAR_HOOKS[p && p.characterId];
+  return !!(mod && mod.isBeatActive && mod.isBeatActive(engine, p));
 }
-// เข้าสู่ Beat Mode ครั้งแรก (เล่นวีดีโอ passive + ตั้งร่างถาวรจนตาย)
 function maybeBeatMode(p) {
-  if (!p || !p.alive || p.characterId !== "kuwagata") return;
-  if (p.hp < 1 || p.hp >= 3) return;      // ต้องเหลือ 1-2 หน่วย (0 = กำลังจะตาย)
-  if (p.seen && p.seen.beat) return;       // เข้าแล้วครั้งเดียวพอ (ถาวรจนตาย)
-  p.seen.beat = true;
-  p.transformAt = ++transformCounter;
-  p.beatAt = p.transformAt; // ล็อกลำดับตอนเข้า Beat (ให้เพลง ex_guts ไม่รีสตาร์ทตอนแปลงร่างอื่นทีหลัง)
-  const firstTime = !p.cutsceneShown.beat;
-  triggerCutscene(p, "beat");
-  if (firstTime) queueTransformAnnounce(p, "beat"); // วีดีโอ -> ประกาศเปลี่ยนร่าง (ระเบิดเขียว + เสียงพากย์)
-  lastLog.push(`⚡ ${p.name} เข้าสู่ประกายเขี้ยวปฏิปักษ์ (Beat Mode)!`);
+  const mod = CHAR_HOOKS[p && p.characterId];
+  if (mod && mod.maybeEnterBeatMode) mod.maybeEnterBeatMode(engine, p);
 }
-// Beat Mode กันตาย (คุวากาตะ) / ฉันยัง...มองเห็นอยู่!!! (ทาคุโตะ): ทำงานทันทีเมื่อความเสียหายถึงตาย
-// (ครั้งเดียวต่อเกม — ค้างที่ 1 หน่วย)
+// กันตายทันทีเมื่อความเสียหายถึงตาย (ครั้งเดียวต่อเกม — ค้างที่ 1 หน่วย)
 function maybeBeatSave(p) {
   if (!p || !p.alive || passiveSealed(p)) return false;
   if (p.beatSaved || p.hp >= 1) return false;
-  if (p.characterId === "kuwagata") {
-    p.hp = 1;
-    p.beatSaved = true;
-    p.armorLocked = true;
-    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_BEAT_FORTUNE);
-    p.fortuneIdle = 0;
-    lastLog.push(`🛡️⚡ ${p.name} ประกายเขี้ยวปฏิปักษ์ — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียว) ได้รับโชคลาภ +${KUWAGATA_BEAT_FORTUNE}`);
-    return true;
-  }
-  if (p.characterId === "takuto") {
-    // patch 2.2.4: ทำงานเฉพาะตอนฉันคว้ามันได้แล้ว (Apprivoise!) กำลังทำงานอยู่เท่านั้น — ไม่ใช่ร่างปกติจะไม่กันตาย (ดูสกิลติดตัว 3 แทน)
-    if (!((p.statuses.apprivoise || 0) > 0)) return false;
-    p.hp = 1;
-    p.beatSaved = true;
-    p.statuses.apprivoise = TAKUTO_APPRIVOISE_TURNS; // patch 2.2.4: กันตายทำงาน -> นับเวลาฉันคว้ามันได้แล้วใหม่เต็ม 10 เทิร์น (ลดเทิร์นตามปกติต่อไป ไม่ถาวร)
-    p.takutoAwakenAt = ++transformCounter; // เพลง/ภาพซ้อนทับใช้ลำดับล่าสุด (กรณีมีทาคุโตะหลายคน)
-    triggerCutscene(p, "takutoAwaken"); // takuto_passive2.mp4 -> เปลี่ยนภาพเป็น tauburn_un.jpg + เพลง takuto2 ถาวร
-    const healedHp = healHp(p, TAKUTO_BEATSAVE_HEAL);
-    const healedArmor = healArmor(p, TAKUTO_BEATSAVE_ARMOR);
-    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + TAKUTO_FORTUNE_GRANT);
-    p.fortuneIdle = 0;
-    lastLog.push(`✨ ${p.name} ฉันยัง...มองเห็นอยู่!!! — รอดจากความเสียหายถึงตาย! (กันตายได้ครั้งเดียวต่อเกม) ฟื้นพลังชีวิต +${healedHp} เกราะ +${healedArmor} ได้รับโชคลาภ +${TAKUTO_FORTUNE_GRANT} และร่างฉันคว้ามันได้แล้วนับเวลาใหม่เต็ม ${TAKUTO_APPRIVOISE_TURNS} เทิร์น`);
-    return true;
-  }
-  return false;
+  const mod = CHAR_HOOKS[p.characterId];
+  return !!(mod && mod.tryDeathSave && mod.tryDeathSave(engine, p));
 }
 // ---------- ริต้า เบอร์นัล / ฟีนิกซ์ (patch 2.1.6) ----------
 // สกิลติดตัว 1 ถ้าเลือกได้ อยากเกิดเป็นอะไรหรอ?: ตายครั้งแรกในเกม -> เกิดใหม่ด้วยพลังชีวิต/เกราะเต็ม (ครั้งเดียวต่อเกม)
@@ -1477,27 +1433,17 @@ function instantDeath(p) {
   p.hp = 0; p.alive = false; p.result = "dead"; p.locked = true;
 }
 
-// ---------- เอวานเกเลี่ยน หมายเลข 13 ----------
-// สกิลติดตัว 3 อย่าให้ฉันทำแแบบนี้เลย: เลือด <= 4 = ทำงาน (โอกาสล็อกสกิลของหอกลองกินัส 100%, เพดานเกราะ +1) — patch 2.2 alpha เดิม <=3
+// ---------- เอวานเกเลี่ยน หมายเลข 13 (universal-dispatcher wrappers — ตรรกะจริงอยู่ characters/eva13.js) ----------
 function eva3Active(p) {
-  return !!p && p.alive && p.characterId === "eva13" && p.hp > 0 && p.hp <= EVA13_HP_THRESHOLD && !passiveSealed(p);
+  return !!p && p.alive && p.characterId === "eva13" && CHAR_HOOKS.eva13.isEva3Active(engine, p);
 }
-// เข้าสกิลติดตัว 3 ครั้งแรก: เล่นวีดีโอ + ฟื้นเกราะให้ทันที (เพดานเพิ่มแล้วผ่าน maxArmorOf)
 function maybeEva3(p) {
-  if (!eva3Active(p)) return;
-  if (p.seen && p.seen.eva3) return; // เข้าแล้วครั้งเดียวพอ (ผลเปิด/ปิดตามเลือดจริง)
-  p.seen.eva3 = true;
-  healArmor(p, EVA13_ARMOR_HEAL); // ฟื้นเกราะให้ด้วย
-  triggerCutscene(p, "eva3");
-  lastLog.push(`🗡️ ${p.name} อย่าให้ฉันทำแแบบนี้เลย — เพดานเกราะ +1 และฟื้นเกราะ +${EVA13_ARMOR_HEAL}!`);
+  if (!p || !p.alive || p.characterId !== "eva13") return;
+  CHAR_HOOKS.eva13.maybeEnterEva3(engine, p);
 }
-// สกิลติดตัว 2 ทุกอย่างไร้ความหมาย: ไม่รับดาเมจแพ้จั่ว/แตก
-//  - fourth impact อยู่ = บังคับทำงานแบบไม่ติดเงื่อนไข
-//  - สกิลติดตัว 3 ทำงานอยู่ (เลือด <= 3) = สกิลติดตัว 2 ไม่ทำงาน
 function evaLossImmune(p) {
   if (!p || p.characterId !== "eva13") return false;
-  if ((p.statuses.fourth || 0) > 0) return true;
-  return !eva3Active(p);
+  return CHAR_HOOKS.eva13.isLossImmune(engine, p);
 }
 
 // ---------- Gambler the gambling ----------
@@ -1756,29 +1702,14 @@ function evaBlastEvade(o, e) {
   lastLog.push(`💨 ${o.name} พยายามหลบแรงระเบิดของ ${e.name} แต่ไม่พ้น (${evadePct}%)`);
   return false;
 }
-// RS-Hopper (เอวา 13 patch 2.2.1 alpha): ไม่ใช่การโจมตีปกติ (สกิลประเภทโจมตี/เลือกเป้าหมาย) -> กันความเสียหายได้เต็ม 100% ทันที
-//  ทำงานตลอดไม่ว่าเลือดจะเหลือเท่าไหร่ ไม่ต้องเช็คเงื่อนไข HP เลย — ไม่ทำงานเฉพาะช่วง Fourth Impact เท่านั้น
+// RS-Hopper ทั้งสองแบบ (universal-dispatcher wrappers — ตรรกะจริงอยู่ characters/eva13.js)
 function eva13RsHopperBlock(p) {
   if (!p || p.characterId !== "eva13" || !p.alive) return false;
-  if ((p.statuses.fourth || 0) > 0) return false;
-  if ((p.statuses.rsHopper || 0) <= 0) return false;
-  p.statuses.rsHopper--;
-  triggerCutscene(p, "eva13RsHopper");
-  lastLog.push(`🦘 ${p.name} RS-HOPPER — ป้องกันความเสียหายจากสกิลได้ทั้งหมด! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
-  return true;
+  return CHAR_HOOKS.eva13.rsHopperBlock(engine, p);
 }
-// RS-Hopper พิเศษ (เอวา 13 patch 2.2.1 alpha): การโจมตีปกติ (รวมที่มีบัฟเสริมพลัง) — คำนวณพลังชีวิตที่จะเหลือหลังโดนก่อนเสมอ
-//  ผลลัพธ์ <=4 และมีชาร์จ -> ตรึงพลังชีวิตไว้ที่ 4 พอดี (ไม่ว่าดาเมจจริงจะแรงแค่ไหน) เสียชาร์จ 1 | ผลลัพธ์ >4 -> ไม่ป้องกัน โดนเต็ม ไม่เสียชาร์จ
 function eva13NormalAttackFloor(p, n) {
   if (!p || p.characterId !== "eva13" || !p.alive) return false;
-  if ((p.statuses.fourth || 0) > 0) return false;
-  if ((p.statuses.rsHopper || 0) <= 0) return false;
-  if (p.hp - n > EVA13_HP_THRESHOLD) return false;
-  p.statuses.rsHopper--;
-  p.hp = EVA13_HP_THRESHOLD;
-  triggerCutscene(p, "eva13ExRsHopper");
-  lastLog.push(`🦘 ${p.name} RS-HOPPER (พิเศษ) — ตรึงพลังชีวิตไว้ที่ ${EVA13_HP_THRESHOLD} หน่วย! (เหลือ ${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX} ชาร์จ)`);
-  return true;
+  return CHAR_HOOKS.eva13.normalAttackFloor(engine, p, n);
 }
 // isNormalAttack: true เฉพาะที่ doAttack() เรียก (การโจมตีจากการเลือกเป้าหมายในเทิร์นปกติ ไม่ว่าจะมีบัฟเสริมพลังหรือไม่)
 function dealDirect(p, n, isNormalAttack) {
@@ -4268,28 +4199,12 @@ function useSkill(id, tier, targets, item) {
       lastLog.push(`🎯 ${p.name} หนูจะทำให้พี่ตาสว่างเอง — แต้ม 21 อยู่แล้ว ไม่มีผลกับแต้มการจั่ว`);
     }
   }
-  // ---------- คุวากาตะโอเจอร์ (patch 2.2 alpha) ----------
-  // สวมเกราะราชัน: เปลี่ยนร่างเป็นคิงโอเจอร์ 5 เทิร์น + มอบโชคลาภ 2 หน่วยสำหรับการจั่วการ์ด
+  // ---------- คุวากาตะโอเจอร์: สวมเกราะราชัน (characters/kuwagata.js) ----------
   if (st === "rachan") {
-    // แปลงร่างคิงโอเจอร์ทันทีก่อนเปิดไพ่ทั้งหมด (patch 2.2.1 alpha — วีดีโอ/ภาพ/เพลง/ลำดับความสำคัญ)
-    //  เดิมทั้งหมดนี้ผูกกับ p.seen.rachan ซึ่งเคยถูกตั้งค่าใน afterResolve() sweep หลังเปิดไพ่เท่านั้น
-    const rachanFirstTime = !p.cutsceneShown.rachan;
-    p.seen.rachan = true;
-    p.transformAt = ++transformCounter;
-    triggerCutscene(p, "rachan");
-    if (rachanFirstTime) queueTransformAnnounce(p, "rachan");
-    p.statuses.fortune = Math.min(BARD_FORTUNE_MAX, (p.statuses.fortune || 0) + KUWAGATA_RACHAN_FORTUNE);
-    p.fortuneIdle = 0;
-    lastLog.push(`👑 ${p.name} สวมเกราะราชัน — เปลี่ยนร่างเป็นคิงโอเจอร์ ${KUWAGATA_RACHAN_TURNS} เทิร์น พลังโจมตีปกติ +${KUWAGATA_RACHAN_ATK} และได้รับโชคลาภ +${KUWAGATA_RACHAN_FORTUNE}`);
+    CHAR_HOOKS.kuwagata.applyRachanEffect(engine, p);
   }
-  // ---------- เอวานเกเลี่ยน หมายเลข 13 (patch 2.2.1 alpha) ----------
-  // Fourth Impact: แปลงร่างทันทีก่อนเปิดไพ่ทั้งหมด (วีดีโอ/ภาพ/เพลง) — เดิมผูกกับ afterResolve() sweep หลังเปิดไพ่เท่านั้น
-  if (st === "fourth") {
-    p.seen.fourth = true;
-    p.transformAt = ++transformCounter;
-    triggerCutscene(p, "fourth");
-    lastLog.push(`☄️ ${p.name} Fourth Impact — พลังโจมตีปกติ +${EVA13_FOURTH_ATK} คงอยู่ ${EVA13_FOURTH_TURNS} เทิร์น`);
-  }
+  // ---------- เอวานเกเลี่ยน หมายเลข 13: Fourth Impact (characters/eva13.js) ----------
+  if (st === "fourth") CHAR_HOOKS.eva13.applyFourthEffect(engine, p);
   // ---------- DoomGuy (patch 2.2 new) ----------
   // Crucible: แปลงร่างทันทีก่อนเปิดไพ่ทั้งหมด (วีดีโอ/ภาพ/เพลง) + บังคับทุกคนอื่นแตกทันที
   //  พลังโจมตี 7 คงอยู่จนกว่าจะได้โจมตีจริง 1 ครั้งแล้วหายไป (ไม่ใช่นับเทิร์นแบบเดิม — ดู endTurn skip-list + doAttack)
@@ -5839,14 +5754,8 @@ function doAttack(byId, targetId) {
       }
     }
   }
-  // โอเจอร์ชาร์จ (คุวากาตะ Ohger Finish patch 2.2 alpha): โจมตีปกติ +1 แล้วมอบผุพังให้เป้าหมาย — ใช้แล้วหมดไป
-  if (ohger) {
-    delete attacker.statuses.ohger;
-    if (target.alive) {
-      target.statuses.decay = Math.max(target.statuses.decay || 0, KUWAGATA_OHGER_DECAY_TURNS);
-      lastLog.push(`👑 ${attacker.name} โอเจอร์ชาร์จ — โจมตี +1 และมอบผุพังให้ ${target.name} ${KUWAGATA_OHGER_DECAY_TURNS} เทิร์น (เกราะไม่ฟื้น)!`);
-    }
-  }
+  // โอเจอร์ชาร์จ (คุวากาตะ Ohger Finish, characters/kuwagata.js): โจมตีปกติ +1 แล้วมอบผุพังให้เป้าหมาย — ใช้แล้วหมดไป
+  if (ohger) CHAR_HOOKS.kuwagata.onAttackConsumeOhger(engine, attacker, target);
   // ข้าขอบัญชา (ชาย คิชินามิ ฮาคุโนะ): โจมตีปกติติดผกผันให้เป้าหมาย 3 เทิร์น — เป้าเดิมที่ติดผกผันอยู่แล้ว ไม่ต่อเวลาให้ และสกิลเสียเปล่า
   if (hakunoInvertAtk) {
     delete attacker.statuses.hakunoInvertReady;
@@ -5887,24 +5796,8 @@ function doAttack(byId, targetId) {
       lastLog.push(`🏆 The Beat of Victory! ${target.name} ติดเกินเยียวยา ${OGURI_ULT_NOREGEN_TURNS} เทิร์น และชะงัก ${OGURI_ULT_STAGGER_TURNS} เทิร์น (ฟื้นฟูแต้มสกิลไม่ได้)`);
     }
   }
-  // หอกลองกินัส (patch 2.2.1 alpha): โจมตีโดนเป้าหมาย -> โอกาส 50/50 ที่เป้าหมายจะใช้สกิลไม่ได้ 2 เทิร์น — ใช้แล้วหมดไป
-  //  เพิ่มเป็น 100% ถ้าขณะนั้นเปิด Fourth Impact อยู่ หรือเลือดเหลือ <= 4 (สกิลติดตัว 3 ทำงาน)
-  if (spearAtk) {
-    delete attacker.statuses.spear;
-    if (target.alive) {
-      const spearChance = (eva3Active(attacker) || (attacker.statuses.fourth || 0) > 0) ? 1 : EVA13_SPEAR_CHANCE;
-      if (Math.random() < spearChance) {
-        if (resistActive(target)) {
-          lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — หอกลองกินัสไม่มีผล`);
-        } else {
-          target.noSkillNext = Math.max(target.noSkillNext || 0, EVA13_SPEAR_LOCK_TURNS);
-          lastLog.push(`🗡️ หอกลองกินัสปักเป้า! ${target.name} ใช้สกิลไม่ได้ ${EVA13_SPEAR_LOCK_TURNS} เทิร์น`);
-        }
-      } else {
-        lastLog.push(`🗡️ หอกลองกินัสพลาด — ${target.name} ยังใช้สกิลได้ตามปกติ`);
-      }
-    }
-  }
+  // หอกลองกินัส (characters/eva13.js): โจมตีโดนเป้าหมาย -> โอกาสล็อกสกิลเป้าหมาย ใช้แล้วหมดไป
+  if (spearAtk) CHAR_HOOKS.eva13.onAttackConsumeSpear(engine, attacker, target);
   // Beat Mode กันตาย (ครั้งเดียวต่อเกม): ทำงานทันทีเมื่อความเสียหายถึงตาย — ไม่ต้องอยู่ใน Beat Mode ก่อน
   //  หลังกันตายทำงาน -> เกราะจะไม่ฟื้นคืน + ภูมิดาเมจจากการแพ้ (แต่ครั้งต่อไปจะตายปกติ)
   const beatSaveFired = maybeBeatSave(target);
@@ -6332,15 +6225,8 @@ function endTurn() {
         lastLog.push(`🍀 ${p.name} โชคลาภไม่ได้ใช้ 3 เทิร์น — หมดฤทธิ์`);
       }
     } else p.fortuneIdle = 0;
-    // RS-Hopper (เอวา 13 patch 2.2 alpha): ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น (สูงสุด 3)
-    if (p.characterId === "eva13" && (p.statuses.rsHopper || 0) < EVA13_RSHOPPER_MAX) {
-      p.rsHopperRegenTimer = (p.rsHopperRegenTimer || 0) + 1;
-      if (p.rsHopperRegenTimer >= EVA13_RSHOPPER_REGEN_TURNS) {
-        p.rsHopperRegenTimer = 0;
-        p.statuses.rsHopper = Math.min(EVA13_RSHOPPER_MAX, (p.statuses.rsHopper || 0) + 1);
-        lastLog.push(`🦘 ${p.name} RS-HOPPER — ฟื้นชาร์จ +1 (${p.statuses.rsHopper}/${EVA13_RSHOPPER_MAX})`);
-      }
-    }
+    // RS-Hopper (characters/eva13.js): ฟื้น 1 ชาร์จทุกๆ 3 เทิร์น (สูงสุด 3)
+    if (p.characterId === "eva13") CHAR_HOOKS.eva13.onRoundStartRegen(engine, p);
     // DoomGuy (patch 2.2 full): Weapon — จบเทิร์น บังคับสลับอาวุธใหม่ทันที (เหมือนกด Quick Swap) — ไม่ทำงานระหว่างถือ Crucible
     if (p.characterId === "doomguy" && p.alive && (p.statuses.doomCrucible || 0) <= 0) {
       const oldW = DOOM_WEAPONS[p.doomWeapon] ? DOOM_WEAPONS[p.doomWeapon].name : "";
@@ -6869,6 +6755,8 @@ const engine = {
   CHAR_BY_ID,
   POSITION_COLORS,
   ATTACKFX_TIME,
+  BARD_FORTUNE_MAX,
+  TAKUTO_APPRIVOISE_TURNS,
   get gameState() { return gameState; },
   setGameState(v) { gameState = v; },
   get roundNumber() { return roundNumber; },
@@ -6895,6 +6783,7 @@ const engine = {
   displayImg,
   passiveSealed,
   killSealed,
+  resistActive,
   hasKillCapability,
   miyakoKillChance,
   miyakoSurvivedKillAttempt,
