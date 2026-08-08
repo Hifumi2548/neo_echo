@@ -42,7 +42,6 @@ const FILES = {
   gambler: "/characters/gambler/gambler_theme.mp3",  // เพลงระหว่างบัฟเวลาทอง 777 (แกมเบลอร์)
   eva13: "/characters/eva13/eva13_theme.mp3",        // เพลงระหว่าง Fourth Impact (เอวา 13)
   oberon: "/characters/oberon/orberon theme.mp3",    // เพลงประจำตัวโอเบรอน (ระหว่าง Lie Like Vortigern)
-  auqarion: "/characters/auqarion/auqarion_theme.mp3", // เพลงประจำตัวอควาเรียน (ระหว่างไปยังพฤกษาแห่งชีวิต)
   oguri: "/characters/oguri/oguri_theme.mp3",          // เพลงประจำตัวโอกูริ แคป (เริ่มตอนเข้าร่าง Zone — เล่นค้างระหว่างอยู่ร่าง)
   wonderofu: "/characters/satoru/wonderofu_theme.mp3", // เพลง Wonder of U (ซาโตรุ — เล่นค้างตราบใดที่มีคนติด Calamity)
   doomguy: "/characters/doomguy/สกิลอัลติเมติ/Doom Eternal OST - The Only Thing They Fear Is You (Mick Gordon) [Doom Eternal Theme].mp3", // เพลงระหว่างท่าไม้ตาย Crucible (DoomGuy)

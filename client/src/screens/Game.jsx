@@ -233,7 +233,7 @@ function TransformNotice({ n }) {
 //  กลางวัน = background_morning.jpg | กลางคืน = background_night.jpg
 //  เปลี่ยนช่วงเวลาแบบ crossfade ช้าๆ (ไม่ตัดปุ๊บปั๊บ) — ซ้อนทั้ง 2 ภาพแล้วเฟดสลับกัน
 //  ระหว่าง Lie Like Vortigern (โอเบรอน) ฉากหลังกลางคืนกลายเป็นวีดีโอ oberon_background.mp4 (เฟดเข้า)
-function GameBackground({ cycle, oberonBg, godtreeBg, shradeBg, bardBg, shikiBg, hakunoBg }) {
+function GameBackground({ cycle, oberonBg, shradeBg, bardBg, shikiBg, hakunoBg }) {
   const night = cycle === "night";
   return (
     <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
@@ -269,13 +269,6 @@ function GameBackground({ cycle, oberonBg, godtreeBg, shradeBg, bardBg, shikiBg,
         <video
           src="/characters/oberon/oberon_background.mp4"
           autoPlay loop muted playsInline
-          className="absolute inset-0 w-full h-full object-cover bg-fade-in"
-        />
-      )}
-      {godtreeBg && (
-        <img
-          src="/characters/auqarion/backgroud_skillgod.jpg"
-          alt=""
           className="absolute inset-0 w-full h-full object-cover bg-fade-in"
         />
       )}
@@ -529,14 +522,6 @@ const STATUS_INFO = {
   riddheward: { icon: "🛡️", label: "บันชีปกป้อง", cls: "bg-echo-armor", desc: "ได้รับการปกป้องจากบันชี: เพดานเกราะ +2 และต้านสถานะผิดปกติ ตามจำนวนเทิร์นที่เหลือ" },
   calamity: { icon: "🌩️", label: "Calamity", cls: "bg-echo-hp", desc: "Wonder of U: หายนะไล่ล่า — ถูกบังคับจั่วไพ่เพิ่มตามระดับตอนเริ่มเทิร์นถัดจากที่โดน และรับความเสียหายตามระดับทุกๆ 2 เทิร์น ตามจำนวนเทิร์นที่เหลือ (สะสมสูงสุด 3 ระดับ — โดนซ้ำ = ระดับเพิ่ม + เวลารีเฟรช)" },
   // ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
-  solarburst: { icon: "🥊", label: "หมัดไร้ขอบเขต", cls: "bg-echo-gold text-gray-900", desc: "หมัดไร้ขอบเขต: การโจมตีเทิร์นนี้กลายเป็นตีหมู่ — เป้าหมายรับเต็ม คนอื่นเสียเกราะ 1 หน่วย" },
-  marssword:  { icon: "⚔️", label: "ดาบแห่งแสง", cls: "bg-echo-hp", desc: "ดาบแห่งแสง: เมื่อโจมตี จะลดเกราะเป้าหมาย 1 หน่วยก่อน แล้วจึงสร้างความเสียหายตามปกติ" },
-  lunabow:    { icon: "🏹", label: "ศรศักดิ์สิทธิ์", cls: "bg-echo-magenta", desc: "ศรศักดิ์สิทธิ์: โจมตีตามปกติ และติดพิษเป้าหมาย เสียเลือด 1 หน่วยทุกเทิร์น 2 เทิร์น" },
-  godtree:    { icon: "🌳", label: "พฤกษาแห่งชีวิต", cls: "bg-echo-gold text-gray-900", desc: "ไปยังพฤกษาแห่งชีวิต: ทำอะไรไม่ได้เลย — ทุกคนเจ็บ 1 (ไม่สนเกราะ) ทุกเทิร์น ตัวเองเสียเลือด 1/เทิร์น (ต่ำสุด 1) เกราะฟื้น +2/เทิร์น — ระหว่างผลทำงาน กลางวันยาวไม่สิ้นสุดและร่างปีกแห่งสุริยันไม่มีวันหมด จนกว่าจะกดท่าไม้ตายซ้ำเพื่อยกเลิก หรือตาย — ตายระหว่างนี้จะฟื้นคืนชีพใน 12 เทิร์น" },
-  godwing:    { icon: "🌟", label: "ปีกแห่งสุริยัน", cls: "bg-echo-gold text-gray-900", desc: "ปีกแห่งสุริยัน: เปิดสกิลติดตัว 1-3 พร้อมกัน ไม่รับความเสียหายจากแพ้จั่ว/ไพ่แตก และต่อเวลากลางวันเป็น 5 เทิร์น" },
-  godarmor:   { icon: "🛡️", label: "คืนร่าง", cls: "bg-echo-armor", desc: "คืนร่าง: ฟื้นฟูเกราะเพิ่ม +1 หน่วยทุกเทิร์น ตามจำนวนเทิร์นที่เหลือ" },
-  aquapoison: { icon: "☠️", label: "พิษศร", cls: "bg-echo-hp", desc: "พิษศรศักดิ์สิทธิ์: เสียพลังชีวิต 1 หน่วยทุกเทิร์น (ไม่ถึงตาย — ค้างที่ 1) ตามจำนวนเทิร์นที่เหลือ" },
-  marssurge:  { icon: "🗡️", label: "ดาบแห่งจุดจบ", cls: "bg-echo-gold text-gray-900", desc: "ดาบแห่งจุดจบ: ชนะเทิร์นที่มีผู้เล่นอื่นไพ่แตก — พลังโจมตี +1 หน่วยในเทิร์นนี้" },
   // ---------- นานายะ ชิกิ (patch 2.1.9) ----------
   nanayaSeal: { icon: "👁️", label: "สกิลติดตัวถูกปิด", cls: "bg-echo-hp", desc: "อันนี้ของนายรึเปล่า: ใช้สกิล/จั่วไพ่ไม่ได้ และสกิลติดตัวไม่ทำงาน ตามจำนวนเทิร์นที่เหลือ" },
   // ---------- อาริมะ มิยาโกะ (patch 2.2.0) ----------
@@ -577,8 +562,6 @@ function statusEntries(p, full) {
   }
   // คิชินามิ ฮาคุโนะ (patch 2.2.1): แต้มคำสาปแห่งดวงจันทร์ — สะสมครบ 3 เพื่อเปิด MOON*CELL
   if (p.character?.id === "hakuno") out.push({ key: "hakunoMoon", v: 1, icon: "🌙", label: `คำสาปแห่งดวงจันทร์ ${p.hakunoMoonPoints || 0}/3`, cls: "bg-echo-magenta", desc: "แต้มคำสาปแห่งดวงจันทร์: สะสมจากข้าขอบัญชา (ทั้งสองร่าง) ครั้งละ +1 — ครบ 3 หน่วยเปิดใช้ท่าไม้ตาย MOON*CELL ได้ (ใช้หมดตอนกด)" });
-  if ((p.lightDew || 0) > 0) out.push({ key: "lightDew", v: p.lightDew, icon: "✨", label: "แสงละออง", cls: "bg-echo-cyan text-gray-900", desc: "แสงละอองสะสม (สูงสุด 5) — ครบ 5 ขณะอยู่ร่างโซล่าตอนกลางวัน จะกลายเป็นปีกแห่งสุริยัน 5 เทิร์น" });
-  if ((p.reviveIn || 0) > 0) out.push({ key: "reviveIn", v: p.reviveIn, icon: "🌳", label: "รอฟื้นคืนชีพ", cls: "bg-echo-gold text-gray-900", desc: "พฤกษาแห่งชีวิต: จะฟื้นคืนชีพเมื่อครบตามจำนวนเทิร์นที่เหลือ (เลือด 1 เกราะ 0 แต้มสกิล 0) หากเกมยังไม่จบ" });
   if ((p.phenexPain || 0) > 0) out.push({ key: "phenexPain", v: p.phenexPain, icon: "💔", label: "ความเจ็บปวด", cls: "bg-echo-hp", desc: "ความเจ็บปวดสะสม (ไม่อยากให้ใครต้องเจ็บปวด) — ปลดปล่อยเป็นความเสียหายใส่เป้าหมายที่เลือกตอนตกรอบจริง (ไม่สนการหลบหลีก)" });
   // Bard: ท่อนทำนองสะสม + โน้ตในช่องประพันธ์เพลง (ทุกคนเห็นได้)
   if ((p.bloodSection || 0) > 0) out.push({ key: "bloodSection", v: p.bloodSection, icon: "❤️", label: "ท่อนโลหิต", cls: "bg-echo-hp", desc: "ท่อนทำนองแห่งโลหิต: สะสมจากการบรรเลงเพลงสาย Crimson — ครบ 5 ชั้น เปิดมิติมายาบรรเลงโลหิต 3 เทิร์น" });
@@ -1016,39 +999,6 @@ function TohnoLevelModal({ me, onPick, onClose }) {
     </div>
   );
 }
-// ---------- เปลี่ยนหัวหน้า (อควาเรียน สกิลพื้นฐาน): เมนูเลือกผู้นำ ----------
-//  ใช้ 2 แต้ม ฟื้นเลือด 1 หน่วย — ใช้แล้วยังใช้สกิลอื่นได้อีก 1 ครั้ง — กำหนดร่างที่จะรวมร่างด้วยสกิลรอง
-const AQUA_LEADERS = [
-  { key: "apollo", name: "อะพอลโล่ (โซล่า)", img: "/characters/auqarion/skill1/apollo.jpg" },
-  { key: "sirius", name: "ซิลิอุส (มาร์)", img: "/characters/auqarion/skill1/sirius.jpg" },
-  { key: "rena", name: "ลีน่า (ลูน่า)", img: "/characters/auqarion/skill1/rena.jpg" },
-];
-function AquaLeaderModal({ me, onPick, onClose }) {
-  return (
-    <div className="fixed inset-0 z-40 bg-black/60 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-echo-navy rounded-2xl p-5 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="text-lg font-black text-echo-gold">🌊 เปลี่ยนหัวหน้า — เลือกผู้นำ</div>
-        <div className="text-sm opacity-80 mb-3">กำหนดร่างที่จะรวมร่างด้วยสกิลรอง "รวมร่างหุ่นศักดิ์สิทธิ์" (ใช้ 2 แต้ม ฟื้นเลือด +1 — ใช้แล้วยังใช้สกิลอื่นได้อีก 1 ครั้ง)</div>
-        <div className="flex flex-col gap-2">
-          {AQUA_LEADERS.map((it) => (
-            <button
-              key={it.key}
-              onClick={() => { clickSound(); onPick(it.key); }}
-              className={`text-left flex items-center gap-3 rounded-xl border px-3 py-2 transition ${
-                me.leader === it.key ? "bg-echo-gold/20 border-echo-gold" : "bg-white/5 hover:bg-white/15 border-white/15"
-              }`}
-            >
-              <img src={it.img} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" />
-              <div className="font-bold text-echo-gold">{it.name}{me.leader === it.key ? " · เลือกอยู่" : ""}</div>
-            </button>
-          ))}
-        </div>
-        <Button className="mt-3 w-full" onClick={() => { clickSound(); onClose(); }}>ปิด</Button>
-      </div>
-    </div>
-  );
-}
-
 // ---------- สนใจใช้บริการเราไหม (เจ้าแห่งเน็ตบ้าน): ข้อเสนอสัญญา — เป้าหมายเลือกตอบรับ/ปฏิเสธ ----------
 //  ไม่ตอบก่อนเปิดไพ่ = ถือว่าปฏิเสธ (โดนค่าปรับตามปกติ)
 function ContractOfferModal({ offer, onAnswer }) {
@@ -1331,7 +1281,6 @@ export default function Game({ state, lowQ }) {
   const [kawaiiSel, setKawaiiSel] = useState(false); // โคโตเนะ (patch 2.1.3): โหมดเลือกเป้าหมาย Sekai ichi kawaii watashi (เลือกตัวเองไม่ได้)
   const [appleOpen, setAppleOpen] = useState(false); // Apple guy: เมนูเลือกของส่งมอบ (สกิลพื้นฐาน)
   const [tohnoOpen, setTohnoOpen] = useState(false); // โทโนะ ชิกิ: เมนูเลือกระดับมีดพับประจำตระกูล (สกิลพื้นฐาน)
-  const [aquaOpen, setAquaOpen] = useState(false);   // อควาเรียน: เมนูเลือกผู้นำ (สกิลพื้นฐาน)
   const [appleSel, setAppleSel] = useState(false);   // Apple guy: โหมดเลือกเป้าหมายเอาไปสิ (เลือกตัวเองไม่ได้)
   const [bbSel, setBbSel] = useState(false);         // เจ้าแห่งเน็ตบ้าน: โหมดเลือกเป้าหมายยื่นข้อเสนอสัญญา
   const [shSel, setShSel] = useState(false);         // ชเรด เอลัน: โหมดเลือกเป้าหมายแสงจันทร์ส่องวิญญาณ (เลือกตัวเองไม่ได้)
@@ -1387,15 +1336,6 @@ export default function Game({ state, lowQ }) {
   const nightNow = state.cycle === "night";
   // ท่าไม้ตายกำลังมีผลอยู่: กดซ้ำไม่ได้จนกว่าจะหมดเวลา (สวมเกราะราชันถาวร = กดซ้ำไม่ได้อีกเลย)
   //  โอเบรอน: กลางวันเช็ค lai / กลางคืนเช็ค vortigern
-  // อควาเรียน: ท่าไม้ตายสลับตามร่างที่รวมอยู่ (โซล่า/มาร์/ลูน่า) หรือปีกแห่งสุริยัน (ไปยังพฤกษาแห่งชีวิต)
-  const aquaUltStatusKey = (p) => {
-    if (!p) return null;
-    if ((p.statuses?.godwing || 0) > 0) return "godtree";
-    if (p.fused && p.leader === "sirius") return "marssword";
-    if (p.fused && p.leader === "rena") return "lunabow";
-    if (p.fused && p.leader === "apollo") return "solarburst";
-    return null;
-  };
   // ริดดี้ (patch 2.0.9): ระหว่างเป็นพันธมิตร ท่าไม้ตายเป็นท่า 2 (riddheguard) — เส้นทางเดี่ยวเป็นท่า 1 (riddhentd)
   const riddheAlliedMe = ch?.id === "riddhe" && !!me?.allyId &&
     state.players.some((x) => x.id === me.allyId && x.alive && x.allyId === me.id);
@@ -1403,17 +1343,12 @@ export default function Game({ state, lowQ }) {
   const banagherAlliedMe = ch?.id === "banagher" && !!me?.allyId &&
     state.players.some((x) => x.id === me.allyId && x.alive && x.allyId === me.id);
   const ultStatusKey = ch?.id === "oberon" ? (nightNow ? "vortigern" : "lai")
-    : ch?.id === "aquarion" ? aquaUltStatusKey(me)
     : ch?.id === "shiki" ? (me?.shikiUlt === "wither" ? "wither" : "deatheye")
     : ch?.id === "riddhe" ? (riddheAlliedMe ? "riddheguard" : "riddhentd")
     // บานาจ: ระหว่างร่าง Paradise ที่มีริดดี้เป็นพันธมิตร ปุ่มท่าไม้ตายกลายเป็นแสงที่ไม่อยู่เพียงลำพัง — กดซ้ำได้เรื่อยๆ (ไม่ล็อก)
     : ch?.id === "banagher" ? ((banagherAlliedMe && (me?.statuses?.paradise || 0) > 0) ? null : "paradise")
     : ULTIMATE_STATUS[ch?.id];
   const ultimateActive = !!(me && me.statuses && me.statuses[ultStatusKey]);
-  // ไปยังพฤกษาแห่งชีวิต: กดปุ่มท่าไม้ตายซ้ำได้เพื่อยกเลิก แม้ล็อกอยู่ (server อนุญาตแม้ระหว่าง locked)
-  const aquaCancelable = ch?.id === "aquarion" && !!me?.statuses?.godtree;
-  // ท่าไม้ตายอควาเรียนใช้ไม่ได้จนกว่าจะรวมร่าง
-  const aquaUltLocked = ch?.id === "aquarion" && !me?.fused;
   // MonsterLive (ฮิคารุ patch 2.1.3): ระหว่างมีผล ใช้สกิลรอง Ultlive Ultraman Ginga ไม่ได้
   const monsterMe = !!(me && ch?.id === "hikaru" && me.statuses?.monster);
   // Ginga Strium (ฮิคารุ patch 2.1.3): ต้องอยู่ในร่าง Ginga (สกิลรอง 1) และเป็นตอนกลางวันเท่านั้นถึงใช้ได้
@@ -1471,7 +1406,6 @@ export default function Game({ state, lowQ }) {
   const veilLocked = isOberon && !!me?.statuses?.veil;
   // ---------- Apple guy ----------
   const isApple = ch?.id === "appleguy"; // สกิลพื้นฐานไม่นับเป็นการใช้สกิลของเทิร์น (ใช้แล้วยังใช้สกิลอื่นได้)
-  const isAquarion = ch?.id === "aquarion"; // เปลี่ยนหัวหน้า (สกิลพื้นฐาน) ไม่นับเป็นการใช้สกิลของเทิร์นเช่นกัน
   const isTohno = ch?.id === "tohno"; // มีดพับประจำตระกูล (สกิลพื้นฐาน) ไม่นับเป็นการใช้สกิลของเทิร์นเช่นกัน (กดเปลี่ยนระดับได้เรื่อยๆ)
   const isHakuno = ch?.id === "hakuno"; // เธอ/นาย คือฉันหรอ? (สกิลพื้นฐาน) ไม่นับเป็นการใช้สกิลของเทิร์นเช่นกัน (กดสลับได้ 1 ครั้ง/เทิร์น)
   const hakunoCmdUsable = !!(isHakuno && phase === "PLAYING" && me?.alive && !done && (me?.hakunoCommandUses || 0) > 0);
@@ -1563,8 +1497,6 @@ export default function Game({ state, lowQ }) {
     // Apple guy: สกิลพื้นฐานเปิดเมนูเลือกของส่งมอบ / สกิลรองเข้าโหมดเลือกเป้าหมายมอบของ
     if (tier === "basic" && ch?.id === "appleguy") { setAppleOpen(true); setSkillOpen(false); return; }
     if (tier === "secondary" && ch?.id === "appleguy") { setAppleSel(true); setSkillOpen(false); return; }
-    // อควาเรียน: สกิลพื้นฐานเปิดเมนูเลือกผู้นำ
-    if (tier === "basic" && ch?.id === "aquarion") { setAquaOpen(true); setSkillOpen(false); return; }
     // โทโนะ ชิกิ: สกิลพื้นฐานเปิดเมนูเลือกระดับมีดพับประจำตระกูล (1-5)
     if (tier === "basic" && ch?.id === "tohno") { setTohnoOpen(true); setSkillOpen(false); return; }
     // นานายะ ชิกิ: สกิลพื้นฐาน (อันนี้ของนายรึเปล่า) เข้าโหมดเลือกเป้าหมายก่อนส่งไป server
@@ -1660,11 +1592,6 @@ export default function Game({ state, lowQ }) {
   const pickTohnoLevel = (level) => {
     socket.emit("useSkill", { tier: "basic", item: level });
   };
-  // เลือกผู้นำ (เปลี่ยนหัวหน้า) -> ส่งไป server ทันที
-  const pickAquaLeader = (key) => {
-    socket.emit("useSkill", { tier: "basic", item: key });
-    setAquaOpen(false);
-  };
   // เลือกเป้าหมายมอบของ (เอาไปสิ) -> ส่งไป server ทันที
   const pickGive = (id) => {
     socket.emit("useSkill", { tier: "secondary", targets: [id] });
@@ -1754,9 +1681,6 @@ export default function Game({ state, lowQ }) {
     if (appleOpen && (phase !== "PLAYING" || done)) setAppleOpen(false);
   }, [appleOpen, phase, done]);
   useEffect(() => {
-    if (aquaOpen && (phase !== "PLAYING" || done)) setAquaOpen(false);
-  }, [aquaOpen, phase, done]);
-  useEffect(() => {
     if (tohnoOpen && (phase !== "PLAYING" || done)) setTohnoOpen(false);
   }, [tohnoOpen, phase, done]);
   // แบนเนอร์สลับกลางวัน/กลางคืน: เด้งเมื่อ cycle เปลี่ยนระหว่างแมตช์ แล้วหายเอง
@@ -1798,7 +1722,7 @@ export default function Game({ state, lowQ }) {
     const revealed = phase === "SUMMARY" || phase === "ATTACK" || phase === "ATTACKING";
     return (
       <div className="fixed inset-0 overflow-hidden flex flex-col">
-        <GameBackground cycle={state.cycle} oberonBg={state.oberonBg} godtreeBg={state.godtreeBg} shradeBg={state.shradeBg} bardBg={state.bardBg} shikiBg={state.shikiBg} hakunoBg={state.hakunoBg} />
+        <GameBackground cycle={state.cycle} oberonBg={state.oberonBg} shradeBg={state.shradeBg} bardBg={state.bardBg} shikiBg={state.shikiBg} hakunoBg={state.hakunoBg} />
         {/* แถบบน: รอบ + เวลา (เว้นขวาให้ปุ่มเสียง) */}
         <div className="shrink-0 flex flex-col items-center gap-1 pt-2 px-14 min-h-[40px]">
           {(phase === "PLAYING" || phase === "ATTACK") && (
@@ -1979,9 +1903,9 @@ export default function Game({ state, lowQ }) {
 
               {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                 <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={undefined} />}
+                {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={(done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting || hikaruUltLocked)} onUse={skill} cost={undefined} />}
               </div>
               {noSkill && phase === "PLAYING" && !done && (
                 <div className="text-center text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2140,7 +2064,6 @@ export default function Game({ state, lowQ }) {
         {hakunoCmdOpen && me && <HakunoCommandModal me={me} onUse={useHakunoCmd} onClose={() => setHakunoCmdOpen(false)} />}
         {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
-        {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
         {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
         {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
@@ -2163,7 +2086,7 @@ export default function Game({ state, lowQ }) {
 
   return (
     <div className="fixed inset-0 overflow-hidden">
-      <GameBackground cycle={state.cycle} oberonBg={state.oberonBg} godtreeBg={state.godtreeBg} shradeBg={state.shradeBg} bardBg={state.bardBg} shikiBg={state.shikiBg} hakunoBg={state.hakunoBg} />
+      <GameBackground cycle={state.cycle} oberonBg={state.oberonBg} shradeBg={state.shradeBg} bardBg={state.bardBg} shikiBg={state.shikiBg} hakunoBg={state.hakunoBg} />
       <div
         className="relative overflow-hidden"
         style={{ width: DESIGN_W, height: designH, transform: `scale(${scale})`, transformOrigin: "top left" }}
@@ -2379,9 +2302,9 @@ export default function Game({ state, lowQ }) {
 
                 {/* ช่องสกิล 3 อัน (ใช้ได้ 1 สกิลต่อเทิร์น) */}
                 <div className="grid grid-cols-3 gap-3 mt-2">
-                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isAquarion && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
+                  <SkillSlot label="สกิลพื้นฐาน" tier="basic" skill={ch?.basic} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoHealPending || hakunoSecondaryPending || beatBasicLocked || shCharging || rgCharging || phenexTaunting || bardNoteLocked || (me.skillUsed && !gambleRepeat && !isApple && !isBard && !isTohno && !isHakuno && !isDoomguy) || cassiusLocked || veilLocked || ktBasicLocked || (isHakuno && me.hakunoGenderSwitched) || doomBasicLocked || takutoBasicPending || tepeuCookLocked || tepeuPonderLocked} onUse={skill} ammo={isGambler ? me.gamblerUses : undefined} cost={isGambler && goldenOn ? halfCost(ch?.basic) : isKotone && overworkMe ? ktCost(ch?.basic) : undefined} />
                   <SkillSlot label="สกิลรอง" tier="secondary" skill={ch?.secondary} points={me.skillPoints} disabled={done || phase !== "PLAYING" || noSkill || moonCellOn || miyakoComboPending || hakunoSecondaryPending || (me.skillUsed && !isBard && !isDoomguy) || shCharging || rgCharging || phenexTaunting || bardNoteLocked || ohgerLocked || lanLocked || ktSecLocked || skSecLocked || banagherAssaultLocked || doomNoEffectLocked || takutoSecPending || takutoNotApprivoiseLocked || monsterMe || tepeuPonderLocked || tepeuCookLocked} onUse={skill} ammo={isApple ? me.appleGiveUses : me.beamAmmo} cost={isGambler && goldenOn ? halfCost(ch?.secondary) : isKotone && overworkMe ? ktCost(ch?.secondary) : undefined} />
-                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={aquaCancelable ? false : (done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || monsterMe || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || aquaUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={undefined} />}
+                  {isBard ? <BardComposeSlot me={me} /> : <SkillSlot label="ท่าไม้ตาย" tier="ultimate" skill={ch?.ultimate} points={me.skillPoints} disabled={(done || phase !== "PLAYING" || noSkill || moonCellOn || beatMe || me.skillUsed || ultimateActive || monsterMe || fourthLocked || doomUltLocked || takutoUltLockedNow || tepeuCookLocked || tepeuPonderLocked || offerLocked || ktUltLocked || shUltLocked || shCharging || rgCharging || phenexTaunting)} onUse={skill} cost={undefined} />}
                 </div>
                 {noSkill && phase === "PLAYING" && !done && (
                   <div className="text-center text-xs sm:text-sm font-bold text-echo-hp mt-1">🗡️ โดนหอกลองกินัสปัก — เทิร์นนี้ใช้สกิลไม่ได้</div>
@@ -2556,7 +2479,6 @@ export default function Game({ state, lowQ }) {
       {hakunoCmdOpen && me && <HakunoCommandModal me={me} onUse={useHakunoCmd} onClose={() => setHakunoCmdOpen(false)} />}
       {appleOpen && me && <AppleItemModal me={me} onPick={pickAppleItem} onClose={() => setAppleOpen(false)} />}
         {tohnoOpen && me && <TohnoLevelModal me={me} onPick={pickTohnoLevel} onClose={() => setTohnoOpen(false)} />}
-        {aquaOpen && me && <AquaLeaderModal me={me} onPick={pickAquaLeader} onClose={() => setAquaOpen(false)} />}
       {state.contractOffer && me?.alive && <ContractOfferModal offer={state.contractOffer} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}
         {state.locaOffer && me?.alive && <LocaOfferModal offer={state.locaOffer} onAnswer={(a) => socket.emit("locaAnswer", { accept: a })} />}
       {state.renewAsk && me?.alive && <ContractRenewModal ask={state.renewAsk} points={me.skillPoints} onAnswer={(a) => socket.emit("contractAnswer", { accept: a })} />}

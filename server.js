@@ -649,7 +649,7 @@ function applyDebuff(p, key, amount, turns) {
   return true;
 }
 // ดีบัฟพื้นฐานที่ "ต้านสถานะผิดปกติ" ล้างออกได้ทั้งหมด
-const BASIC_DEBUFF_CLEAR = ["discord", "sleep", "kstun", "stun", "nodraw", "noskill", "aquapoison", "weak", "fragile", "spellburden", "oblada", "calamity", "hburn", "phenexBanUlt", "nanayaSeal", "miyakoSeal", "armorSeal", "invert", "norecover"];
+const BASIC_DEBUFF_CLEAR = ["discord", "sleep", "kstun", "stun", "nodraw", "noskill", "weak", "fragile", "spellburden", "oblada", "calamity", "hburn", "phenexBanUlt", "nanayaSeal", "miyakoSeal", "armorSeal", "invert", "norecover"];
 // ดีบัฟที่ยังไม่เกิดผลทันที (ยามฟ้าสาง / เส้นชีวิต): โดนล้าง = ลดลงทีละ 1 หน่วย ไม่หายทั้งหมด
 const SOFT_DEBUFF_STEP = ["dawn", "deathline"];
 function cleanseDebuffs(p) {
@@ -823,7 +823,7 @@ function moonCellActive() {
 }
 // ท่าไม้ตายที่ยกเลิกย้อนหลังได้ (เจ้าของท่ามาตีชิกิระหว่างถือชาร์จ) — สถานะท่าไม้ตายที่กำลังมีผลอยู่
 const SHIKI_CANCELABLE_ULTS = ["gingastrium", "rachan", "paradise", "golden", "fourth", "chill",
-  "kawaii", "lai", "vortigern", "solarburst", "marssword", "lunabow", "godtree", "deatheye", "wither", "shradecharge",
+  "kawaii", "lai", "vortigern", "deatheye", "wither", "shradecharge",
   "anata",                  // patch 2.0.8: เพิ่ม ANATA WAAAAAAAA (เทมาริ) — ครอบคลุมท่าไม้ตายทุกตัวละครที่เก็บเป็นสถานะ
   "bloodDim", "soulDim",    // patch 2.0.8.1: มิติมายาบรรเลงทั้งสอง (คีตกวี) นับเป็นท่าไม้ตาย — ยกเลิกย้อนหลังได้
   "victorybeat", "ashen",   // patch 2.0.8.1: ท่าไม้ตายโอกูริ แคป ทั้งสองท่า
@@ -1072,56 +1072,6 @@ function breakAlliance(r, b) {
   if (r || b) lastLog.push(`💔 พันธมิตรบันชี × ยูนิคอร์นสิ้นสุดลง — ${r ? r.name : "ริดดี้"} กลับสู่เส้นทางเดี่ยว (ท่าไม้ตาย 1 / สกิลติดตัว 1 กลับมา)`);
 }
 
-// ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
-const AQUA_LEADERS = {
-  apollo: { name: "อะพอลโล่ (โซล่า)", pilotName: "อะพอลโล่", robotName: "โซล่า อควาเรียน", skillImg: "/characters/auqarion/skill1/apollo.jpg", profileImg: "/characters/auqarion/profile/apollo.jpg", fuseCover: "/characters/auqarion/skill2/skill2_solar.webp", fuseKey: "aquaFuseSolar", fuseProfile: "/characters/auqarion/profile/solar.jpg", ultimateKey: "ultimateSolar" },
-  sirius: { name: "ซิลิอุส (มาร์)", pilotName: "ซิลิอุส", robotName: "มาร์ อควาเรียน", skillImg: "/characters/auqarion/skill1/sirius.jpg", profileImg: "/characters/auqarion/profile/sirius.jpg", fuseCover: "/characters/auqarion/skill2/skill2_mars.webp", fuseKey: "aquaFuseMars", fuseProfile: "/characters/auqarion/profile/mars.jpg", ultimateKey: "ultimateMars" },
-  rena: { name: "ลีน่า (ลูน่า)", pilotName: "ลีน่า", robotName: "ลูน่า อควาเรียน", skillImg: "/characters/auqarion/skill1/rena.jpg", profileImg: "/characters/auqarion/profile/rena.jpg", fuseCover: "/characters/auqarion/skill2/skill2_luna.webp", fuseKey: "aquaFuseLuna", fuseProfile: "/characters/auqarion/profile/luna.jpg", ultimateKey: "ultimateLuna" },
-};
-const AQUA_GODWING_NAME = "ปีกแห่งสุริยัน อควาเรียน";
-// ชื่อที่แสดงในเกม: ก่อนรวมร่าง = ชื่อผู้นำ / รวมร่างแล้ว = ชื่อหุ่น / ปีกแห่งสุริยัน = ร่างสุดท้าย
-function aquaDisplayName(p) {
-  if ((p.statuses && p.statuses.godwing) > 0) return AQUA_GODWING_NAME;
-  const leader = AQUA_LEADERS[p.leader || "apollo"];
-  return p.fused ? leader.robotName : leader.pilotName;
-}
-const AQUA_GODWING_PROFILE = "/characters/auqarion/profile/godwing.jpg";
-const AQUA_LIGHTDEW_MAX = 5;    // แสงละออง สะสมได้สูงสุด (patch พิเศษ — ลดจาก 10)
-const AQUA_FUSE_DEW = 1;        // รวมร่างหุ่นศักดิ์สิทธิ์: แสงละออง +1
-const AQUA_REVERT_DEW = 2;      // คืนร่าง: แสงละออง +2
-const AQUA_GODWING_TURNS = 5;   // ปีกแห่งสุริยัน คงอยู่ 5 เทิร์น
-const AQUA_DAY_EXTEND = 5;      // ต่อเวลากลางวันเป็น 5 เทิร์น (นับจากเทิร์นที่เปิดใช้งาน)
-const AQUA_MARS_REFLECT_CHANCE = 0.3; // ดาบแห่งจุดจบ: โอกาสสะท้อนความเสียหายครึ่งหนึ่ง
-const AQUA_REVIVE_TURNS = 12;   // ไปยังพฤกษาแห่งชีวิต: ตายระหว่างสถานะนี้ -> ฟื้นคืนชีพใน 12 เทิร์น
-// ร่างที่รวมอยู่ตอนนี้: "apollo" | "sirius" | "rena" | null (ยังไม่รวมร่าง)
-function aquaForm(p) {
-  return (p && p.characterId === "aquarion" && p.fused) ? p.leader : null;
-}
-// สกิลติดตัว 1 แสงแห่งสุริยัน: ทำงานตอนอยู่ร่างโซล่า หรือปีกแห่งสุริยัน
-function aquaPassive1Active(p) {
-  return !!p && p.characterId === "aquarion" && (((p.statuses && p.statuses.godwing) || 0) > 0 || aquaForm(p) === "apollo");
-}
-// สกิลติดตัว 2 ดาบแห่งจุดจบ: ทำงานตอนอยู่ร่างมาร์ หรือปีกแห่งสุริยัน
-function aquaPassive2Active(p) {
-  return !!p && p.characterId === "aquarion" && (((p.statuses && p.statuses.godwing) || 0) > 0 || aquaForm(p) === "sirius");
-}
-// สกิลติดตัว 3 จันทราสยบ: ทำงานตอนอยู่ร่างลูน่า หรือปีกแห่งสุริยัน
-function aquaPassive3Active(p) {
-  return !!p && p.characterId === "aquarion" && (((p.statuses && p.statuses.godwing) || 0) > 0 || aquaForm(p) === "rena");
-}
-// สกิลติดตัว 4 แสงสว่างที่สรรค์สร้าง: แสงละอองครบ 10 + ร่างโซล่า + กลางวัน -> ปีกแห่งสุริยัน 5 เทิร์น
-function maybeGodwing(p) {
-  if (!p || !p.alive || p.characterId !== "aquarion") return;
-  if (((p.statuses && p.statuses.godwing) || 0) > 0) return;
-  if ((p.lightDew || 0) < AQUA_LIGHTDEW_MAX) return;
-  if (!p.fused || p.leader !== "apollo") return;
-  if (isNightRound(roundNumber)) return;
-  p.statuses.godwing = AQUA_GODWING_TURNS;
-  p.lightDew = 0;
-  dayForceUntil = Math.max(dayForceUntil, roundNumber + AQUA_DAY_EXTEND - 1);
-  lastLog.push(`🌟 ${p.name} แสงละอองเปี่ยมล้น — แสงสว่างที่สรรค์สร้าง! กลายเป็นปีกแห่งสุริยันเต็มรูปแบบ (5 เทิร์น)`);
-  triggerCutscene(p, "godwingForm");
-}
 
 // ร่างกลางวัน/กลางคืนของโอเบรอน (สลับอัตโนมัติตามช่วงเวลา)
 const OBERON_MORNING_IMG = "/characters/oberon/oberon_morning.jpg";
@@ -1213,13 +1163,6 @@ const TRANSFORMS = {
   kotoneSena: { img: "/characters/kotone/kotone.jpg", video: "/characters/kotone/kotone_passive.mp4", title: "ท่านประธานเซนะจัง!?", label: "สกิลติดตัวทำงาน", seconds: 6, music: null, afterReveal: false },
   // kawaii: ท่าไม้ตายโคโตเนะ (หลังเปิดไพ่) — วีดีโอ 15 วิ
   kawaii: { img: "/characters/kotone/kotone_skill3.jpg", video: "/characters/kotone/kotone_final.mp4", title: "SEKAI ICHI KAWAII WATASHI", label: "ปล่อยท่าไม้ตาย", seconds: 16, music: null, afterReveal: true },
-  // ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
-  // aquaFuseSolar/Mars/Luna: รวมร่างหุ่นศักดิ์สิทธิ์ (ทำงานก่อนเปิดไพ่ — เล่นทันทีตอนกดสกิล)
-  aquaFuseSolar: { img: AQUA_LEADERS.apollo.fuseProfile, video: "/characters/auqarion/skill2/solar.mp4", title: "โซล่า อควาเรียน", label: "รวมร่างหุ่นศักดิ์สิทธิ์", seconds: 14, music: null, afterReveal: false },
-  aquaFuseMars: { img: AQUA_LEADERS.sirius.fuseProfile, video: "/characters/auqarion/skill2/mars.mp4", title: "มาร์ อควาเรียน", label: "รวมร่างหุ่นศักดิ์สิทธิ์", seconds: 12, music: null, afterReveal: false },
-  aquaFuseLuna: { img: AQUA_LEADERS.rena.fuseProfile, video: "/characters/auqarion/skill2/luna.mp4", title: "ลูน่า อควาเรียน", label: "รวมร่างหุ่นศักดิ์สิทธิ์", seconds: 11, music: null, afterReveal: false },
-  // godwingForm: สกิลติดตัว 4 แสงสว่างที่สรรค์สร้าง (ทำงานก่อนเปิดไพ่ — เล่นทันทีตอนเข้าเงื่อนไข)
-  godwingForm: { img: AQUA_GODWING_PROFILE, video: "/characters/auqarion/skill2/godwing.mp4", title: "ปีกแห่งสุริยัน", label: "แสงสว่างที่สรรค์สร้าง", seconds: 10, music: null, afterReveal: false },
   // ---------- ชเรด เอลัน (patch พิเศษ) ----------
   // shradeMoon: สกิลรอง แสงจันทร์ส่องวิญญาณ (ก่อนเปิดไพ่ — เล่นทันทีตอนกดสกิล) วีดีโอ 4.1 วิ
   shradeMoon: { img: "/characters/shrade_elan/skill2/shrade_skill2.jpg", video: "/characters/shrade_elan/skill2/shrade_skill2.mp4", title: "แสงจันทร์ส่องวิญญาณ", label: "ใช้สกิล", seconds: 5, music: null, afterReveal: false },
@@ -1284,11 +1227,6 @@ const TRANSFORMS = {
   riddheLastShield: { img: RIDDHE_NTD2_IMG, video: "/characters/riddhe/skill3/banshee_skill3.2_last.mp4", title: "ฉันจะไม่ยอมสูญเสียใครไปอีก", label: "เกราะปกป้องทั้งคู่", seconds: 11, music: null, afterReveal: false },
   // riddhePassive3: สกิลติดตัว 3 อย่าทิ้งฉันไป — บานาจพันธมิตรตาย (วีดีโอ 9 วิ) ร่างบันชีดำมืดถาวร
   riddhePassive3: { img: RIDDHE_NTD2_IMG, video: "/characters/riddhe/banshee_passive3.mp4", title: "อย่าทิ้งฉันไป", label: "สกิลติดตัวทำงาน", seconds: 10, music: null, afterReveal: false },
-  // ท่าไม้ตาย 4 แบบ (หลังเปิดไพ่): โซล่า/มาร์/ลูน่า/ปีกแห่งสุริยัน — เลือกตามร่างที่รวมอยู่
-  solarburst: { img: "/characters/auqarion/skill3/skill3_solar.png", video: "/characters/auqarion/skill3/solar_final.mp4", title: "หมัดไร้ขอบเขต", label: "ปล่อยท่าไม้ตาย", seconds: 10, music: null, afterReveal: true },
-  marssword: { img: "/characters/auqarion/skill3/skill3_mars.jpg", video: "/characters/auqarion/skill3/mars_final.mp4", title: "ดาบแห่งแสง", label: "ปล่อยท่าไม้ตาย", seconds: 8, music: null, afterReveal: true },
-  lunabow: { img: "/characters/auqarion/skill3/skill3_luna.jpg", video: "/characters/auqarion/skill3/luna_final.mp4", title: "ศรศักดิ์สิทธิ์", label: "ปล่อยท่าไม้ตาย", seconds: 11, music: null, afterReveal: true },
-  godtree: { img: "/characters/auqarion/skill3/skill3_godwing.jpg", video: "/characters/auqarion/skill3/godwing_final.mp4", title: "ไปยังพฤกษาแห่งชีวิต", label: "ปล่อยท่าไม้ตาย", seconds: 17, music: "auqarion", afterReveal: true },
   // ---------- ริต้า เบอร์นัล / ฟีนิกซ์ (patch 2.1.6) ----------
   // seconds วัดจากความยาววีดีโอจริง (+buffer ~0.5-1 วิ กันตัดก่อนจบ)
   // phenexReflect: สกิลรอง 1 ฝันไปเถอะ — เล่นตอนสะท้อนความเสียหายกลับผู้โจมตี ก่อนสรุปผล (วีดีโอจริง 3.24 วิ)
@@ -1412,7 +1350,7 @@ const TEMARI_ANATA_DRAWS = 3;    // ANATA WAAAAAAAA: บังคับจั่
 // สถานะผิดปกติที่ Song for you ล้างออกได้ทั้งหมด (patch 2.0.8: เพิ่มดีบัฟพื้นฐานใหม่
 //  และแยก ยามฟ้าสาง/เส้นชีวิต ออกไปลดทีละ 1 แทน — ดูใน st === "song")
 const DEBUFF_KEYS = ["discord", "sleep", "kstun", "stun", "nodraw", "noskill", "sena",
-  "aquapoison", "energy", "nohealing", "moonmark", "overwork", "unplug", "weak", "fragile", "spellburden",
+  "energy", "nohealing", "moonmark", "overwork", "unplug", "weak", "fragile", "spellburden",
   "oblada", "calamity", "hburn", "phenexBanUlt", "nanayaSeal", "miyakoSeal", "armorSeal", "invert", "norecover"];
 // เกราะสูงสุดของผู้เล่น: ปกติ 2 — ระหว่างสวมเกราะราชัน (ท่าไม้ตายคุวากาตะ) เพิ่ม +3 เป็น 5
 // ระหว่างสกิลติดตัว 3 เอวา 13 (เลือด <= 3) เพิ่ม +1
@@ -1528,10 +1466,8 @@ function phenexReleasePain(p) {
   if (pool.length === 1) { resolvePhenexRelease(p, pool[0], pain); return; }
   p.phenexReleaseAsk = { pain, options: pool.map((o) => o.id) };
 }
-// ตายกลางเทิร์น (เลือดหมดจากสกิล/ผลสถานะ): ตกรอบทันที — อควาเรียนที่ตายขณะไปยังพฤกษาแห่งชีวิต
-//  จะติดธงรอฟื้นคืนชีพ (ตั้งเวลา 12 เทิร์นตอนจบเทิร์น ถ้าเกมยังไม่จบ)
+// ตายกลางเทิร์น (เลือดหมดจากสกิล/ผลสถานะ): ตกรอบทันที
 function instantDeath(p) {
-  if (p.characterId === "aquarion" && ((p.statuses && p.statuses.godtree) || 0) > 0) p.pendingRevive = true;
   // ริต้า เบอร์นัล (สกิลติดตัว 1 patch 2.1.6): ตายครั้งแรก -> เกิดใหม่แทนที่จะตกรอบ (ครั้งเดียวต่อเกม)
   if (p.characterId === "phenex" && !p.phenexReborn && !passiveSealed(p)) {
     phenexRebirth(p);
@@ -1641,14 +1577,6 @@ function displayImg(p) {
     if ((p.statuses.phenexNtd || 0) > 0 || p.phenexNtdPermanent) return PHENEX_NTD_IMG;
     return PHENEX_BASE_IMG;
   }
-  // อควาเรียน: ในล็อบบี้ใช้ select_profile — ลงสนามแล้ว ปีกแห่งสุริยัน > รวมร่าง (ตามผู้นำ) > โปรไฟล์ผู้นำ
-  if (p.characterId === "aquarion") {
-    if (gameState === "LOBBY") return p.img;
-    if ((p.statuses.godwing || 0) > 0) return AQUA_GODWING_PROFILE;
-    const leader = AQUA_LEADERS[p.leader || "apollo"];
-    if (p.fused) return leader.fuseProfile;
-    return leader.profileImg;
-  }
   if (p.seen && p.seen.beat) return OHGER_FORM;
   // สึงาชิ ทาคุโตะ (patch 2.2.5): สกิลติดตัว 1 กันตายทำงานไปแล้วสักครั้ง — ระหว่างที่ยังอยู่ในร่างฉันคว้ามันได้แล้ว ใช้ภาพ tauburn_un.jpg แทน tauburn.jpg ปกติ
   if (p.characterId === "takuto" && p.beatSaved && (p.statuses.apprivoise || 0) > 0) return TRANSFORMS.takutoAwaken.img;
@@ -1706,14 +1634,6 @@ function activeSkillMusic() {
     }
   }
   if (bestBard) return bestBard;
-  // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): เพลงอยู่เหนือเพลงสกิล/ท่าไม้ตายอื่นทั้งหมด (ยกเว้น Beat Mode)
-  let bestTree = null;
-  for (const p of alivePlayers()) {
-    if (p.characterId === "aquarion" && (p.statuses.godtree || 0) > 0) {
-      if (!bestTree || (p.transformAt || 0) > bestTree.at) bestTree = { music: "auqarion", at: p.transformAt || 0 };
-    }
-  }
-  if (bestTree) return bestTree;
   // ฉันมองเห็นมันแล้ว / ความตายที่โรยรา (ชิกิ): เพลงประจำท่าเล่นค้างระหว่างท่าไม้ตายทำงาน
   let bestShiki = null;
   for (const p of alivePlayers()) {
@@ -1766,7 +1686,7 @@ function activeSkillMusic() {
   }
   if (bestWou) return bestWou;
   let best = null;
-  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "golden", "fourth", "solarburst", "marssword", "lunabow", "graybeast", "doomCrucible", "apprivoise"]) {
+  for (const key of ["ginga", "gingastrium", "paradise", "rachan", "golden", "fourth", "graybeast", "doomCrucible", "apprivoise"]) {
     const t = TRANSFORMS[key];
     if (!t.music) continue;
     for (const p of alivePlayers()) {
@@ -1924,8 +1844,7 @@ function firePassive(p, trigger) {
 function skillByStatus(p, status) {
   const ch = CHAR_BY_ID[p.characterId];
   if (!ch) return null;
-  for (const tier of ["basic", "secondary", "secondary2", "secondaryNight", "ultimate", "ultimate2", "ultimateNight",
-    "secondaryRevert", "ultimateSolar", "ultimateMars", "ultimateLuna", "ultimateGodwing"]) {
+  for (const tier of ["basic", "secondary", "secondary2", "secondaryNight", "ultimate", "ultimate2", "ultimateNight"]) {
     const s = ch[tier];
     if (s && s.effect && !Array.isArray(s.effect) && s.effect.type === "status" && s.effect.status === status) {
       return { name: s.name, img: s.img || null, by: p.name, color: POSITION_COLORS[p.position] || "#888" };
@@ -2045,12 +1964,6 @@ function resetCombat(p) {
   p.skillDrainPending = 0;  // ค่าปรับเริ่มนับเทิร์นถัดไป (ย้ายเข้า skillDrain ตอนเริ่มเทิร์นใหม่)
   p.healNextTurn = 0;       // เสือนอนกิน: ฟื้นเลือด 1 หน่วยในเทิร์นถัดไป (กรณีไม่มีคู่สัญญา)
   p.unplugHold = null;      // กระชากสายแลน: บัฟที่ถูกถอดชั่วคราว (คืนให้ตอนจบเทิร์น)
-  // ---------- 14 ปีกแห่งสุริยัน อควาเรียน (patch 2.0) ----------
-  p.leader = "apollo";      // ผู้นำที่เลือกไว้ (apollo/sirius/rena) — กำหนดร่างที่จะรวมร่างด้วย
-  p.fused = false;          // กำลังรวมร่างหุ่นศักดิ์สิทธิ์อยู่ไหม
-  p.lightDew = 0;           // แสงละออง สะสม (สูงสุด 10)
-  p.reviveIn = 0;           // ไปยังพฤกษาแห่งชีวิต: จำนวนเทิร์นก่อนฟื้นคืนชีพ (0 = ไม่รอฟื้น)
-  p.pendingRevive = false;  // ตายขณะ godtree ยังอยู่ -> รอเช็คตอนจบเทิร์นว่าเกมจบไหม
   // ---------- ชเรด เอลัน (patch พิเศษ) ----------
   p.shradeForm = false;     // รวมร่างทำนองเพลงแล้ว (อควาเรียน สปาด้า — ถาวร โจมตี +2)
   // (patch พิเศษ: ราตรีของชเรดไม่ถาวรแล้ว — ใช้ nightResetPending รีเซ็ตกลางคืน 3 เทิร์นแทน)
@@ -2152,8 +2065,6 @@ function buildStateFor(viewerId) {
   // ราตรีกลืนกิน: เปิดเมื่อโอเบรอนใช้ท่าไม้ตาย 2 (Lie Like Vortigern) — ฉากหลังกลางคืนกลายเป็น
   //  วีดีโอ oberon_background.mp4 + เพลงประจำตัวเล่นค้าง และหายไปเมื่อหมดกลางคืน
   const oberonBg = nightNow && oberonDevour > 0;
-  // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): ฉากหลังกลายเป็น backgroud_skillgod.jpg ระหว่างสถานะนี้มีผล
-  const godtreeBg = Object.values(players).some((p) => p.alive && p.characterId === "aquarion" && (p.statuses.godtree || 0) > 0);
   // ราตรีถาวรของชเรด เอลัน: ฉากหลังกลายเป็น change_fill.jpg จนกว่าชเรดจะหมดสภาพต่อสู้
   const shradeBg = shradeBgActive(); // กลางคืน + มีชเรดร่างสปาด้า = ฉากหลังราตรีของชเรด
   // MOON*CELL (คิชินามิ ฮาคุโนะ patch 2.2.1): ฉากหลังกลายเป็น hakuno_fill.jpg ระหว่างท่าไม้ตายทำงาน
@@ -2248,7 +2159,6 @@ function buildStateFor(viewerId) {
     roundNumber,
     cycle: nightNow ? "night" : "day", // กลางวัน/กลางคืน (สลับทุก 3 เทิร์น)
     oberonBg,
-    godtreeBg,
     shradeBg, // ราตรีของชเรด เอลัน (ฉากหลัง change_fill.jpg — ทุกค่ำคืนที่ยังอยู่ในร่างสปาด้า)
     hakunoBg, // MOON*CELL (คิชินามิ ฮาคุโนะ): ฉากหลัง hakuno_fill.jpg ระหว่างท่าไม้ตายทำงาน
     bardBg,   // มิติมายาบรรเลง (Bard): "blood" | "soul" | null
@@ -2275,22 +2185,8 @@ function buildStateFor(viewerId) {
       // สกิลพื้นฐานสลับกลางคืน (โคโตเนะ) + Apple guy: ปกสกิลพื้นฐานเปลี่ยนตามของส่งมอบที่เลือกอยู่
       let basicPub = pub(nightNow && ch.basicNight ? ch.basicNight : ch.basic);
       if (basicPub && p.characterId === "appleguy") basicPub.img = (APPLE_ITEMS[p.appleItem] || APPLE_ITEMS.drink).img;
-      // อควาเรียน: ปกสกิลพื้นฐาน "เปลี่ยนหัวหน้า" เปลี่ยนตามผู้นำที่เลือกอยู่ + สกิลรอง/ท่าไม้ตายสลับตามร่าง
       let secondaryPub = pub(nightNow && ch.secondaryNight ? ch.secondaryNight : ch.secondary);
       let ultimatePub = pub(nightNow && ch.ultimateNight ? ch.ultimateNight : ch.ultimate);
-      if (ch.id === "aquarion") {
-        const leader = AQUA_LEADERS[p.leader || "apollo"];
-        if (basicPub) basicPub.img = leader.skillImg;
-        secondaryPub = pub(p.fused ? ch.secondaryRevert : ch.secondary);
-        if (secondaryPub && !p.fused) secondaryPub.img = leader.fuseCover;
-        // ท่าไม้ตายสลับตามร่าง — ยังไม่รวมร่างโชว์ท่าของผู้นำที่เลือกไว้ (ปุ่มล็อกฝั่ง client จนกว่าจะรวมร่าง)
-        ultimatePub = pub(
-          (p.statuses.godwing || 0) > 0 ? ch.ultimateGodwing
-          : p.leader === "sirius" ? ch.ultimateMars
-          : p.leader === "rena" ? ch.ultimateLuna
-          : ch.ultimateSolar
-        );
-      }
       // ชเรด เอลัน: หลังรวมร่าง — สกิลพื้นฐาน/รองเปลี่ยนเป็นเวอร์ชันสปาด้า และปุ่มท่าไม้ตายเป็น แด่เพื่อนรักของฉัน
       if (ch.id === "shrade_elan" && p.shradeForm) {
         basicPub = pub(ch.basic2);
@@ -2396,8 +2292,6 @@ function buildStateFor(viewerId) {
         tepeuCookTurns: p.tepeuCookTurns || 0,     // เทเปา: วันนี้อากาศดีจัง — เทิร์นที่เหลือก่อนได้ "มื้อที่สุข" (0 = กดใช้ได้)
         tepeuPonderTurns: p.tepeuPonderTurns || 0, // เทเปา: เป็นแบบนี้นี่เอง — ครุ่นคิดเหลือกี่เทิร์น (0 = กดใช้ได้/จั่วไพ่ได้)
         coins: p.coins || 0,               // โคโตเนะ: coin ในกระปุกออมสิน (สูงสุด 6)
-        leader: p.leader || "apollo",      // อควาเรียน: ผู้นำที่เลือกอยู่ (apollo/sirius/rena)
-        fused: !!p.fused,                  // อควาเรียน: กำลังรวมร่างหุ่นศักดิ์สิทธิ์อยู่ไหม
         shradeForm: !!p.shradeForm,        // ชเรด เอลัน: รวมร่างทำนองเพลงแล้ว (อควาเรียน สปาด้า — ถาวร)
         bardNotes: p.bardNotes || [],      // Bard: โน้ตในช่องประพันธ์เพลง (ทุกคนเห็นได้)
         bardNotesUsed: p.bardNotesUsed || 0, // Bard: โน้ตที่เติมไปแล้วเทิร์นนี้ (จำกัด 2)
@@ -2408,8 +2302,6 @@ function buildStateFor(viewerId) {
         stamina: p.stamina || 0,           // โอกูริ แคป: Stamina ชาร์จสะสม (ทรัพยากรท่าไม้ตาย)
         oguriEnergy: p.oguriEnergy || 0,   // โอกูริ แคป: Energy สะสม (สูงสุด 16 — ทรัพยากร Breakfast/Training)
         oguriChargeCap: p.characterId === "oguri" ? oguriChargeCapOf(p) : undefined, // โอกูริ แคป: ความจุ Stamina ชาร์จปัจจุบัน
-        lightDew: p.lightDew || 0,         // อควาเรียน: แสงละอองสะสม (สูงสุด 10)
-        reviveIn: p.reviveIn || 0,         // อควาเรียน: จำนวนเทิร์นก่อนฟื้นคืนชีพจากไปยังพฤกษาแห่งชีวิต
         contractPartnerId: p.contractPartner || null, // เจ้าแห่งเน็ตบ้าน: คู่สัญญาปัจจุบัน
         contractWithId: p.contractWith || null,       // คู่สัญญา: ทำสัญญากับเจ้าแห่งเน็ตบ้านคนไหน
         allyId: p.allyId || null,                     // ริดดี้ (patch 2.0.9): คู่พันธมิตรบันชี × ยูนิคอร์น
@@ -2433,11 +2325,8 @@ function buildStateFor(viewerId) {
         statusAmt: p.statusAmt || {}, // จำนวน (amount) ของบัฟ/ดีบัฟพื้นฐาน (patch 2.0.8)
         character: {
           // โอเบรอน: กลางคืนสลับชื่อ + สกิลรอง/ท่าไม้ตายเป็นเวอร์ชันกลางคืน (ฝันร้ายยามค่ำคืน / Lie Like Vortigern)
-          // อควาเรียน: ลงสนามเป็นชื่อผู้นำ รวมร่างแล้วเป็นชื่อหุ่น (ปีกแห่งสุริยันตอนร่างสุดท้าย)
           id: ch.id,
-          // อควาเรียน: ล็อบบี้โชว์ชื่อเต็ม — ลงสนามเป็นชื่อผู้นำ/หุ่นตามร่าง
-          name: ch.id === "aquarion" ? (gameState === "LOBBY" ? ch.name : aquaDisplayName(p))
-            : ch.id === "shrade_elan" && p.shradeForm ? SHRADE_SPADA_NAME
+          name: ch.id === "shrade_elan" && p.shradeForm ? SHRADE_SPADA_NAME
             : nightNow && ch.nightName ? ch.nightName : ch.name,
           passive: ch.passive ? { name: ch.passive.name, desc: ch.passive.desc } : null,
           // บานาจ ลิงก์ (patch 2.1.2): สกิลติดตัว 2 ฉันไม่อยากให้เราต้องมาสู้กัน — ตัวอื่นเป็น null
@@ -2703,18 +2592,6 @@ function dealRound() {
       p.skillDrain = Math.max(p.skillDrain || 0, p.skillDrainPending);
       p.skillDrainPending = 0;
     }
-    // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): ตายระหว่างสถานะนี้ -> ฟื้นคืนชีพหลัง 12 เทิร์น (ถ้าเกมยังไม่จบ)
-    if (!p.alive && p.reviveIn > 0) {
-      p.reviveIn--;
-      if (p.reviveIn <= 0) {
-        p.alive = true;
-        p.hp = 1; p.armor = 0; p.skillPoints = 0; p.shield = 0;
-        p.statuses = {}; p.seen = {};
-        p.fused = false; p.leader = "apollo"; p.lightDew = 0;
-        p.locked = false; p.busted = false; p.result = null;
-        lastLog.push(`🌳✨ ${p.name} ฟื้นคืนชีพจากพฤกษาแห่งชีวิต! (เลือด 1 เกราะ 0 แต้มสกิล 0)`);
-      }
-    }
     if (!p.alive) { p.cards = []; p.locked = true; p.busted = false; continue; }
 
     // กลางคืน (patch 2.1.7): สุ่มใหม่ทุกเทิร์นว่าสกิลพื้นฐานหรือสกิลรอง (อย่างใดอย่างหนึ่ง) จะใช้แต้มมากขึ้น — ไม่มีผลกับท่าไม้ตาย
@@ -2828,11 +2705,6 @@ function dealRound() {
     if (!p.armorLocked && !((p.statuses.armorSeal || 0) > 0) && !((p.statuses.decay || 0) > 0) && !moonCellActive() && roundNumber % 2 === 0) {
       healArmor(p, 1);
     }
-    // คืนร่าง (อควาเรียน): ฟื้นฟูเกราะเพิ่ม +1 หน่วยทุกเทิร์น (ซ้อนกับการฟื้นเกราะปกติ) เป็นเวลา 3 เทิร์น
-    if ((p.statuses.godarmor || 0) > 0 && p.armor < maxArmorOf(p)) {
-      healArmor(p, 1);
-      lastLog.push(`🛡️ ${p.name} คืนร่าง — เกราะฟื้นเพิ่ม +1`);
-    }
     // เสือนอนกิน (เจ้าแห่งเน็ตบ้าน): ฟื้นพลังชีวิต 1 หน่วยในเทิร์นถัดไป (กรณีไม่มีคู่สัญญา)
     if ((p.healNextTurn || 0) > 0) {
       const heal = healHp(p, p.healNextTurn);
@@ -2894,13 +2766,6 @@ function dealRound() {
       }
     }
 
-    // ---------- อควาเรียน: แสงสว่างที่สรรค์สร้าง (เช็คทุกรอบ เผื่อกลางวันเพิ่งเริ่มพร้อมแสงละอองเต็ม) ----------
-    maybeGodwing(p);
-    // ---------- อควาเรียน: ศรศักดิ์สิทธิ์ — พิษ ลดพลังชีวิตเป้าหมาย 1 หน่วยทุกเทิร์น ----------
-    if ((p.statuses.aquapoison || 0) > 0 && p.hp > 1) {
-      p.hp--; p.dmgHp++;
-      lastLog.push(`☠️ ${p.name} ติดพิษศรศักดิ์สิทธิ์ — เสียพลังชีวิต -1 (เหลืออีก ${p.statuses.aquapoison - 1} เทิร์น)`);
-    }
     // ---------- ไรโด ฮิคารุ (patch 2.1.3): ลุกไหม้ — ดาเมจ 1/เทิร์น ลดลงทีละหน่วยหลังสร้างความเสียหาย สะสมสูงสุด 6 ----------
     if ((p.statuses.hburn || 0) > 0 && p.alive) {
       // หัวใจที่ลุกไหม้ (สกิลติดตัว 2 ฮิคารุ): ระหว่างร่าง Ginga Strium ลุกไหม้ที่เกิดกับตัวเองรักษาแทนสร้างความเสียหาย
@@ -2971,27 +2836,6 @@ function dealRound() {
       lastLog.push(`💤 ${p.name} หลับไหลจากคำลวงของราชาภูติ — ขยับไม่ได้ (เหลืออีก ${p.statuses.sleep} เทิร์น)`);
     }
 
-    // ---------- อควาเรียน: ไปยังพฤกษาแห่งชีวิต — ทำอะไรไม่ได้เลย + ทุกคนเจ็บ 1 (ไม่สนเกราะ) ทุกเทิร์น ----------
-    //  (ต้องล็อกหลังแจกไพ่ — แจกไพ่รีเซ็ต locked = false)
-    if ((p.statuses.godtree || 0) > 0) {
-      p.locked = true;
-      for (const o of alivePlayers()) {
-        if (o.id === p.id) continue;
-        dealDirect(o, 1);
-        maybeBeatSave(o);
-        maybeBeatMode(o);
-        maybeEva3(o);
-        maybeWakeKotone(o);
-        o.wasAttacked = true;
-        if (o.alive && o.hp <= 0) {
-          instantDeath(o);
-          if (!o.alive) lastLog.push(`💀 ${o.name} เลือดจริงหมด ตกรอบ!`);
-        }
-      }
-      if (p.hp > 1) { p.hp--; p.dmgHp++; }
-      healArmor(p, 2);
-      lastLog.push(`🌳 ${p.name} ไปยังพฤกษาแห่งชีวิต — ทุกคนเจ็บ -1 (ไม่สนเกราะ) ตัวเองเสียเลือด -1 (ไม่สนเกราะ) เกราะฟื้น +2`);
-    }
     // ---------- ฟุจิตะ โคโตเนะ (patch 2.1.3) ----------
     // Sleeping time: หลับนิ่ง 2 เทิร์นตายตัว (ไม่ผูกกับความยาวกลางคืนอีกต่อไป — นับถอยหลังตามปกติ)
     //  ตื่นเองเมื่อครบเวลา (นับถอยหลังหมดใน endTurn) จะได้รับ [เช้าที่สดใส] 3 เทิร์น
@@ -3115,15 +2959,6 @@ function dealRound() {
         lastLog.push(`🎻 ${p.name} เสียงไพเราะที่กึกก้อง — ราตรีปลดล็อกท่าไม้ตาย รวมร่างทำนองเพลง`);
       }
     }
-    // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด — กลางคืนมาเยือนแล้วผลสิ้นสุดลง
-    if (night) {
-      for (const p of alivePlayers()) {
-        if (p.characterId === "aquarion" && (p.statuses.godtree || 0) > 0) {
-          delete p.statuses.godtree;
-          lastLog.push(`🌳 ${p.name} กลางวันหมดลง — ไปยังพฤกษาแห่งชีวิตสิ้นสุด`);
-        }
-      }
-    }
   }
 
   gameState = "PLAYING";
@@ -3201,14 +3036,6 @@ function nanayaToggleEye(id) {
 function useSkill(id, tier, targets, item) {
   const p = players[id];
   if (!p || !p.alive) return;
-  // อควาเรียน: ไปยังพฤกษาแห่งชีวิต — กดปุ่มท่าไม้ตายซ้ำเพื่อยกเลิกได้แม้กำลังล็อกอยู่ (ก่อนเปิดการ์ดเท่านั้น)
-  if (gameState === "PLAYING" && p.characterId === "aquarion" && tier === "ultimate" && (p.statuses.godtree || 0) > 0) {
-    delete p.statuses.godtree;
-    lastLog.push(`🌳 ${p.name} ยกเลิกไปยังพฤกษาแห่งชีวิต`);
-    io.emit("skillFlash", { name: "ไปยังพฤกษาแห่งชีวิต — ยกเลิก", img: TRANSFORMS.godtree.img, by: p.name, color: POSITION_COLORS[p.position] || "#9B4F96" });
-    broadcastState();
-    return;
-  }
   if (gameState !== "PLAYING" || p.locked) return;
   if (!["basic", "secondary", "ultimate"].includes(tier)) return;
   // MOON*CELL (คิชินามิ ฮาคุโนะ): สกิลทั้งหมดของทุกคนใช้ไม่ได้เลย (รวมของฮาคุโนะเจ้าของท่าเองด้วย — เหลือแค่สกิลติดตัว)
@@ -3309,17 +3136,6 @@ function useSkill(id, tier, targets, item) {
   if (ch && ch.id === "takuto" && tier === "basic" && (p.statuses.apprivoise || 0) > 0) skill = ch.basic2;
   // patch 2.2.5: กันตาย (สกิลติดตัว 1) เคยทำงานไปแล้ว — ท่าไม้ตายเปลี่ยนเป็นร่วมเดินทางไปกับฉันเถอะถาวร (แทนพิชิตแสงดาว)
   if (ch && ch.id === "takuto" && tier === "ultimate" && p.beatSaved) skill = ch.ultimate2;
-  // อควาเรียน: สกิลรองสลับ รวมร่าง/คืนร่าง — ท่าไม้ตายสลับตามร่างที่รวมอยู่ (โซล่า/มาร์/ลูน่า/ปีกแห่งสุริยัน)
-  if (ch && ch.id === "aquarion") {
-    if (tier === "secondary") skill = p.fused ? ch.secondaryRevert : ch.secondary;
-    else if (tier === "ultimate") {
-      skill = (p.statuses.godwing || 0) > 0 ? ch.ultimateGodwing
-        : (p.fused && p.leader === "sirius") ? ch.ultimateMars
-        : (p.fused && p.leader === "rena") ? ch.ultimateLuna
-        : (p.fused && p.leader === "apollo") ? ch.ultimateSolar
-        : null;
-    }
-  }
   if (!skill) return;
   // โอเบรอน/โคโตเนะ: สกิลสลับตามช่วงเวลา — กลางคืนใช้เวอร์ชันกลางคืนแทน
   if (tier === "ultimate" && ch.ultimateNight && isNightRound(roundNumber)) skill = ch.ultimateNight;
@@ -3381,11 +3197,6 @@ function useSkill(id, tier, targets, item) {
   //  (ใช้แล้วยังเลือกใช้สกิลอื่นได้อีก 1 ครั้ง)
   const isApplePick = p.characterId === "appleguy" && tier === "basic";
   if (isApplePick && !APPLE_ITEMS[item]) return; // ต้องเลือกของที่มีจริงเท่านั้น
-  // เปลี่ยนหัวหน้า (อควาเรียน สกิลพื้นฐาน): เลือกผู้นำ — ไม่นับเป็นการใช้สกิลของเทิร์น (ใช้แล้วยังใช้สกิลอื่นได้อีก 1 ครั้ง)
-  const isAquaLeader = p.characterId === "aquarion" && tier === "basic";
-  if (isAquaLeader && !AQUA_LEADERS[item]) return; // ต้องเลือกผู้นำที่มีจริงเท่านั้น
-  const isAquaFuse = p.characterId === "aquarion" && tier === "secondary" && !p.fused;   // รวมร่างหุ่นศักดิ์สิทธิ์
-  const isAquaRevert = p.characterId === "aquarion" && tier === "secondary" && p.fused;  // คืนร่าง
   // มีดพับประจำตระกูล (โทโนะ ชิกิ สกิลพื้นฐาน): เลือกระดับ 1-5 — ไม่นับเป็นการใช้สกิลของเทิร์น (กดเปลี่ยนกี่ครั้งก็ได้)
   const isTohnoPick = p.characterId === "tohno" && tier === "basic";
   const tohnoLevelPick = Number(item);
@@ -3396,7 +3207,7 @@ function useSkill(id, tier, targets, item) {
   // DoomGuy (patch 2.2 full): สกิลติดตัว "ไม่ติดคูลดาวน์การใช้สกิล" — Quick Swap (พื้นฐาน) และ Weapon (รอง)
   //  ไม่นับเป็นการใช้สกิลของเทิร์น กดได้ทั้งคู่ในเทิร์นเดียวกัน (Quick Swap เองยังจำกัด 1 ครั้ง/เทิร์นแยกต่างหาก)
   const isDoomguyPick = p.characterId === "doomguy" && (tier === "basic" || tier === "secondary");
-  if (p.skillUsedRound && !gambleRepeat && !isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
+  if (p.skillUsedRound && !gambleRepeat && !isApplePick && !isTohnoPick && !isHakunoGender && !isDoomguyPick) return; // ใช้สกิลได้เพียง 1 อันต่อเทิร์น (ซ้ำ/ซ้อนไม่ได้)
   // MOON*CELL (คิชินามิ ฮาคุโนะ): ต้องมีแต้มคำสาปแห่งดวงจันทร์ครบ 3 เท่านั้น
   if (st === "moonCell" && (p.hakunoMoonPoints || 0) < HAKUNO_MOONCELL_NEED) return;
   // ข้าขอบัญชา (ชาย/หญิง คิชินามิ ฮาคุโนะ): กดซ้ำไม่ได้จนกว่าผลเดิมจะหมด
@@ -3616,7 +3427,7 @@ function useSkill(id, tier, targets, item) {
     if (p.statuses.freecast <= 0) delete p.statuses.freecast;
     lastLog.push(`🎁 ${p.name} พรแห่งการจั่ว — ใช้สกิลนี้โดยไม่เสียแต้มสกิล`);
   }
-  if (!isApplePick && !isAquaLeader && !isTohnoPick && !isHakunoGender && !isDoomguyPick) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / เปลี่ยนหัวหน้า / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ? / Quick Swap-Weapon (DoomGuy)
+  if (!isApplePick && !isTohnoPick && !isHakunoGender && !isDoomguyPick) p.skillUsedRound = true; // เอาแบบนี้ได้ไหม / มีดพับประจำตระกูล / เธอ/นาย คือฉันหรอ? / Quick Swap-Weapon (DoomGuy)
 
   // ---------- นายมีฝีมือแค่ไหนหรอ? (ชิกิ patch 2.0.6): ยกเลิกท่าไม้ตายทันทีที่มีผู้เล่นอื่นกด ----------
   //  มีชิกิถือชาร์จ godslay อยู่บนสนาม -> ท่าไม้ตายของผู้เล่นอื่นที่เพิ่งกดถูกยกเลิกทันที
@@ -3761,32 +3572,6 @@ function useSkill(id, tier, targets, item) {
     p.appleItem = item;
     flashSuffix = ` — เลือก${APPLE_ITEMS[item].name}`;
     lastLog.push(`🍎 ${p.name} เอาแบบนี้ได้ไหม — เปลี่ยนของส่งมอบเป็น ${APPLE_ITEMS[item].name}`);
-  }
-  // ---------- อควาเรียน: เปลี่ยนหัวหน้า — เลือกผู้นำ + ฟื้นเลือด 1 ----------
-  if (isAquaLeader) {
-    p.leader = item;
-    healHp(p, 1);
-    flashSuffix = ` — เลือก${AQUA_LEADERS[item].name}`;
-    lastLog.push(`🌊 ${p.name} เปลี่ยนหัวหน้า — เลือก${AQUA_LEADERS[item].name} และฟื้นพลังชีวิต +1`);
-  }
-  // ---------- อควาเรียน: รวมร่างหุ่นศักดิ์สิทธิ์ — แสงละออง +1 + วีดีโอแปลงร่างตามผู้นำ ----------
-  if (isAquaFuse) {
-    p.fused = true;
-    p.lightDew = Math.min(AQUA_LIGHTDEW_MAX, (p.lightDew || 0) + AQUA_FUSE_DEW);
-    const leader = AQUA_LEADERS[p.leader || "apollo"];
-    flashSuffix = ` — ${leader.robotName}`;
-    lastLog.push(`✨ ${p.name} รวมร่างหุ่นศักดิ์สิทธิ์ — กลายเป็น ${leader.robotName} (แสงละออง ${p.lightDew}/${AQUA_LIGHTDEW_MAX})`);
-    triggerCutscene(p, leader.fuseKey);
-    maybeGodwing(p);
-    if (cutsceneQueue.length) pausePlayingForCutscene();
-  }
-  // ---------- อควาเรียน: คืนร่าง — เกราะ +1 + ฟื้นฟูเกราะเพิ่ม 3 เทิร์น + แสงละออง +2 ----------
-  if (isAquaRevert) {
-    p.fused = false;
-    healArmor(p, 1);
-    p.statuses.godarmor = Math.max(p.statuses.godarmor || 0, 4); // ฟื้นเกราะเพิ่ม +1/เทิร์น 3 เทิร์น (+1 ชดเชยการลดสถานะตอนจบเทิร์น)
-    p.lightDew = Math.min(AQUA_LIGHTDEW_MAX, (p.lightDew || 0) + AQUA_REVERT_DEW);
-    lastLog.push(`🛡️ ${p.name} คืนร่าง — เกราะ +1 และฟื้นฟูเกราะเพิ่ม 3 เทิร์น (แสงละออง ${p.lightDew}/${AQUA_LIGHTDEW_MAX})`);
   }
   // ---------- Apple guy: เอาไปสิ — มอบของที่เลือกให้เป้าหมายทันที + บัฟพลังโจมตี ----------
   if (isAppleGive && appleTarget && satoruOnTargeted(appleTarget, p, `สกิล ${skill.name} `).negated) {
@@ -4610,10 +4395,8 @@ function useSkill(id, tier, targets, item) {
 
   // สกิลช่วงจั่วการ์ด (instant): เด้งโชว์ทันทีบนกระดานของทุกคน ไม่ต้องรอเปิดไพ่/ไม่ตัดจอดำ
   if (skill.instant) {
-    // Apple guy: ป้ายเด้งของสกิลพื้นฐานโชว์รูปของที่เลือก / อควาเรียน: โชว์รูปตามผู้นำที่เลือกอยู่
+    // Apple guy: ป้ายเด้งของสกิลพื้นฐานโชว์รูปของที่เลือก
     const flashImg = isApplePick ? APPLE_ITEMS[item].img
-      : isAquaLeader ? AQUA_LEADERS[item].skillImg
-      : isAquaFuse ? AQUA_LEADERS[p.leader || "apollo"].fuseCover
       : (skill.img || null);
     // เทเปา (ชิกิ): กดสกิลพื้นฐาน/สกิลรอง ให้เล่นเสียง tepeu_skill1_2 ก่อนเสมอ
     const flashSound = (isTepeuCook || isTepeuPonder) ? "tepeu_skill1_2" : null;
@@ -5014,11 +4797,6 @@ function resolveRound() {
     // patch 2.1.3.5: ชนะจั่วการ์ดไม่ได้แต้มสกิลอีกต่อไป
     firePassive(w, "win");
     if (tied.length > 1) lastLog.push(`เสมอที่ ${best} แต้ม — สุ่มผู้ชนะได้ ${w.name} (เสมอ ไม่มีเทิร์นโจมตี)`);
-    // ดาบแห่งจุดจบ (อควาเรียน): ชนะพร้อมมีผู้เล่นอื่นไพ่แตกในเทิร์นนั้น -> พลังโจมตี +1 (เทิร์นนี้)
-    if (aquaPassive2Active(w) && combatants.some((c) => c.id !== w.id && bustedOf(c))) {
-      w.statuses.marssurge = 1;
-      lastLog.push(`🗡️ ${w.name} ดาบแห่งจุดจบ — มีผู้เล่นอื่นไพ่แตก พลังโจมตี +1`);
-    }
   }
 
   if (best !== worst) {
@@ -5054,13 +4832,6 @@ function resolveRound() {
         addSkill(l, 1);
         firePassive(l, "lose");
         lastLog.push(`🌑 ${l.name} ทุกอย่างไร้ความหมาย — ไม่รับความเสียหายจากการแพ้`);
-        continue;
-      }
-      if ((l.statuses.godwing || 0) > 0) {
-        // ปีกแห่งสุริยัน (อควาเรียน): ไม่โดนความเสียหายจากการ์ดแตกหรือแพ้จั่ว
-        addSkill(l, 1);
-        firePassive(l, "lose");
-        lastLog.push(`🌟 ${l.name} ปีกแห่งสุริยัน — ไม่รับความเสียหายจากการแพ้/ไพ่แตก`);
         continue;
       }
       const armorBefore = l.armor;
@@ -5374,7 +5145,6 @@ function afterSummary() {
     (winner.statuses.kstun || 0) > 0 ||
     (winner.statuses.stun || 0) > 0 || // สตั้น (สถานะพื้นฐาน patch 2.0.8)
     (winner.statuses.sena || 0) > 0 ||
-    (winner.statuses.godtree || 0) > 0 ||
     (winner.statuses.riddheguard || 0) > 0 // ฉันจะไม่ยอมสูญเสียใครไปอีก (ริดดี้): แม้ชนะการจั่วก็ตีไม่ได้
   )) {
     lastLog.push(`💤 ${winner.name} ไม่อยู่ในสภาพจะโจมตีใคร — ไม่มีเทิร์นโจมตี`);
@@ -5854,18 +5624,6 @@ function doAttack(byId, targetId) {
   if (kotoneExhausted) pigDmg = 0; // ตีไม่เข้า — ไม่เสีย coin ฟรี
   // สกิลรอง (โคโตเนะ patch 2.2.2): บัฟพลังโจมตีพื้นฐาน +2 ในการโจมตีครั้งถัดไป (ผ่านเกราะตามปกติ — ใช้แล้วหมดไป)
   const kotoneAtk = attacker.characterId === "kotone" && (attacker.statuses.kotoneAtk || 0) > 0;
-  // ---------- อควาเรียน: สกิลติดตัว 1/2/3 (แสงแห่งสุริยัน / ดาบแห่งจุดจบ / จันทราสยบ) ----------
-  let aquaAtk = 0;
-  let aquaZero = false; // จันทราสยบ กลางวัน: พลังโจมตีเหลือ 0 (แต่โจมตีได้ฟื้นเลือด 1)
-  if (attacker.characterId === "aquarion") {
-    const aquaNight = isNightRound(roundNumber);
-    if (aquaPassive1Active(attacker) && !aquaNight) aquaAtk += 1; // แสงแห่งสุริยัน: กลางวัน +1
-    if (aquaPassive3Active(attacker)) {
-      if (aquaNight) aquaAtk += 1; // จันทราสยบ: กลางคืน +1
-      else aquaZero = true;        // จันทราสยบ: กลางวันเหลือ 0
-    }
-    if ((attacker.statuses.marssurge || 0) > 0) aquaAtk += 1; // ดาบแห่งจุดจบ: ชนะเทิร์นที่มีคนไพ่แตก
-  }
   // รวมร่างทำนองเพลง (ชเรด เอลัน): ร่างอควาเรียน สปาด้า พลังโจมตีพื้นฐาน +2
   //  (patch พิเศษ: ตอนเช้าไม่คืนร่าง แต่โบนัสโจมตีไม่ทำงาน — มีผลเฉพาะช่วงกลางคืน)
   const shradeAtk = (attacker.characterId === "shrade_elan" && attacker.shradeForm && isNightRound(roundNumber)) ? SHRADE_ATK_BONUS : 0;
@@ -5921,11 +5679,10 @@ function doAttack(byId, targetId) {
   // สึงาชิ ทาคุโตะ (patch 2.2 new): พลังโจมตีถาวรจากสกิลติดตัว 1+2 (+1+1 = +2) ทำงานพร้อมกันตอน Apprivoise! เท่านั้น — ตอนร่างธรรมดายังไม่บวก
   // patch 2.2.4: เอาโบนัสจากกันตาย (สกิลติดตัว 1) ออก — เหลือเฉพาะช่วงฉันคว้ามันได้แล้ว (Apprivoise!) ทำงานอยู่
   const takutoAtk = attacker.characterId === "takuto" && (attacker.statuses.apprivoise || 0) > 0 ? TAKUTO_ATK_BONUS : 0;
-  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + aquaAtk + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
+  let base = doomBaseAtk + oberonZero + (veilAtk ? 1 : 0) + (empowerAtk ? 1 : 0) + ((ginga || gingastriumAtk) ? 1 : 0) + (gingastriumAtk ? 1 : 0) + (beam ? 2 : 0) + (lastStanding ? 1 : 0) + ohgerBonus + (spearAtk ? 1 : 0) + profitAtk + appleAtk + (tigerAtk ? 1 : 0) + (partnerAtk ? 1 : 0) + pigDmg + shradeAtk + oguriGoldAtk + (victoryAtk ? OGURI_ULT_ATK_BONUS : 0) + riddheUltBonus + (riddheP1Atk ? 1 : 0) + (riddheAvAtk ? 1 : 0) + (unibeam2Atk ? BANAGHER_ULT2_TARGET_DMG : 0) + (phenexRebornAtk ? 1 : 0) + (phenexNtdAtk ? PHENEX_NTD_ATK_BONUS : 0) + (miyakoAtkBonusOn ? MIYAKO_ATK_BONUS : 0) + hakunoMaleAtk + hakunoMoonAtk + (kotoneAtk ? KOTONE_DANCE_ATK_BONUS : 0) + rachanAtk + fourthAtk + doomLockonAtk + takutoAtk; // Beam Magnum +2 / แสงที่ไม่อยู่เพียงลำพัง +6
   // ผกผัน (สถานะ Universal patch 2.2.1): โบนัสพลังโจมตีที่ควรได้ กลับกลายเป็นลดพลังโจมตีแทน (คำนวณรอบเพดานฐาน 1 หน่วย)
   if (invertActive(attacker)) base = Math.max(0, 1 - (base - 1));
   if (kotoneExhausted) base = 0;
-  if (aquaZero) base = 0;
   let dmg = base + (kotoneExhausted ? 0 : ntdBonus);
   // เสริมพลัง / อ่อนแอ (สถานะพื้นฐาน patch 2.0.8): เพิ่ม/ลดดาเมจที่ทำได้ตามจำนวนที่ระบุ
   const mightAtk = statusAmtOf(attacker, "might");
@@ -6033,13 +5790,6 @@ function doAttack(byId, targetId) {
     if ((attacker.beamAmmo || 0) > 0) attacker.beamAmmo--;
     if (unibeam2Ally && (unibeam2Ally.beamAmmo || 0) > 0) unibeam2Ally.beamAmmo--;
     triggerCutscene(attacker, "unibeam2");
-  }
-
-  // ดาบแห่งแสง (อควาเรียน ท่าไม้ตายร่างมาร์): ลดเกราะเป้าหมายก่อน 1 หน่วย แล้วจึงสร้างความเสียหาย
-  const marsswordAtk = (attacker.statuses.marssword || 0) > 0;
-  if (marsswordAtk && target.armor > 0) {
-    loseArmor(target);
-    lastLog.push(`⚔️ ดาบแห่งแสง! ${attacker.name} ลดเกราะ ${target.name} -1 ก่อนโจมตี`);
   }
 
   const attackerBeat = beatActive(attacker); // Beat Mode: การโจมตีเป็นความเสียหายจริง ไม่สนเกราะ
@@ -6158,33 +5908,6 @@ function doAttack(byId, targetId) {
   if (empowerAtk) {
     delete attacker.statuses.empower;
     lastLog.push(`💪 ${attacker.name} เสริมพลังจาก Rejuvenation — การโจมตีนี้ +1 (บัฟหมดลง)`);
-  }
-  // จันทราสยบ (อควาเรียน กลางวันร่างลูน่า): พลังโจมตีเหลือ 0 แต่ยังได้โจมตี -> ฟื้นเลือด 1
-  if (aquaZero) {
-    const heal = healHp(attacker, 1);
-    if (heal > 0) lastLog.push(`🌙 ${attacker.name} จันทราสยบ — พลังโจมตีเหลือ 0 แต่ยังได้โจมตี ฟื้นพลังชีวิต +${heal}`);
-  }
-  // ศรศักดิ์สิทธิ์ (อควาเรียน ท่าไม้ตายร่างลูน่า): ติดพิษ ลดพลังชีวิตเป้าหมาย 1 หน่วยทุกเทิร์น 2 เทิร์น
-  if ((attacker.statuses.lunabow || 0) > 0 && target.alive) {
-    if (resistActive(target)) {
-      lastLog.push(`🛡️ ${target.name} ต้านสถานะผิดปกติ — ไม่ติดพิษศรศักดิ์สิทธิ์`);
-    } else {
-      target.statuses.aquapoison = Math.max(target.statuses.aquapoison || 0, 3); // +1 ชดเชยการลดสถานะตอนจบเทิร์น
-      lastLog.push(`☠️ ศรศักดิ์สิทธิ์! ${target.name} ติดพิษ เสียพลังชีวิต 1 หน่วยทุกเทิร์น (2 เทิร์น)`);
-    }
-  }
-  // ดาบแห่งจุดจบ (อควาเรียน ร่างมาร์/ปีกแห่งสุริยัน): 30% สะท้อนความเสียหายครึ่งหนึ่งกลับผู้โจมตี (ดาเมจ 1 สะท้อนไม่ได้)
-  let aquaReflect = 0;
-  if (aquaPassive2Active(target) && dmg > 1 && Math.random() < AQUA_MARS_REFLECT_CHANCE) {
-    aquaReflect = Math.floor(dmg / 2);
-    if (aquaReflect > 0 && attacker.alive) {
-      dealMixed(attacker, aquaReflect);
-      maybeBeatSave(attacker);
-      maybeBeatMode(attacker);
-      maybeEva3(attacker);
-      attacker.wasAttacked = true;
-      lastLog.push(`🗡️ ดาบแห่งจุดจบ! ${target.name} สะท้อนความเสียหาย -${aquaReflect} กลับให้ ${attacker.name}`);
-    }
   }
   // The Beat of Victory (โอกูริ Rework): เป้าหมายที่ถูกโจมตีติด "เกินเยียวยา" + "ชะงัก" 2 เทิร์น (ชะงักเริ่มเทิร์นถัดไป)
   if (victoryAtk && target.alive) {
@@ -6422,17 +6145,6 @@ function doAttack(byId, targetId) {
       }
     }
   }
-  // หมัดไร้ขอบเขต (อควาเรียน ท่าไม้ตายร่างโซล่า): ตีหมู่ — คนที่ไม่ใช่เป้าหมายเสียเกราะ 1 หน่วย
-  if ((attacker.statuses.solarburst || 0) > 0) {
-    const splashHit = [];
-    for (const o of alivePlayers()) {
-      if (o.id === attacker.id || o.id === target.id) continue;
-      dealArmorOnly(o, 1);
-      o.wasAttacked = true;
-      splashHit.push(o);
-    }
-    if (splashHit.length) lastLog.push(`หมัดไร้ขอบเขต! ${attacker.name} ตีหมู่ — ผู้เล่นอื่นเสียเกราะ -1`);
-  }
   // Beam Magnum Plus (ริดดี้): เปลี่ยนการโจมตีปกติเป็นตีหมู่ — คนที่ไม่ใช่เป้าหมายเสียเกราะ 1 หน่วย
   if (beamPlusAtk) {
     const splashHit = [];
@@ -6547,13 +6259,6 @@ function doAttack(byId, targetId) {
     addFx({ name: takutoSaveFired ? "ฉันยัง...มองเห็นอยู่!!! (กันตาย)" : "ประกายเขี้ยวปฏิปักษ์ (กันตาย)", img: takutoSaveFired ? displayImg(target) : OHGER_FORM, by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
   }
   if ((target.statuses.absorbplus || 0) > 0 && armorLost > 0) addFx(skillByStatus(target, "absorbplus"), "def");
-  // อควาเรียน
-  if (aquaAtk > 0) addFx({ name: `พลังโจมตี +${aquaAtk} (สกิลติดตัว)`, img: displayImg(attacker), by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
-  if (aquaZero) addFx({ name: "จันทราสยบ (พลังโจมตี 0)", img: displayImg(attacker), by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
-  if ((attacker.statuses.solarburst || 0) > 0) addFx(skillByStatus(attacker, "solarburst"), "atk");
-  if (marsswordAtk) addFx(skillByStatus(attacker, "marssword"), "atk");
-  if ((attacker.statuses.lunabow || 0) > 0) addFx(skillByStatus(attacker, "lunabow"), "atk");
-  if (aquaReflect > 0) addFx({ name: `ดาบแห่งจุดจบ — สะท้อน -${aquaReflect}`, img: displayImg(target), by: target.name, color: POSITION_COLORS[target.position] || "#888" }, "def");
   if (shradeAtk > 0) addFx({ name: `รวมร่างทำนองเพลง +${shradeAtk}`, img: SHRADE_SPADA_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   if (shradeDayOff) addFx({ name: "รวมร่างทำนองเพลง (ตอนเช้า — โบนัสโจมตีไม่ทำงาน)", img: SHRADE_SPADA_IMG, by: attacker.name, color: POSITION_COLORS[attacker.position] || "#888" }, "atk");
   // เรียวกิ ชิกิ
@@ -6588,7 +6293,7 @@ function doAttack(byId, targetId) {
     byName: attacker.name, byImg: displayImg(attacker), byColor: POSITION_COLORS[attacker.position] || "#888",
         byDoomWeapon: attacker.characterId === "doomguy" ? attacker.doomWeapon : undefined, // DoomGuy: อาวุธที่ใช้ยิงตอนนี้ (เสียงยิงฝั่ง client)
     targetName: target.name, targetImg: displayImg(target), targetColor: POSITION_COLORS[target.position] || "#888",
-    dmg, aoe: ginga || (attacker.statuses.solarburst || 0) > 0 || beamPlusAtk || unibeam2Atk || storiumAtk, revenge: isRevenge, skills: fxSkills,
+    dmg, aoe: ginga || beamPlusAtk || unibeam2Atk || storiumAtk, revenge: isRevenge, skills: fxSkills,
   };
   const showAttackFx = () => {
     gameState = "ATTACKING";
@@ -6688,7 +6393,6 @@ function endTurn() {
       if (k === "chill") continue;  // ชิวๆครับน้องๆ (Apple guy): คงอยู่จนกว่าจะถูกโจมตี ไม่ลดเทิร์น
       // โหมงานหนัก (โคโตเนะ patch พิเศษ): คงอยู่ 3 เทิร์นแล้วหมดเอง (หรือลบก่อนด้วย Sleeping time ตอนกลางคืน)
       // ksleep (Sleeping time patch 2.1.3): นับถอยหลังตามปกติ 2 เทิร์นตายตัว — ตื่นเองแล้วรับ [เช้าที่สดใส] (ดูด้านล่าง)
-      if (k === "godtree") continue; // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): คงอยู่จนกว่ากลางวันจะหมด/ยกเลิกเอง ไม่ลดเทิร์น
       if (k === "hburn") continue;   // ลุกไหม้ (ฮิคารุ patch 2.1.3): ลดลงเองในตอนต้นเทิร์นหลังสร้างผล (ดูด้านล่าง) ไม่ลดซ้ำที่นี่
       if (k === "melody") continue;  // ท่วงทำนอง (ชเรด เอลัน): สแตคถาวร สะสมจนครบ 5 เพื่อรวมร่าง
       if (k === "star") continue;    // ดวงดาว (สึงาชิ ทาคุโตะ): สแตคถาวร สะสมจนครบ 5 เพื่อฉันคว้ามันได้แล้ว
@@ -6715,20 +6419,12 @@ function endTurn() {
       if (k === "grit") continue;       // เวลากัดฟันทน: สแตค หายเมื่อฝึกฝนสำเร็จ
       if (k === "healthfull") continue; // Healthfull: สแตค ใช้ลบ Overweight เมื่อครบ 2
       if (k === "overweight") continue; // Overweight: คงอยู่จนกว่าจะถูกลบด้วย Healthfull
-      // ปีกแห่งสุริยัน (อควาเรียน): ระหว่างท่าไม้ตายไปยังพฤกษาแห่งชีวิตทำงาน ร่างไม่มีวันหมด
-      //  (คงอยู่จนกว่าผลท่าไม้ตายจะจบลงหรือตาย — ค่อยกลับมานับเทิร์นต่อ)
-      if (k === "godwing" && (p.statuses.godtree || 0) > 0) continue;
       // หลับไหล: เทิร์นที่เพิ่งโดนกล่อม ยังไม่เริ่มนับ (เริ่มหลับจริงเทิร์นถัดไป ครบตามจำนวนยามฟ้าสาง)
       if (k === "sleep" && p.sleepFresh) { p.sleepFresh = false; continue; }
       p.statuses[k]--;
       if (p.statuses[k] <= 0) {
         delete p.statuses[k];
         if (p.statusAmt) delete p.statusAmt[k]; // ล้างจำนวน (amount) ของสถานะพื้นฐานที่หมดอายุ (patch 2.0.8)
-        // ปีกแห่งสุริยันจบลง (อควาเรียน): ล้างแสงละอองที่สะสมออกทั้งหมด
-        if (k === "godwing" && p.characterId === "aquarion") {
-          p.lightDew = 0;
-          lastLog.push(`🌟 ${p.name} ผลปีกแห่งสุริยันจบลง — แสงละอองถูกล้างออก`);
-        }
         // มิติมายาบรรเลงสิ้นสุด (Bard): รีเซ็ตท่อนทำนองทั้งหมด — ฉากหลัง/เพลงกลับสู่ปกติ
         if ((k === "bloodDim" || k === "soulDim") && p.characterId === "bard") {
           p.bloodSection = 0;
@@ -6791,14 +6487,6 @@ function endTurn() {
       if (o.alive) o.statuses.norecover = Math.max(o.statuses.norecover || 0, HAKUNO_NORECOVER_TURNS);
     }
     lastLog.push(`🌙 ${moonCellEndedBy.name} คำสาปแห่งดวงจันทร์ MOON*CELL สิ้นสุดลง — คืนบัฟ/ดีบัฟที่ถูกล้างไว้ทั้งหมด และทุกคน (ยกเว้น ${moonCellEndedBy.name}) ติดสถานะ "ไร้ทางเยียวยา" ${HAKUNO_NORECOVER_TURNS} เทิร์น`);
-  }
-
-  // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): ระหว่างผลยังทำงาน กลางวันจะยาวไม่สิ้นสุด
-  //  — ต่อเวลากลางวันให้คลุมเทิร์นถัดไปทุกครั้งที่จบเทิร์น จนกว่าจะกดยกเลิกหรือตาย
-  for (const p of alivePlayers()) {
-    if (p.characterId === "aquarion" && (p.statuses.godtree || 0) > 0) {
-      dayForceUntil = Math.max(dayForceUntil, roundNumber + 1);
-    }
   }
 
   // จบเทิร์นรอบนั้น +1 — ช่วงกลางวันได้แต้มสกิลเพิ่มอีก +1 (ระบบกลางวัน/กลางคืน)
@@ -6917,20 +6605,6 @@ function endTurn() {
     } else if (s.alive) {
       instantDeath(s);
       if (!s.alive) lastLog.push(`🎻 ${s.name} จบชีวิตลงพร้อมบทเพลงสุดท้าย... ลาก่อนเพื่อนรัก`);
-    }
-  }
-  // ไปยังพฤกษาแห่งชีวิต (อควาเรียน): ตั้งเวลาฟื้นคืนชีพ 12 เทิร์น ก็ต่อเมื่อเกมยังไม่จบ (เหลือผู้เล่นอื่นอย่างน้อย 2 คน)
-  {
-    const revivers = Object.values(players).filter((p) => p.pendingRevive);
-    if (revivers.length) {
-      const stillAliveNow = alivePlayers().length;
-      for (const p of revivers) {
-        p.pendingRevive = false;
-        if (stillAliveNow >= 2) {
-          p.reviveIn = AQUA_REVIVE_TURNS;
-          lastLog.push(`🌳 ${p.name} ร่างสลายไปกับพฤกษาแห่งชีวิต — จะฟื้นคืนชีพใน ${AQUA_REVIVE_TURNS} เทิร์น หากเกมยังไม่จบ`);
-        }
-      }
     }
   }
   // ---------- ริดดี้: สกิลติดตัว 3 อย่าทิ้งฉันไป — บานาจพันธมิตรตายระหว่างเกม ----------
@@ -7111,7 +6785,6 @@ io.on("connection", (socket) => {
       contractPartner: null, contractWith: null, contractOffer: null,
       contractTurns: 0, renewPending: false, skillDrain: 0, skillDrainPending: 0,
       healNextTurn: 0, unplugHold: null,
-      leader: "apollo", fused: false, lightDew: 0, reviveIn: 0,
       shradeForm: false,
       bardNotes: [], bardNotesUsed: 0, bardPending: null,
       bloodSection: 0, soulSection: 0, linkedWith: null,
